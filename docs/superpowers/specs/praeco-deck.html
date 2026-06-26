@@ -1,0 +1,255 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Praeco — Brief</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080b11; --panel:#0f141c; --line:#222b38; --line2:#30363d;
+    --txt:#c4cdd9; --dim:#7d8aa0; --head:#eef3fa;
+    --acc:#56d364; --acc2:#9af2a0; --warn:#e3b341;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--txt); font-family:var(--sans);
+    overflow:hidden;
+    background-image:radial-gradient(900px 600px at 78% -10%, rgba(86,211,100,.10), transparent 60%),
+                     radial-gradient(700px 500px at 0% 110%, rgba(86,211,100,.06), transparent 55%);
+  }
+  #bar{position:fixed;top:0;left:0;height:3px;background:var(--acc);width:0;z-index:30;transition:width .35s ease;box-shadow:0 0 12px var(--acc)}
+  .wm{position:fixed;left:34px;bottom:26px;font-family:var(--mono);font-size:13px;letter-spacing:.18em;color:var(--dim);z-index:20}
+  .wm b{color:var(--acc)}
+  .count{position:fixed;right:34px;bottom:26px;font-family:var(--mono);font-size:13px;color:var(--dim);z-index:20}
+  .hint{position:fixed;left:50%;transform:translateX(-50%);bottom:24px;font-family:var(--mono);font-size:11px;color:#46506200;color:#475064;z-index:20}
+  #dots{position:fixed;right:30px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:20}
+  #dots button{width:8px;height:8px;border-radius:50%;border:0;background:#2a3340;cursor:pointer;padding:0;transition:.2s}
+  #dots button.on{background:var(--acc);box-shadow:0 0 8px var(--acc);transform:scale(1.25)}
+  #stage{position:relative;height:100vh;width:100vw}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 9vw;opacity:0;visibility:hidden;transform:translateY(22px);
+    transition:opacity .5s ease,transform .5s ease}
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.22em;color:var(--acc);margin-bottom:18px;text-transform:uppercase}
+  h1{font-size:clamp(40px,7vw,86px);color:var(--head);line-height:1.02;letter-spacing:-.02em}
+  h2{font-size:clamp(28px,4.4vw,52px);color:var(--head);line-height:1.08;letter-spacing:-.015em;margin-bottom:22px}
+  .lead{font-size:clamp(18px,2.2vw,26px);color:var(--txt);max-width:60ch;line-height:1.5}
+  .big-quote{font-size:clamp(22px,3.2vw,40px);color:var(--head);max-width:24ch;line-height:1.22;font-weight:600}
+  .big-quote .g{color:var(--acc)}
+  .sub{color:var(--dim);font-size:clamp(15px,1.6vw,19px);margin-top:18px;max-width:62ch;line-height:1.55}
+  .meta{margin-top:38px;font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:.04em}
+  .meta b{color:var(--acc2)}
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:14px;margin-top:8px}
+  ul.clean li{font-size:clamp(16px,1.9vw,21px);line-height:1.4;padding-left:26px;position:relative;color:var(--txt)}
+  ul.clean li::before{content:"";position:absolute;left:0;top:.62em;width:9px;height:9px;border-radius:2px;background:var(--acc);transform:rotate(45deg)}
+  ul.clean li b{color:var(--head)}
+  ul.clean li span{color:var(--dim);font-size:.85em}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:18px;margin-top:10px}
+  .grid4{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:20px 22px}
+  .card .n{font-family:var(--mono);font-size:12px;color:var(--acc);letter-spacing:.12em}
+  .card h3{color:var(--head);font-size:clamp(17px,1.9vw,22px);margin:8px 0 6px}
+  .card p{color:var(--dim);font-size:clamp(13px,1.4vw,15.5px);line-height:1.5}
+  table{border-collapse:collapse;margin-top:8px;font-size:clamp(14px,1.6vw,18px);width:100%;max-width:880px}
+  th,td{text-align:left;padding:11px 16px;border-bottom:1px solid var(--line)}
+  th{font-family:var(--mono);font-size:12px;letter-spacing:.1em;color:var(--dim);text-transform:uppercase;font-weight:500}
+  td.w{font-family:var(--mono);color:var(--acc);font-weight:600;white-space:nowrap}
+  td b{color:var(--head)}
+  .row{display:flex;gap:40px;flex-wrap:wrap;margin-top:18px}
+  .stat .k{font-family:var(--mono);font-size:12px;letter-spacing:.14em;color:var(--dim);text-transform:uppercase}
+  .stat .v{font-size:clamp(26px,3.4vw,40px);color:var(--head);font-weight:700;letter-spacing:-.01em}
+  .stat .v small{color:var(--acc);font-size:.5em;font-weight:600}
+  .pill{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--acc);border:1px solid var(--line2);border-radius:999px;padding:5px 12px;margin:6px 8px 0 0}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;font-family:var(--mono);font-size:clamp(12px,1.4vw,15px)}
+  .flow span{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--txt)}
+  .flow i{color:var(--acc);font-style:normal}
+  .kept{color:var(--acc)}
+  .strike{color:#cf5b56}
+  .note{margin-top:26px;color:var(--dim);font-size:14px;border-left:2px solid var(--acc);padding-left:14px;max-width:60ch;line-height:1.5}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="wm"><b>praeco</b> · design brief</div>
+<div class="count" id="count">01 / 13</div>
+<div id="dots"></div>
+<div id="stage">
+
+  <!-- 1 -->
+  <section class="slide active">
+    <div class="eyebrow">CROO Agent Hackathon · Creator &amp; Content Ops + Open A2A</div>
+    <h1>Praeco</h1>
+    <p class="lead" style="margin-top:24px">A <b style="color:var(--head)">general contractor for product launches</b>.</p>
+    <p class="big-quote" style="margin-top:18px">One sentence in <span class="g">→</span> a full launch kit out, built by a crew of AIs that Praeco <span class="g">hires and pays</span> for you.</p>
+    <div class="meta">Internal deadline <b>Jul 9</b> · Demo Day <b>Jul 16</b> · Winners <b>Jul 24</b> · Prize pool <b>$10,200</b></div>
+  </section>
+
+  <!-- 2 -->
+  <section class="slide">
+    <div class="eyebrow">01 · The Problem</div>
+    <p class="big-quote">Great products die at launch — not because they're bad, but because their makers can't market them <span class="g">fast, well, or cheaply</span>.</p>
+    <p class="sub">Builders ship, but the marketing — copy, images, announcement, positioning — is slow, scattered across a dozen tools, and usually needs hiring and coordinating several freelancers.</p>
+  </section>
+
+  <!-- 3 -->
+  <section class="slide">
+    <div class="eyebrow">02 · What it does</div>
+    <h2>A pure composer.</h2>
+    <p class="lead">Praeco never does the specialist work itself. Like a general contractor, it <b style="color:var(--head)">discovers, hires, and pays</b> specialist agents on the CROO marketplace, quality-checks them, and composes the results into a finished launch kit.</p>
+    <p class="sub">You talk to one agent. It runs the whole crew behind the scenes — and hands you website copy, a social image, and announcement posts, each with an on-chain receipt.</p>
+  </section>
+
+  <!-- 4 -->
+  <section class="slide">
+    <div class="eyebrow">03 · One run</div>
+    <h2>Hire → verify → compose → settle.</h2>
+    <div class="flow">
+      <span>User pays Praeco</span><i>→</i><span>Intake (GLM-5.2)</span><i>→</i><span>Hire research</span><i>→</i><span>Hire copy</span><i>→</i><span>Hire image</span><i>→</i><span>QA + compose</span><i>→</i><span>Deliver + receipts</span>
+    </div>
+    <div class="row">
+      <div class="stat"><div class="k">User pays Praeco</div><div class="v kept">+$2.00</div></div>
+      <div class="stat"><div class="k">Praeco pays 3 specialists</div><div class="v strike">−$0.70</div></div>
+      <div class="stat"><div class="k">Praeco keeps</div><div class="v">+$1.30</div></div>
+    </div>
+    <p class="note">Praeco is a <b class="kept">buyer and a seller</b> in the live economy — earns from the user, spends on the crew, keeps the spread. Every run = 3+ real CAP orders.</p>
+  </section>
+
+  <!-- 5 -->
+  <section class="slide">
+    <div class="eyebrow">04 · Two doors, one engine</div>
+    <div class="grid2">
+      <div class="card"><div class="n">DOOR A · HERO</div><h3>Human web app</h3><p>Next.js — intake, the live "Agent-Economy Theater", finished kit + provenance cards.</p></div>
+      <div class="card"><div class="n">DOOR B · MANDATORY</div><h3>Callable CAP service</h3><p>Praeco listed on the CROO Agent Store — other agents (and humans) hire it over CAP.</p></div>
+    </div>
+    <p class="note">Both doors funnel into the <b class="kept">same CAP entry point</b> — so every job, human or agent, is a real CAP order, and web buyers count toward the ≥5 unique buyer wallets.</p>
+  </section>
+
+  <!-- 6 -->
+  <section class="slide">
+    <div class="eyebrow">05 · Why it can win</div>
+    <h2>The rubric fits by design.</h2>
+    <table>
+      <tr><th>Weight</th><th>Criterion</th><th>Praeco</th></tr>
+      <tr><td class="w">30%</td><td><b>Technical Execution</b></td><td>3+ real orders/run → clears the 10+ bonus fast</td></tr>
+      <tr><td class="w">25%</td><td><b>A2A Composability</b></td><td>Diverse, independent agents every run</td></tr>
+      <tr><td class="w">20%</td><td><b>Innovation</b></td><td>A curated, verifiable, watchable vertical product</td></tr>
+      <tr><td class="w">15%</td><td><b>Usability / Adoption</b></td><td>Polished product + real audience buyers</td></tr>
+      <tr><td class="w">10%</td><td><b>Presentation</b></td><td>The Theater demos like nothing else</td></tr>
+    </table>
+    <p class="note"><b class="kept">55%</b> (Technical Execution + Composability) rewards exactly what Praeco does on every single run.</p>
+  </section>
+
+  <!-- 7 -->
+  <section class="slide">
+    <div class="eyebrow">06 · Prizes &amp; timeline</div>
+    <h2>Global leaderboard — not per-track.</h2>
+    <div class="row">
+      <div class="stat"><div class="k">1st</div><div class="v">$3,500</div></div>
+      <div class="stat"><div class="k">2nd</div><div class="v">$2,500</div></div>
+      <div class="stat"><div class="k">3rd</div><div class="v">$1,500</div></div>
+      <div class="stat"><div class="k">4th–10th</div><div class="v">$300<small>×7</small></div></div>
+      <div class="stat"><div class="k">Most Popular</div><div class="v">$300</div></div>
+      <div class="stat"><div class="k">Most Innovative</div><div class="v">$300</div></div>
+    </div>
+    <p class="note">Realistic target: <b class="kept">top-10 + Most Innovative</b> + $CROO airdrop whitelist. &nbsp;·&nbsp; Submit <b>Jul 9</b> → Demo Day <b>Jul 16</b> → Winners <b>Jul 24</b>.</p>
+  </section>
+
+  <!-- 8 -->
+  <section class="slide">
+    <div class="eyebrow">07 · The competitive reality</div>
+    <h2>The mechanic is taken. The vertical is open.</h2>
+    <div class="grid2">
+      <div class="card"><div class="n">TAKEN — but thin</div><h3>"Agents hiring agents"</h3><p>CROO Contractor (5 orders), Axion, Universal Workbench — all <b style="color:var(--txt)">headless dev-tooling</b>, single-digit traction.</p></div>
+      <div class="card" style="border-color:var(--acc)"><div class="n" style="color:var(--acc2)">OPEN</div><h3>The creator / launch vertical</h3><p>"launch kit" → nothing. "marketing" → nothing. No one runs a creator <b style="color:var(--head)">product</b>.</p></div>
+    </div>
+    <p class="note">So we win on <b class="kept">product</b>, not mechanic — via the novelty stack →</p>
+  </section>
+
+  <!-- 9 -->
+  <section class="slide">
+    <div class="eyebrow">08 · Novelty stack (locked)</div>
+    <div class="grid4">
+      <div class="card"><div class="n">01</div><h3>Agent-Economy Theater</h3><p>Watch the economy hire, pay, verify &amp; settle live — with a shareable replay. Headless rivals can't.</p></div>
+      <div class="card"><div class="n">02</div><h3>Proof-carrying kit</h3><p>Every asset ships with an on-chain provenance card — a verifiable marketing supply chain.</p></div>
+      <div class="card"><div class="n">03</div><h3>Curate + QA loop</h3><p>Reputation-ranked routing + a GLM critic that accepts / redoes / swaps each hire.</p></div>
+      <div class="card"><div class="n">04</div><h3>Repo-native intake</h3><p>Paste a GitHub URL; GLM-5.2's 1M context reads the code to auto-brief the specialists.</p></div>
+    </div>
+  </section>
+
+  <!-- 10 -->
+  <section class="slide">
+    <div class="eyebrow">09 · Stack</div>
+    <h2>One LLM. Bounded modules.</h2>
+    <div>
+      <span class="pill">TypeScript</span><span class="pill">Pi SDK · pi-ai + pi-agent-core</span><span class="pill">GLM-5.2:cloud (1 LLM)</span><span class="pill">Next.js · Tailwind · shadcn</span><span class="pill">@croo-network/sdk</span><span class="pill">USDC on Base</span><span class="pill">VPS engine</span>
+    </div>
+    <p class="sub" style="margin-top:26px">11 single-purpose modules: <b style="color:var(--txt)">Intake · Discovery · Orchestrator · QA/Critic · Composer · Provenance · Settlement · Worklog · Wallet · Web app · CAP listing.</b></p>
+  </section>
+
+  <!-- 11 -->
+  <section class="slide">
+    <div class="eyebrow">10 · Anti-sybil &amp; cost</div>
+    <h2>The moat is demand — cleared by design.</h2>
+    <ul class="clean">
+      <li><b>≥3 unique counterparty agents</b> — every run hires 3+ independent specialists <span>(structural)</span></li>
+      <li><b>Zero self-trade</b> — pure-composer never hires our own agents</li>
+      <li><b>≥5 unique buyer wallets</b> — RECTOR's audience, motivated by the kit + airdrop whitelist</li>
+    </ul>
+    <div class="row" style="margin-top:30px">
+      <div class="stat"><div class="k">Net cash to build &amp; run</div><div class="v kept">~$0–10</div></div>
+      <div class="stat"><div class="k">Against a pool of</div><div class="v">$10,200</div></div>
+    </div>
+    <p class="note">Self-funding: buyer pays $2 &gt; ~$0.70 of hires → net-positive after the first buyer. Free stack (Vercel + VPS + Ollama flat-rate + 0% gas window).</p>
+  </section>
+
+  <!-- 12 -->
+  <section class="slide">
+    <div class="eyebrow">11 · Plan to Jul 9 (~12 days)</div>
+    <h2>Five phases.</h2>
+    <ul class="clean">
+      <li><b>0 · De-risk</b> — CAP SDK smoke test + Pi SDK + GLM-5.2 wiring</li>
+      <li><b>1 · Engine</b> — Intake → Discovery → Orchestrator → QA → Composer → Settlement (testnet)</li>
+      <li><b>2 · Doors</b> — web app + Agent-Economy Theater + proof cards; CAP listing</li>
+      <li><b>3 · Real</b> — mainnet orders; manufacture demand (≥3 agents, ≥5 wallets)</li>
+      <li><b>4 · Submit</b> — demo video + README; flip public; file BUIDL; prep Demo Day</li>
+    </ul>
+  </section>
+
+  <!-- 13 -->
+  <section class="slide">
+    <div class="eyebrow">Praeco</div>
+    <p class="big-quote">Watch a real agent economy <span class="g">build your launch</span> — live, and with receipts.</p>
+    <div class="meta">Next: <b>PLAN.md</b> via writing-plans → Phase-0 de-risk → build.</div>
+  </section>
+
+</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const bar=document.getElementById('bar');
+  const count=document.getElementById('count');
+  let i=0;
+  slides.forEach((_,k)=>{const b=document.createElement('button');b.onclick=()=>go(k);dotsWrap.appendChild(b);});
+  const dots=[...dotsWrap.children];
+  const pad=n=>String(n).padStart(2,'0');
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    bar.style.width=((i)/(slides.length-1)*100)+'%';
+    count.textContent=pad(i+1)+' / '+pad(slides.length);
+  }
+  function next(){go(i+1)} function prev(){go(i-1)}
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(slides.length-1);}
+  });
+  addEventListener('click',e=>{ if(e.target.closest('#dots'))return; (e.clientX>innerWidth*0.4)?next():prev(); });
+  go(0);
+</script>
+</body>
+</html>
