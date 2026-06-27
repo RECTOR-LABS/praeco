@@ -1,94 +1,209 @@
 import { describe, it, expect } from "vitest";
-import { searchServices, resolveCandidate, rankCandidates } from "./discovery.js";
-import type { ServiceCandidate } from "../types.js";
+import {
+  listServices, listAgents, getAgent, resolveCandidate, discoverForLeg,
+  normalizeRate, parseRequirementSchema, legRelevance,
+  type ServiceListing, type AgentRecord,
+} from "./discovery.js";
 
-function jsonFetch(map: Record<string, unknown>): typeof fetch {
+/** Fetch stub keyed by URL substring; mirrors the live CAP public REST shapes. */
+function jsonFetch(map: Record<string, unknown | ((url: string) => unknown)>): typeof fetch {
   return (async (url: string) => {
     const key = Object.keys(map).find((k) => String(url).includes(k));
-    if (!key) return new Response("not found", { status: 404 });
-    return new Response(JSON.stringify(map[key]), { status: 200, headers: { "content-type": "application/json" } });
+    if (key === undefined) return new Response("not found", { status: 404 });
+    const v = map[key];
+    const body = typeof v === "function" ? (v as (u: string) => unknown)(String(url)) : v;
+    return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
   }) as unknown as typeof fetch;
 }
 
-describe("searchServices", () => {
-  it("maps public search hits to ServiceHit[]", async () => {
+// --- Real live-shape fixtures (captured 2026-06-28) ---
+const PYGM_AGENT = {
+  agent: {
+    agentId: "449c3ab5",
+    name: "Pygmalion - AI KOL Agent & Studio",
+    description: "AI KOL agent and content studio",
+    completedOrders: "1401",         // string
+    completionRate: 100,             // percent, not fraction
+    avgDeliveryText: "< 1min",
+    onlineStatus: "online",
+    skillTagSlugs: ["content-creative"],
+    services: [
+      { serviceId: "pygm-text", name: "Pygm Studio Text Code", price: "200000", requirementType: "text", requirementSchema: "[]", requirementText: "", deliverableType: "text" },
+      { serviceId: "pygm-image", name: "Pygm Studio Image Code", price: "500000", requirementType: "text", requirementSchema: "[]", requirementText: "", deliverableType: "text" },
+    ],
+  },
+};
+const OPS_AGENT = {
+  agent: {
+    agentId: "13506a9a",
+    name: "OpsPilot",
+    completedOrders: "3138",
+    completionRate: 99.97,
+    onlineStatus: "online",
+    skillTagSlugs: ["data-analytics"],
+    services: [
+      {
+        serviceId: "ops-seo",
+        name: "seo_rules_audit",
+        price: "100000",
+        requirementType: "schema",
+        // requirementSchema arrives JSON-ENCODED, with extra fields the engine ignores
+        requirementSchema: JSON.stringify([
+          { name: "title", type: "string", required: true, description: "", stringSubtype: "plain" },
+          { name: "bodyText", type: "string", required: true, description: "" },
+        ]),
+        deliverableType: "schema",
+      },
+    ],
+  },
+};
+
+describe("normalizeRate", () => {
+  it("treats >1 as a percent and passes fractions through", () => {
+    expect(normalizeRate(100)).toBeCloseTo(1);
+    expect(normalizeRate(99.97)).toBeCloseTo(0.9997);
+    expect(normalizeRate(0.98)).toBeCloseTo(0.98);
+    expect(normalizeRate(0)).toBe(0);
+    expect(normalizeRate(null)).toBe(0);
+  });
+});
+
+describe("parseRequirementSchema", () => {
+  it("parses a JSON-encoded string and strips extra fields", () => {
+    const out = parseRequirementSchema('[{"name":"title","type":"string","required":true,"stringSubtype":"plain"}]');
+    expect(out).toEqual([{ name: "title", type: "string", required: true }]);
+  });
+  it("returns [] for empty string, junk, or non-array", () => {
+    expect(parseRequirementSchema("[]")).toEqual([]);
+    expect(parseRequirementSchema("")).toEqual([]);
+    expect(parseRequirementSchema("not json")).toEqual([]);
+    expect(parseRequirementSchema({})).toEqual([]);
+    expect(parseRequirementSchema(undefined)).toEqual([]);
+  });
+  it("accepts an already-parsed array", () => {
+    expect(parseRequirementSchema([{ name: "brief", type: "string", required: true }]))
+      .toEqual([{ name: "brief", type: "string", required: true }]);
+  });
+});
+
+describe("listServices", () => {
+  it("unwraps {items}, maps live fields (name, price, orders7d), and stops at total", async () => {
     const f = jsonFetch({
-      "/public/search": [
-        { serviceId: "s1", agentId: "a1", agentName: "OpsPilot", title: "SEO audit", price: "100000", orders7d: 42 },
-      ],
+      "/public/services": (url: string) => url.includes("page=1")
+        ? { items: [{ serviceId: "s1", agentId: "a1", name: "Verifiable Research", description: "market intel", price: "100000", orders7d: "30" }], total: "1" }
+        : { items: [], total: "1" },
     });
-    const hits = await searchServices("https://api.croo.network", "seo", f);
-    expect(hits[0]).toMatchObject({ serviceId: "s1", agentId: "a1", priceBaseUnits: "100000", orders7d: 42 });
+    const out = await listServices("https://api.croo.network", f);
+    expect(out).toHaveLength(1);
+    expect(out[0]).toMatchObject({ serviceId: "s1", agentId: "a1", name: "Verifiable Research", priceBaseUnits: "100000", orders7d: 30 });
+  });
+
+  it("paginates until fewer than a full page is returned", async () => {
+    const page1 = { items: Array.from({ length: 50 }, (_, i) => ({ serviceId: `p1-${i}`, agentId: "a", name: "x", price: "1" })), total: "60" };
+    const page2 = { items: Array.from({ length: 10 }, (_, i) => ({ serviceId: `p2-${i}`, agentId: "a", name: "x", price: "1" })), total: "60" };
+    const f = jsonFetch({ "/public/services": (url: string) => (url.includes("page=1") ? page1 : page2) });
+    const out = await listServices("https://api.croo.network", f);
+    expect(out).toHaveLength(60);
+  });
+});
+
+describe("listAgents", () => {
+  it("unwraps {agents}, normalizes percent rate + string orders, keeps skill tags", async () => {
+    const f = jsonFetch({
+      "/public/agents": { agents: [{ agentId: "449c3ab5", name: "Pygm", completedOrders: "1401", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["content-creative"] }], total: "1" },
+    });
+    const out = await listAgents("https://api.croo.network", f);
+    expect(out[0].completedOrders).toBe(1401);
+    expect(out[0].completionRate).toBeCloseTo(1);
+    expect(out[0].skillTagSlugs).toEqual(["content-creative"]);
+  });
+});
+
+describe("getAgent", () => {
+  it("unwraps {agent}, normalizes rate, maps service name->title, parses JSON-string schema", async () => {
+    const f = jsonFetch({ "/public/agents/13506a9a": OPS_AGENT });
+    const a = await getAgent("https://api.croo.network", "13506a9a", f);
+    expect(a.name).toBe("OpsPilot");
+    expect(a.completionRate).toBeCloseTo(0.9997);
+    expect(a.completedOrders).toBe(3138);
+    expect(a.services[0].title).toBe("seo_rules_audit"); // name -> title
+    expect(a.services[0].requirementSchema).toEqual([
+      { name: "title", type: "string", required: true },
+      { name: "bodyText", type: "string", required: true },
+    ]);
+  });
+
+  it("treats a text-type service (empty schema string) as text", async () => {
+    const f = jsonFetch({ "/public/agents/449c3ab5": PYGM_AGENT });
+    const a = await getAgent("https://api.croo.network", "449c3ab5", f);
+    const img = a.services.find((s) => s.serviceId === "pygm-image")!;
+    expect(img.requirementType).toBe("text");
+    expect(img.requirementSchema).toEqual([]);
+    expect(img.title).toBe("Pygm Studio Image Code");
   });
 });
 
 describe("resolveCandidate", () => {
-  it("merges a service with its agent reputation + requirementSchema", async () => {
-    const f = jsonFetch({
-      "/public/agents/a1": {
-        agentId: "a1",
-        name: "OpsPilot",
-        completedOrders: 2754,
-        completionRate: 0.9996,
-        avgDeliveryText: "~60s",
-        onlineStatus: "online",
-        services: [
-          {
-            serviceId: "s1",
-            title: "seo_rules_audit",
-            price: "100000",
-            requirementType: "schema",
-            requirementSchema: [{ name: "title", type: "string", required: true }],
-          },
-        ],
-      },
-    });
-    const c = await resolveCandidate("https://api.croo.network", "s1", "a1", f);
-    expect(c.completionRate).toBeCloseTo(0.9996);
-    expect(c.requirementSchema).toEqual([{ name: "title", type: "string", required: true }]);
+  it("merges a service with its agent reputation + parsed schema (real wrapped shape)", async () => {
+    const f = jsonFetch({ "/public/agents/13506a9a": OPS_AGENT });
+    const c = await resolveCandidate("https://api.croo.network", "ops-seo", "13506a9a", f);
+    expect(c.title).toBe("seo_rules_audit");
+    expect(c.priceBaseUnits).toBe("100000");
+    expect(c.completionRate).toBeCloseTo(0.9997);
+    expect(c.requirementType).toBe("schema");
+    expect(c.requirementSchema).toEqual([
+      { name: "title", type: "string", required: true },
+      { name: "bodyText", type: "string", required: true },
+    ]);
+  });
+
+  it("throws when the service is missing from the agent record", async () => {
+    const f = jsonFetch({ "/public/agents/449c3ab5": PYGM_AGENT });
+    await expect(resolveCandidate("https://api.croo.network", "missing", "449c3ab5", f)).rejects.toThrow(/not found on agent/);
   });
 });
 
-describe("rankCandidates", () => {
-  const mk = (over: Partial<ServiceCandidate>): ServiceCandidate => ({
-    serviceId: "s", agentId: "a", agentName: "n", title: "t", priceBaseUnits: "100000",
-    requirementType: "schema", requirementSchema: [], completedOrders: 0, completionRate: 0, ...over,
-  });
-  it("puts the preferred service first, then ranks by reputation, then price", () => {
-    const a = mk({ serviceId: "pref", completedOrders: 1, completionRate: 0.5 });
-    const b = mk({ serviceId: "proven", completedOrders: 2754, completionRate: 0.9996 });
-    const c = mk({ serviceId: "stub", completedOrders: 0, completionRate: 0 });
-    const ranked = rankCandidates([c, a, b], { preferredServiceId: "pref" });
-    expect(ranked.map((x) => x.serviceId)).toEqual(["pref", "proven", "stub"]);
-  });
-  it("non-numeric price doesn't crash ranking and unparseable price ranks last", () => {
-    const a = mk({ serviceId: "finite", priceBaseUnits: "200000" });
-    const b = mk({ serviceId: "bad-price", priceBaseUnits: "abc" });
-    const result = rankCandidates([b, a]);
-    expect(result).toHaveLength(2);
-    // finite-priced candidate must rank before the unparseable one
-    expect(result[0].serviceId).toBe("finite");
-  });
-});
-
-describe("searchServices — non-ok response", () => {
-  it("getJson throws with URL+status on non-ok", async () => {
+describe("getJson — non-ok response", () => {
+  it("throws with URL+status on non-ok", async () => {
     const f = jsonFetch({});
-    await expect(searchServices("https://api.croo.network", "seo", f)).rejects.toThrow("CAP public GET");
+    await expect(listServices("https://api.croo.network", f)).rejects.toThrow("CAP public GET");
   });
 });
 
-describe("resolveCandidate — missing service", () => {
-  it("throws when service is missing from agent", async () => {
-    const f = jsonFetch({
-      "/public/agents/a1": {
-        agentId: "a1",
-        name: "n",
-        completedOrders: 0,
-        completionRate: 0,
-        services: [],
-      },
-    });
-    await expect(resolveCandidate("https://api.croo.network", "missing", "a1", f)).rejects.toThrow(/not found on agent/);
+describe("legRelevance", () => {
+  it("scores leg keywords and distinctive query words", () => {
+    expect(legRelevance("Pygm Studio Image Code", "og_image", "")).toBeGreaterThan(0);
+    expect(legRelevance("Pygm Studio Text Code", "og_image", "")).toBe(0); // "text code" has no image keyword
+    expect(legRelevance("Verifiable Research Report", "research", "")).toBeGreaterThan(0);
+  });
+});
+
+describe("discoverForLeg", () => {
+  const services: ServiceListing[] = [
+    { serviceId: "pygm-text", agentId: "449c3ab5", name: "Pygm Studio Text Code", priceBaseUnits: "200000" },
+    { serviceId: "pygm-image", agentId: "449c3ab5", name: "Pygm Studio Image Code", priceBaseUnits: "500000" },
+    { serviceId: "ops-seo", agentId: "13506a9a", name: "seo_rules_audit", description: "landing page seo", priceBaseUnits: "100000" },
+    { serviceId: "swapgod", agentId: "swap1", name: "SwapGod", description: "swap erc20", priceBaseUnits: "100000" },
+  ];
+  const agentsById = new Map<string, AgentRecord>([
+    ["449c3ab5", { agentId: "449c3ab5", name: "Pygm", completedOrders: 1401, completionRate: 1, skillTagSlugs: ["content-creative"], services: [] }],
+    ["13506a9a", { agentId: "13506a9a", name: "OpsPilot", completedOrders: 3138, completionRate: 0.9997, skillTagSlugs: ["data-analytics"], services: [] }],
+    ["swap1", { agentId: "swap1", name: "SwapGod", completedOrders: 2000, completionRate: 1, skillTagSlugs: ["defi"], services: [] }],
+  ]);
+
+  it("picks the image service for og_image (not the text one) and drops irrelevant services", () => {
+    const ranked = discoverForLeg(services, agentsById, "og_image", "og image generation");
+    expect(ranked[0].serviceId).toBe("pygm-image");
+    expect(ranked.map((r) => r.serviceId)).not.toContain("swapgod"); // SwapGod has no image relevance
+  });
+
+  it("ranks the pinned preferred service first regardless of relevance", () => {
+    const ranked = discoverForLeg(services, agentsById, "research", "market research", { preferredServiceId: "ops-seo" });
+    expect(ranked[0].serviceId).toBe("ops-seo");
+  });
+
+  it("respects the limit", () => {
+    const ranked = discoverForLeg(services, agentsById, "landing_copy", "copy", { limit: 1 });
+    expect(ranked).toHaveLength(1);
   });
 });

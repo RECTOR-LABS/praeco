@@ -12,11 +12,14 @@ const config: Config = {
   usdcTokenAddress: "0x8335", runBudgetUsdc: "2.00", legCapUsdc: "0.60", preferredServiceIds: {},
 };
 
-// One fetch impl serving discovery (GET) + the funded balance (POST eth_call).
+// One fetch impl serving catalog discovery (GET) + the funded balance (POST eth_call).
+// Service s1 matches all three legs because the scripted driver hires it for each.
 const fetchImpl = (async (url: string, init?: RequestInit) => {
   if (init?.method === "POST") return new Response(JSON.stringify({ result: "0x00000000000000000000000000000000000000000000000000000000001e8480" }), { status: 200 });
-  if (String(url).includes("/public/search")) return new Response(JSON.stringify([{ serviceId: "s1", agentId: "a1", agentName: "ProvenAgent", title: "svc", price: "100000", orders7d: 50 }]), { status: 200 });
-  if (String(url).includes("/public/agents/a1")) return new Response(JSON.stringify({ agentId: "a1", name: "ProvenAgent", completedOrders: 500, completionRate: 0.99, services: [{ serviceId: "s1", title: "svc", price: "100000", requirementType: "schema", requirementSchema: [{ name: "topic", type: "string", required: true }] }] }), { status: 200 });
+  const u = String(url);
+  if (u.includes("/public/agents/a1")) return new Response(JSON.stringify({ agent: { agentId: "a1", name: "ProvenAgent", completedOrders: "500", completionRate: 99, onlineStatus: "online", skillTagSlugs: [], services: [{ serviceId: "s1", name: "svc", price: "100000", requirementType: "schema", requirementSchema: JSON.stringify([{ name: "topic", type: "string", required: true }]) }] } }), { status: 200 });
+  if (u.includes("/public/agents")) return new Response(JSON.stringify({ agents: [{ agentId: "a1", name: "ProvenAgent", completedOrders: "500", completionRate: 99, onlineStatus: "online", skillTagSlugs: [] }], total: "1" }), { status: 200 });
+  if (u.includes("/public/services")) return new Response(JSON.stringify(u.includes("page=1") ? { items: [{ serviceId: "s1", agentId: "a1", name: "Launch Research Copy Image Studio", description: "market research, landing page copy, and og image generation", price: "100000", orders7d: "50" }], total: "1" } : { items: [], total: "1" }), { status: 200 });
   return new Response("not found", { status: 404 });
 }) as unknown as typeof fetch;
 

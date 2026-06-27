@@ -41,6 +41,65 @@ function ctxFor(client: CapBuyer, llm: Llm): RunContext {
 const fakeLlm = (verdict: unknown): Llm => ({ completeText: vi.fn(async () => ""), completeJson: vi.fn(async () => verdict) as Llm["completeJson"] });
 const toolMap = (ctx: RunContext) => Object.fromEntries(buildTools(ctx).map((t) => [t.name, t]));
 
+/** Fetch stub mirroring the live CAP catalog shapes for search_marketplace tests. */
+function catalogFetch(): typeof fetch {
+  const services = {
+    items: [
+      { serviceId: "pygm-text", agentId: "pygm", name: "Pygm Studio Text Code", price: "200000", orders7d: "1401" },
+      { serviceId: "pygm-image", agentId: "pygm", name: "Pygm Studio Image Code", price: "500000", orders7d: "1401" },
+      { serviceId: "research-1", agentId: "zeru", name: "Verifiable Research Report", description: "market intelligence", price: "100000", orders7d: "9" },
+    ],
+    total: "3",
+  };
+  const agentsCatalog = {
+    agents: [
+      { agentId: "pygm", name: "Pygmalion", completedOrders: "1401", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["content-creative"] },
+      { agentId: "zeru", name: "ZERU", completedOrders: "9", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["research-report"] },
+    ],
+    total: "2",
+  };
+  const agentRecords: Record<string, unknown> = {
+    pygm: { agent: { agentId: "pygm", name: "Pygmalion", completedOrders: "1401", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["content-creative"], services: [
+      { serviceId: "pygm-text", name: "Pygm Studio Text Code", price: "200000", requirementType: "text", requirementSchema: "[]" },
+      { serviceId: "pygm-image", name: "Pygm Studio Image Code", price: "500000", requirementType: "text", requirementSchema: "[]" },
+    ] } },
+    zeru: { agent: { agentId: "zeru", name: "ZERU", completedOrders: "9", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["research-report"], services: [
+      { serviceId: "research-1", name: "Verifiable Research Report", price: "100000", requirementType: "text", requirementSchema: "[]" },
+    ] } },
+  };
+  return (async (url: string) => {
+    const u = String(url);
+    const m = u.match(/\/public\/agents\/([^/?]+)/);
+    if (m) return new Response(JSON.stringify(agentRecords[m[1]] ?? {}), { status: 200 });
+    if (u.includes("/public/agents")) return new Response(JSON.stringify(agentsCatalog), { status: 200 });
+    if (u.includes("/public/services")) return new Response(JSON.stringify(u.includes("page=1") ? services : { items: [], total: "3" }), { status: 200 });
+    return new Response("not found", { status: 404 });
+  }) as unknown as typeof fetch;
+}
+
+describe("search_marketplace tool", () => {
+  it("discovers ranked candidates from the catalog and caches them by serviceId", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({}));
+    ctx.candidates.clear();
+    ctx.fetchImpl = catalogFetch();
+    const res = await toolMap(ctx).search_marketplace.execute("id", { leg: "og_image", query: "og image" });
+    const ids = (res.details as any).candidates as string[];
+    expect(ids[0]).toBe("pygm-image");                  // image leg picks the image service
+    expect(ids).not.toContain("research-1");            // research service is irrelevant to og_image
+    expect(ctx.candidates.get("pygm-image")?.priceBaseUnits).toBe("500000");
+    expect(ctx.catalog).toBeDefined();                  // catalog cached on ctx
+  });
+
+  it("returns a no-candidates message when nothing matches the leg", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({}));
+    ctx.candidates.clear();
+    ctx.fetchImpl = (async (url: string) =>
+      new Response(JSON.stringify(String(url).includes("/agents") ? { agents: [], total: "0" } : { items: [], total: "0" }), { status: 200 })) as unknown as typeof fetch;
+    const res = await toolMap(ctx).search_marketplace.execute("id", { leg: "research", query: "nothing" });
+    expect((res.details as any).count).toBe(0);
+  });
+});
+
 describe("buildTools", () => {
   it("exposes the five engine tools", () => {
     const names = buildTools(ctxFor(happyClient(), fakeLlm({}))).map((t) => t.name).sort();

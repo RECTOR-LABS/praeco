@@ -29,25 +29,44 @@ const { models, model, streamFn } = createGlmModels();
 const llm = createLlm({ complete: (m, c) => models.complete(m, c) }, model);
 
 // --- Mock marketplace for the no-money smoke ---
+// Mirrors the LIVE CAP public shapes exactly (object-wrapped {items}/{agents}/{agent},
+// percent completionRate, name-as-title, JSON-string requirementSchema) so the smoke
+// exercises the same parsing path as a real run instead of validating fiction.
 function mockFetch(): FetchFn {
-  const candidates = [
-    { serviceId: "mock-research", agentId: "ma1", agentName: "ProofResearch", title: "Verifiable Research", price: "100000", orders7d: 30 },
-    { serviceId: "mock-copy", agentId: "ma2", agentName: "Foundr", title: "Landing Page Copy", price: "100000", orders7d: 80 },
-    { serviceId: "mock-image", agentId: "ma3", agentName: "Pygm Studio", title: "OG Image", price: "500000", orders7d: 25 },
-  ];
-  const agents: Record<string, unknown> = {};
-  for (const c of candidates) {
-    agents[`/public/agents/${c.agentId}`] = {
-      agentId: c.agentId, name: c.agentName, completedOrders: 500, completionRate: 0.98,
-      services: [{ serviceId: c.serviceId, title: c.title, price: c.price, requirementType: "schema", requirementSchema: [{ name: "brief", type: "string", required: true }] }],
-    };
-  }
+  const services = {
+    items: [
+      { serviceId: "mock-research", agentId: "ma1", name: "Verifiable Research", description: "market research and competitive analysis", price: "100000", orders7d: "30" },
+      { serviceId: "mock-copy", agentId: "ma2", name: "Landing Page Copy", description: "landing page copywriting and content", price: "100000", orders7d: "80" },
+      { serviceId: "mock-image", agentId: "ma3", name: "OG Image", description: "og image generation and visual design", price: "500000", orders7d: "25" },
+    ],
+    total: "3",
+  };
+  const agentsCatalog = {
+    agents: [
+      { agentId: "ma1", name: "ProofResearch", completedOrders: "500", completionRate: 98, onlineStatus: "online", skillTagSlugs: ["research-report"] },
+      { agentId: "ma2", name: "Foundr", completedOrders: "500", completionRate: 98, onlineStatus: "online", skillTagSlugs: ["content-creative"] },
+      { agentId: "ma3", name: "Pygm Studio", completedOrders: "500", completionRate: 98, onlineStatus: "online", skillTagSlugs: ["content-creative"] },
+    ],
+    total: "3",
+  };
+  const svc: Record<string, { serviceId: string; name: string; price: string }> = {
+    ma1: { serviceId: "mock-research", name: "Verifiable Research", price: "100000" },
+    ma2: { serviceId: "mock-copy", name: "Landing Page Copy", price: "100000" },
+    ma3: { serviceId: "mock-image", name: "OG Image", price: "500000" },
+  };
+  const reqSchema = JSON.stringify([{ name: "brief", type: "string", required: true, description: "", stringSubtype: "plain" }]);
+  const agentRecord = (id: string) => {
+    const cat = agentsCatalog.agents.find((a) => a.agentId === id);
+    const s = svc[id];
+    return { agent: { ...cat, services: s ? [{ ...s, requirementType: "schema", requirementSchema: reqSchema, requirementText: "", deliverableType: "text" }] : [] } };
+  };
   return (async (url: string, init?: RequestInit) => {
     if (init?.method === "POST") return new Response(JSON.stringify({ result: "0x00000000000000000000000000000000000000000000000000000000004c4b40" }), { status: 200 }); // 5 USDC
     const u = String(url);
-    if (u.includes("/public/search")) return new Response(JSON.stringify(candidates), { status: 200 });
-    const agentKey = Object.keys(agents).find((k) => u.includes(k));
-    if (agentKey) return new Response(JSON.stringify(agents[agentKey]), { status: 200 });
+    const m = u.match(/\/public\/agents\/([^/?]+)/);
+    if (m) return new Response(JSON.stringify(agentRecord(m[1])), { status: 200 });
+    if (u.includes("/public/agents")) return new Response(JSON.stringify(agentsCatalog), { status: 200 });
+    if (u.includes("/public/services")) return new Response(JSON.stringify(u.includes("page=1") ? services : { items: [], total: "3" }), { status: 200 });
     return new Response("not found", { status: 404 });
   }) as unknown as FetchFn;
 }

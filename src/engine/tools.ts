@@ -9,7 +9,7 @@ import { Type } from "@earendil-works/pi-ai";
 import type { AgentTool, AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { RunContext } from "./context.js";
 import type { LegKind, ServiceCandidate } from "../types.js";
-import { searchServices, resolveCandidate, rankCandidates } from "../cap/discovery.js";
+import { listServices, listAgents, resolveCandidate, discoverForLeg } from "../cap/discovery.js";
 import { hireSpecialist } from "../cap/hire.js";
 import { assertFunded } from "../cap/wallet.js";
 import { reviewDeliverable } from "./qa.js";
@@ -30,19 +30,29 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
     }),
     execute: async (_id, params: any) => {
       const leg = params.leg as LegKind;
-      ctx.worklog.emit({ kind: "leg_search", at: Date.now(), leg, message: `searching: ${params.query}` });
-      const hits = await searchServices(ctx.config.apiUrl, params.query, ctx.fetchImpl);
-      const resolved: ServiceCandidate[] = [];
-      for (const h of hits.slice(0, 5)) {
+      const query = String(params.query ?? "");
+      ctx.worklog.emit({ kind: "leg_search", at: Date.now(), leg, message: `searching: ${query}` });
+      // Fetch the marketplace catalog once per run, then reuse across legs/searches.
+      if (!ctx.catalog || !ctx.agentsById) {
+        ctx.catalog = await listServices(ctx.config.apiUrl, ctx.fetchImpl);
+        const agents = await listAgents(ctx.config.apiUrl, ctx.fetchImpl);
+        ctx.agentsById = new Map(agents.map((a) => [a.agentId, a]));
+      }
+      const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
+        preferredServiceId: ctx.config.preferredServiceIds[leg],
+        limit: 5,
+      });
+      // Resolve the top listings into full candidates (reads requirementSchema from the agent record).
+      const ranked: ServiceCandidate[] = [];
+      for (const h of top) {
         try {
           const c = await resolveCandidate(ctx.config.apiUrl, h.serviceId, h.agentId, ctx.fetchImpl);
           ctx.candidates.set(c.serviceId, c);
-          resolved.push(c);
+          ranked.push(c);
         } catch (e) {
           ctx.worklog.emit({ kind: "error", at: Date.now(), leg, message: `could not resolve ${h.serviceId}: ${(e as Error).message}` });
         }
       }
-      const ranked = rankCandidates(resolved, { preferredServiceId: ctx.config.preferredServiceIds[leg] });
       for (const c of ranked) {
         ctx.worklog.emit({ kind: "leg_candidate", at: Date.now(), leg, message: `${c.agentName} (${c.serviceId}) $${usd(c.priceBaseUnits)} rate ${(c.completionRate * 100).toFixed(1)}%` });
       }

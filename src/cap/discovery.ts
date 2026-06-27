@@ -1,37 +1,66 @@
 /**
  * CAP marketplace discovery against the public REST surface (no auth):
- *   {apiUrl}/backend/v1/public/{search?q= | agents/{id}}
- * The SDK has no marketplace search, so this is a thin fetch client. Input
- * schemas live on the AGENT record (findings #2), not on services, so a full
- * candidate is a service merged with its agent's reputation + requirementSchema.
+ *   {apiUrl}/backend/v1/public/{services | agents | agents/{id}}
+ *
+ * Discovery is CATALOG-driven, not keyword-search-driven. The live `/search?q=`
+ * endpoint is brittle (single-keyword, returns `{agents:[…]}` of agents — not
+ * services — and misses whole categories: `image`→0, `copy`→0). Instead we page
+ * the full service catalog (`/services` → `{items:[…]}`) and the agent catalog
+ * (`/agents` → `{agents:[…]}`, carrying reputation), then rank client-side by
+ * leg-relevance × reputation × price. Per-service input schemas live on the
+ * AGENT record (`/agents/{id}` → `{agent:{services:[…]}}`, Phase-0 finding #2),
+ * where `requirementSchema` is a JSON-encoded STRING that must be parsed.
+ *
+ * Live-shape facts this module encodes (confirmed 2026-06-28):
+ *   - search/agent payloads are object-wrapped (`{agents}`, `{items}`, `{agent}`)
+ *   - `completionRate` is a percent (0–100), not a 0–1 fraction
+ *   - service title field is `name` (not `title`); `price` is a base-unit string
+ *   - `completedOrders` / `orders7d` / `total` are strings
+ *   - `requirementSchema` / `deliverableSchema` are JSON-encoded strings
  */
 import type { FetchFn } from "./wallet.js";
-import type { ServiceCandidate, RequirementField } from "../types.js";
+import type { ServiceCandidate, RequirementField, LegKind } from "../types.js";
 
-export interface ServiceHit {
+/** One service from the `/services` catalog (no reputation, no schema). */
+export interface ServiceListing {
   serviceId: string;
   agentId: string;
-  agentName: string;
-  title: string;
-  priceBaseUnits: string;
+  name: string;            // service title (live field is `name`)
+  description?: string;
+  priceBaseUnits: string;  // USDC base units, decimal string
   orders7d?: number;
+}
+
+export interface AgentService {
+  serviceId: string;
+  title: string;
+  price: string;
+  requirementType: string;            // "schema" | "text"
+  requirementSchema: RequirementField[];
+  requirementText?: string;
 }
 
 export interface AgentRecord {
   agentId: string;
   name: string;
+  description?: string;
   completedOrders: number;
-  completionRate: number;
+  completionRate: number;             // normalized to 0..1
   avgDeliveryText?: string;
   onlineStatus?: string;
-  services: Array<{
-    serviceId: string;
-    title: string;
-    price: string;
-    requirementType: string;
-    requirementSchema?: RequirementField[];
-    requirementText?: string;
-  }>;
+  skillTagSlugs: string[];
+  services: AgentService[];
+}
+
+/** A catalog listing fused with its agent's reputation + a leg-relevance score. */
+export interface RankedListing extends ServiceListing {
+  agentName: string;
+  completedOrders: number;
+  completionRate: number;
+  onlineStatus?: string;
+  skillTagSlugs: string[];
+  relevance: number;
+  repScore: number;
 }
 
 const base = (apiUrl: string) => `${apiUrl.replace(/\/$/, "")}/backend/v1/public`;
@@ -42,31 +71,130 @@ async function getJson<T>(url: string, fetchImpl: FetchFn): Promise<T> {
   return (await res.json()) as T;
 }
 
-export async function searchServices(apiUrl: string, query: string, fetchImpl: FetchFn = fetch): Promise<ServiceHit[]> {
-  const raw = await getJson<any[]>(`${base(apiUrl)}/search?q=${encodeURIComponent(query)}`, fetchImpl);
-  return (Array.isArray(raw) ? raw : []).map((s) => ({
-    serviceId: String(s.serviceId ?? s.id),
-    agentId: String(s.agentId),
-    agentName: String(s.agentName ?? s.name ?? ""),
-    title: String(s.title ?? ""),
-    priceBaseUnits: String(s.price ?? s.priceBaseUnits ?? "0"),
-    orders7d: typeof s.orders7d === "number" ? s.orders7d : undefined,
-  }));
+/** Percent (0–100) → fraction (0–1). Already-fractional values pass through. */
+export function normalizeRate(raw: unknown): number {
+  const n = Number(raw);
+  if (!Number.isFinite(n) || n <= 0) return 0;
+  return n > 1 ? n / 100 : n;
 }
 
-export async function getAgent(apiUrl: string, agentId: string, fetchImpl: FetchFn = fetch): Promise<AgentRecord> {
-  const a = await getJson<any>(`${base(apiUrl)}/agents/${encodeURIComponent(agentId)}`, fetchImpl);
+const numOrUndef = (v: unknown): number | undefined => {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : undefined;
+};
+
+/** `requirementSchema` arrives as a JSON-encoded string (or array). Parse defensively. */
+export function parseRequirementSchema(raw: unknown): RequirementField[] {
+  let arr: unknown = raw;
+  if (typeof raw === "string") {
+    if (!raw.trim()) return [];
+    try { arr = JSON.parse(raw); } catch { return []; }
+  }
+  if (!Array.isArray(arr)) return [];
+  return arr
+    .filter((f): f is Record<string, unknown> => !!f && typeof f === "object")
+    .map((f) => ({ name: String(f.name ?? ""), type: String(f.type ?? "string"), required: Boolean(f.required) }))
+    .filter((f) => f.name);
+}
+
+function mapAgentService(s: Record<string, any>): AgentService {
   return {
-    agentId: String(a.agentId ?? agentId),
-    name: String(a.name ?? a.agentName ?? ""),
-    completedOrders: Number(a.completedOrders ?? 0),
-    completionRate: Number(a.completionRate ?? 0),
-    avgDeliveryText: a.avgDeliveryText ? String(a.avgDeliveryText) : undefined,
-    onlineStatus: a.onlineStatus ? String(a.onlineStatus) : undefined,
-    services: Array.isArray(a.services) ? a.services : [],
+    serviceId: String(s.serviceId ?? s.id ?? ""),
+    title: String(s.name ?? s.title ?? ""),
+    price: String(s.price ?? s.priceBaseUnits ?? "0"),
+    requirementType: String(s.requirementType ?? (s.requirementSchema ? "schema" : "text")),
+    requirementSchema: parseRequirementSchema(s.requirementSchema),
+    requirementText: s.requirementText ? String(s.requirementText) : undefined,
   };
 }
 
+/** Page the public service catalog (`{items:[…], total}`); caps at pageSize=50 server-side. */
+export async function listServices(
+  apiUrl: string,
+  fetchImpl: FetchFn = fetch,
+  opts: { pageSize?: number; maxPages?: number } = {},
+): Promise<ServiceListing[]> {
+  const pageSize = opts.pageSize ?? 50;
+  const maxPages = opts.maxPages ?? 10;
+  const out: ServiceListing[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= maxPages; page++) {
+    const d = await getJson<any>(`${base(apiUrl)}/services?page=${page}&pageSize=${pageSize}`, fetchImpl);
+    const items: any[] = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
+    if (items.length === 0) break;
+    for (const s of items) {
+      const id = String(s.serviceId ?? s.id ?? "");
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        serviceId: id,
+        agentId: String(s.agentId ?? ""),
+        name: String(s.name ?? s.title ?? ""),
+        description: s.description ? String(s.description) : undefined,
+        priceBaseUnits: String(s.price ?? s.priceBaseUnits ?? "0"),
+        orders7d: numOrUndef(s.orders7d),
+      });
+    }
+    const total = Number(d?.total ?? 0);
+    if ((total && out.length >= total) || items.length < pageSize) break;
+  }
+  return out;
+}
+
+/** Page the public agent catalog (`{agents:[…], total}`) for reputation signal. */
+export async function listAgents(
+  apiUrl: string,
+  fetchImpl: FetchFn = fetch,
+  opts: { pageSize?: number; maxPages?: number } = {},
+): Promise<AgentRecord[]> {
+  const pageSize = opts.pageSize ?? 50;
+  const maxPages = opts.maxPages ?? 10;
+  const out: AgentRecord[] = [];
+  const seen = new Set<string>();
+  for (let page = 1; page <= maxPages; page++) {
+    const d = await getJson<any>(`${base(apiUrl)}/agents?page=${page}&pageSize=${pageSize}`, fetchImpl);
+    const items: any[] = Array.isArray(d?.agents) ? d.agents : Array.isArray(d) ? d : [];
+    if (items.length === 0) break;
+    for (const a of items) {
+      const id = String(a.agentId ?? "");
+      if (!id || seen.has(id)) continue;
+      seen.add(id);
+      out.push({
+        agentId: id,
+        name: String(a.name ?? a.agentName ?? ""),
+        description: a.description ? String(a.description) : undefined,
+        completedOrders: Number(a.completedOrders ?? 0) || 0,
+        completionRate: normalizeRate(a.completionRate),
+        avgDeliveryText: a.avgDeliveryText ? String(a.avgDeliveryText) : undefined,
+        onlineStatus: a.onlineStatus ? String(a.onlineStatus) : undefined,
+        skillTagSlugs: Array.isArray(a.skillTagSlugs) ? a.skillTagSlugs.map(String) : [],
+        services: Array.isArray(a.services) ? a.services.map(mapAgentService) : [],
+      });
+    }
+    const total = Number(d?.total ?? 0);
+    if ((total && out.length >= total) || items.length < pageSize) break;
+  }
+  return out;
+}
+
+/** Fetch one agent record (`{agent:{…}}`), unwrapped + normalized, with parsed service schemas. */
+export async function getAgent(apiUrl: string, agentId: string, fetchImpl: FetchFn = fetch): Promise<AgentRecord> {
+  const raw = await getJson<any>(`${base(apiUrl)}/agents/${encodeURIComponent(agentId)}`, fetchImpl);
+  const a = (raw && typeof raw === "object" && raw.agent) ? raw.agent : raw;
+  return {
+    agentId: String(a.agentId ?? agentId),
+    name: String(a.name ?? a.agentName ?? ""),
+    description: a.description ? String(a.description) : undefined,
+    completedOrders: Number(a.completedOrders ?? 0) || 0,
+    completionRate: normalizeRate(a.completionRate),
+    avgDeliveryText: a.avgDeliveryText ? String(a.avgDeliveryText) : undefined,
+    onlineStatus: a.onlineStatus ? String(a.onlineStatus) : undefined,
+    skillTagSlugs: Array.isArray(a.skillTagSlugs) ? a.skillTagSlugs.map(String) : [],
+    services: Array.isArray(a.services) ? a.services.map(mapAgentService) : [],
+  };
+}
+
+/** Resolve a (serviceId, agentId) into a full candidate by reading the agent record. */
 export async function resolveCandidate(
   apiUrl: string,
   serviceId: string,
@@ -83,7 +211,7 @@ export async function resolveCandidate(
     title: svc.title,
     priceBaseUnits: String(svc.price ?? "0"),
     requirementType: svc.requirementType,
-    requirementSchema: Array.isArray(svc.requirementSchema) ? svc.requirementSchema : [],
+    requirementSchema: svc.requirementSchema,
     requirementText: svc.requirementText,
     completedOrders: agent.completedOrders,
     completionRate: agent.completionRate,
@@ -92,23 +220,64 @@ export async function resolveCandidate(
   };
 }
 
-/** Reputation-weighted ranking: pinned preferred first, then proven, then cheapest. */
-export function rankCandidates(
-  candidates: ServiceCandidate[],
-  opts: { preferredServiceId?: string } = {},
-): ServiceCandidate[] {
-  const score = (c: ServiceCandidate) => c.completionRate * Math.log10(c.completedOrders + 1);
-  const priceOf = (c: ServiceCandidate) => {
-    const n = Number(c.priceBaseUnits);
-    return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY; // unparseable prices rank last
-  };
-  return [...candidates].sort((a, b) => {
+/** Keywords that mark a service as relevant to a launch-kit leg. */
+const LEG_KEYWORDS: Record<LegKind, string[]> = {
+  research: ["research", "intelligence", "analy", "audit", "insight", "report", "competit", "market", "data", "due dilig", "trend", "dossier", "diligence"],
+  landing_copy: ["copy", "content", "writ", "landing", "blog", "article", "caption", "marketing", "seo", "narrative", "tweet", "post", "kol", "headline", "page", "text"],
+  og_image: ["image", "logo", " art", "design", "graphic", "visual", "picture", "banner", "thumbnail", "photo", "meme", "avatar", "render", "illustrat", "icon", "poster", "img"],
+};
+
+/** Leg-relevance: leg keywords weigh 2, distinctive query words weigh 1. */
+export function legRelevance(haystack: string, leg: LegKind, query: string): number {
+  const hay = ` ${haystack.toLowerCase()} `;
+  let score = 0;
+  for (const k of LEG_KEYWORDS[leg]) if (hay.includes(k)) score += 2;
+  for (const w of query.toLowerCase().split(/[^a-z0-9]+/)) if (w.length > 3 && hay.includes(w)) score += 1;
+  return score;
+}
+
+const priceOf = (p: string): number => {
+  const n = Number(p);
+  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY; // unparseable prices rank last
+};
+
+/**
+ * Rank catalog services for a leg: fuse each listing with its agent's reputation,
+ * score leg-relevance, and order by preferred → relevance → reputation → price.
+ * Only returns services that match the leg at all (or the pinned preferred one).
+ */
+export function discoverForLeg(
+  services: ServiceListing[],
+  agentsById: Map<string, AgentRecord>,
+  leg: LegKind,
+  query: string,
+  opts: { preferredServiceId?: string; limit?: number } = {},
+): RankedListing[] {
+  const ranked: RankedListing[] = services.map((s) => {
+    const a = agentsById.get(s.agentId);
+    const hay = `${s.name} ${s.description ?? ""} ${(a?.skillTagSlugs ?? []).join(" ")}`;
+    const completionRate = a?.completionRate ?? 0;
+    const completedOrders = a?.completedOrders ?? 0;
+    return {
+      ...s,
+      agentName: a?.name ?? "",
+      completedOrders,
+      completionRate,
+      onlineStatus: a?.onlineStatus,
+      skillTagSlugs: a?.skillTagSlugs ?? [],
+      relevance: legRelevance(hay, leg, query),
+      repScore: completionRate * Math.log10(completedOrders + 1),
+    };
+  });
+  const matches = ranked.filter((r) => r.relevance > 0 || r.serviceId === opts.preferredServiceId);
+  matches.sort((a, b) => {
     if (opts.preferredServiceId) {
       if (a.serviceId === opts.preferredServiceId) return -1;
       if (b.serviceId === opts.preferredServiceId) return 1;
     }
-    const s = score(b) - score(a);
-    if (s !== 0) return s;
-    return priceOf(a) - priceOf(b);
+    if (b.relevance !== a.relevance) return b.relevance - a.relevance;
+    if (b.repScore !== a.repScore) return b.repScore - a.repScore;
+    return priceOf(a.priceBaseUnits) - priceOf(b.priceBaseUnits);
   });
+  return opts.limit ? matches.slice(0, opts.limit) : matches;
 }
