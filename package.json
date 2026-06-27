@@ -24,6 +24,7 @@
   },
   "dependencies": {
     "@croo-network/sdk": "^0.2.1",
+    "@earendil-works/pi-agent-core": "0.80.2",
     "@earendil-works/pi-ai": "^0.80.2",
     "dotenv": "^17.4.2",
     "zod": "^4.4.3"
