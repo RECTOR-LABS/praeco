@@ -29,8 +29,9 @@ export async function reviewDeliverable(
     `- features: ${brief.features.join(", ")}\n- pitch: ${brief.oneLiner}\n\n` +
     `LEG BEING REVIEWED: ${leg}\n\n` +
     `DELIVERABLE CONTENT:\n${content || "(empty)"}\n\n` +
-    `Judge whether this deliverable is on-brief, high quality, and usable as-is.\n` +
+    `Judge whether this deliverable is on-brief, high quality, and usable as-is for this leg.\n` +
+    `Do NOT penalise content-type/format: an og_image deliverable provided as a URL or image description is fine — judge its quality and relevance, not its file type.\n` +
     `Respond with JSON: {"action":"accept"|"redo"|"swap","reason":string,"score":0-100}.\n` +
-    `Use "accept" if usable, "redo" if the same provider should retry, "swap" if a different provider is needed.`;
+    `Use "accept" if the deliverable is on-brief and high quality, "redo" if the same provider should retry for better quality, "swap" if a different provider is needed (e.g. wrong type of content for this leg).`;
   return llm.completeJson(prompt, qaVerdictSchema);
 }

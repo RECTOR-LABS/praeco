@@ -12,7 +12,7 @@ import type { Llm } from "../llm/llm.js";
 import type { CapBuyer, HirePollOpts } from "../cap/hire.js";
 import type { FetchFn } from "../cap/wallet.js";
 import type { RunContext } from "./context.js";
-import type { RunRecord, RunStatus, LaunchAsset, LaunchKit } from "../types.js";
+import type { RunRecord, RunStatus, LaunchAsset, LaunchKit, WorklogEvent } from "../types.js";
 import { type IntakeInput, buildBrief } from "./intake.js";
 import { BudgetGuard } from "./budget.js";
 import { Worklog, attachAgentWorklog } from "./worklog.js";
@@ -48,6 +48,7 @@ export interface RunDeps {
   now?: () => number;
   runId?: string;
   drive?: EngineDriver;
+  onEvent?: (e: WorklogEvent) => void;
 }
 
 export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<RunRecord> {
@@ -55,6 +56,7 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
   const startedAt = now();
   const runId = deps.runId ?? `run-${startedAt}`;
   const worklog = new Worklog();
+  if (deps.onEvent) worklog.subscribe(deps.onEvent);
   worklog.emitKind("run_started", `run ${runId} started`);
 
   const brief = await buildBrief(deps.llm, input, deps.fetchImpl);
