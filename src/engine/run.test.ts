@@ -97,4 +97,29 @@ describe("runLaunchJob", () => {
     expect(rec.kit).toBeUndefined();
     expect(rec.worklog.some((e) => e.kind === "error")).toBe(true);
   });
+
+  it("compose failure resolves with RunRecord (assets present, kit undefined, error event)", async () => {
+    // LLM returns valid intake + QA verdicts, but throws on the compose prompt.
+    // runLaunchJob must resolve (not reject) and preserve the RunRecord.
+    const boomOnCompose: Llm = {
+      completeText: async () => "",
+      completeJson: (async (prompt: string) => {
+        if (prompt.includes("intake analyst")) return { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits." };
+        if (prompt.includes("art director")) return { action: "accept", reason: "on-brief", score: 88 };
+        if (prompt.includes("composer")) throw new Error("schema validation failed");
+        throw new Error("unexpected prompt: " + prompt.slice(0, 50));
+      }) as Llm["completeJson"],
+    };
+    const rec = await runLaunchJob(
+      { text: "Streaky habit tracker" },
+      { ...baseDeps(), llm: boomOnCompose, drive: scriptedDriver },
+    );
+    // All 3 legs paid + delivered — status is completed.
+    expect(rec.status).toBe("completed");
+    expect(rec.assets).toHaveLength(3);
+    // kit is undefined because compose threw.
+    expect(rec.kit).toBeUndefined();
+    // The error event must be present with the compose failure message.
+    expect(rec.worklog.some((e) => e.kind === "error" && e.message.includes("compose failed"))).toBe(true);
+  });
 });

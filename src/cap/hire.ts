@@ -23,6 +23,9 @@ export interface HireParams {
   requirements: Record<string, unknown>;
   priceCapBaseUnits: bigint;
   assertPayable?: (priceBaseUnits: bigint) => Promise<void>;
+  /** Called immediately after payOrder settles, before the delivery poll.
+   *  Fires even if delivery subsequently times out, so spend is always recorded. */
+  onPaid?: (priceBaseUnits: bigint, orderId: string) => void;
 }
 
 export interface HirePollOpts {
@@ -104,6 +107,9 @@ export async function hireSpecialist(
   // 4. Pay (LIVE USDC settlement on Base) — exactly once.
   const pay = await client.payOrder(order.orderId);
   emit("hire_paid", `paid ${p.agentName} — ${basescan(pay.txHash)}`, { orderId: order.orderId, payTxHash: pay.txHash });
+  // Record spend immediately after payment settles — before the delivery poll so a
+  // delivery-timeout throw cannot escape the accounting.
+  p.onPaid?.(priceBaseUnits, order.orderId);
 
   // 5. Poll for delivery.
   for (let i = 0; i < delPolls; i++) {

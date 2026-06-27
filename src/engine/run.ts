@@ -109,7 +109,14 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
   let kit: LaunchKit | undefined;
   if (assets.length > 0) {
     worklog.emitKind("compose_started", "composing the launch kit");
-    kit = await composeKit(deps.llm, brief, assets);
+    try {
+      kit = await composeKit(deps.llm, brief, assets);
+    } catch (e) {
+      // composeKit can throw after legs were already paid (e.g. LLM schema failure).
+      // Emit the error but let RunRecord assembly continue — status reflects the
+      // asset count, not whether compose succeeded (graceful degradation, SPEC §10).
+      worklog.emitKind("error", `compose failed: ${(e as Error).message}`);
+    }
   }
 
   const endedAt = now();

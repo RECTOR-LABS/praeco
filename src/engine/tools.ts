@@ -87,12 +87,20 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       };
       const result = await hireSpecialist(
         ctx.client,
-        { leg, serviceId: c.serviceId, agentId: c.agentId, agentName: c.agentName, requirements: params.requirements as Record<string, unknown>, priceCapBaseUnits: ctx.budget.legCap(), assertPayable },
+        {
+          leg, serviceId: c.serviceId, agentId: c.agentId, agentName: c.agentName,
+          requirements: params.requirements as Record<string, unknown>,
+          priceCapBaseUnits: ctx.budget.legCap(),
+          assertPayable,
+          // Commit spend at pay-time so a delivery timeout cannot lose the accounting.
+          // assertPayable already confirmed canAfford, so commit() cannot throw here.
+          onPaid: (price, orderId) => { ctx.budget.commit(price); ctx.paidOrderIds.add(orderId); },
+        },
         (e) => ctx.worklog.emit(e),
         ctx.hirePollOpts,
       );
-      ctx.budget.commit(BigInt(result.priceBaseUnits));
-      ctx.paidOrderIds.add(result.orderId);
+      // pendingHires only populated on successful delivery — correct that a
+      // failed-delivery hire has no pending entry to QA.
       ctx.pendingHires.set(result.orderId, result);
       const preview = deliverableToText(result.deliverable).slice(0, 500);
       return text(`Hired ${c.agentName} for ${leg}. orderId=${result.orderId}. Deliverable preview:\n${preview}\n\nNext: qa_review this orderId.`, { orderId: result.orderId });

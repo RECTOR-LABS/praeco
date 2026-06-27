@@ -86,6 +86,21 @@ describe("hire_specialist tool", () => {
     ).rejects.toThrow(/exceeds remaining run budget/i);
     expect(client.payOrder).not.toHaveBeenCalled();
   });
+
+  it("delivery timeout: budget is committed (onPaid fired) even though the tool execute rejects", async () => {
+    const client = happyClient();
+    // getOrder never signals delivery — simulates a stalled provider after payment.
+    client.getOrder = vi.fn(async () => ({ status: "pending" }));
+    const ctx = ctxFor(client, fakeLlm({}));
+    await expect(
+      toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } }),
+    ).rejects.toThrow(/did not deliver/);
+    // onPaid fired via the callback — spend is recorded in the ledger.
+    expect(ctx.budget.spent).toBe(100_000n);
+    expect(ctx.paidOrderIds.has("o1")).toBe(true);
+    // pendingHires must NOT have an entry since delivery never completed.
+    expect(ctx.pendingHires.has("o1")).toBe(false);
+  });
 });
 
 describe("qa_review + submit_asset tools", () => {

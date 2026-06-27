@@ -82,4 +82,19 @@ describe("hireSpecialist (guards)", () => {
     await hireSpecialist(client, base, () => {}, fast);
     expect(client.listOrders).toHaveBeenCalledWith(expect.objectContaining({ pageSize: 100 }));
   });
+
+  it("calls onPaid once at pay-time even when delivery times out, then throws", async () => {
+    const client = happyClient();
+    // getOrder never returns a deliverTxHash or completed status — simulates a stalled delivery.
+    client.getOrder = vi.fn(async () => ({ status: "pending" }));
+    const onPaid = vi.fn();
+    await expect(
+      hireSpecialist(client, { ...base, onPaid }, () => {}, fast),
+    ).rejects.toThrow(/did not deliver/);
+    // Payment was made — onPaid must have fired exactly once with the price and orderId.
+    expect(onPaid).toHaveBeenCalledOnce();
+    expect(onPaid).toHaveBeenCalledWith(100_000n, "o1");
+    // payOrder was called exactly once (single-pay invariant preserved).
+    expect(client.payOrder).toHaveBeenCalledOnce();
+  });
 });
