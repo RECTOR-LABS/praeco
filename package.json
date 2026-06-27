@@ -1,0 +1,31 @@
+{
+  "name": "praeco",
+  "version": "0.0.0",
+  "private": true,
+  "type": "module",
+  "description": "A general contractor for product launches — a pure-composer agent on the CROO Agent Protocol (CAP).",
+  "license": "MIT",
+  "engines": {
+    "node": ">=22.19.0"
+  },
+  "scripts": {
+    "test": "vitest",
+    "test:run": "vitest run",
+    "typecheck": "tsc --noEmit",
+    "smoke:llm": "tsx scripts/llm-smoke.ts",
+    "smoke:cap": "tsx scripts/cap-connect.ts",
+    "smoke:hire": "tsx scripts/cap-hire.ts"
+  },
+  "devDependencies": {
+    "@types/node": "^26.0.1",
+    "tsx": "^4.22.4",
+    "typescript": "^6.0.3",
+    "vitest": "^4.1.9"
+  },
+  "dependencies": {
+    "@croo-network/sdk": "^0.2.1",
+    "@earendil-works/pi-ai": "^0.80.2",
+    "dotenv": "^17.4.2",
+    "zod": "^4.4.3"
+  }
+}
