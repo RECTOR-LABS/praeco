@@ -15,7 +15,7 @@ function happyClient(): CapBuyer {
     negotiateOrder: vi.fn(async () => ({ negotiationId: "n1" })),
     getNegotiation: vi.fn(async () => ({ status: "pending" })),
     listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
-    getOrder: vi.fn(async () => ({ status: "completed", deliverTxHash: "0xd" })),
+    getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xd" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
     getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "research findings", contentHash: "0xh" })),
   };
@@ -148,8 +148,8 @@ describe("hire_specialist tool", () => {
 
   it("delivery timeout: budget is committed (onPaid fired) even though the tool execute rejects", async () => {
     const client = happyClient();
-    // getOrder never signals delivery — simulates a stalled provider after payment.
-    client.getOrder = vi.fn(async () => ({ status: "pending" }));
+    // Order finalizes (payable) but the provider never delivers — simulates a stall after payment.
+    client.getOrder = vi.fn(async () => ({ status: "created", price: "100000" }));
     const ctx = ctxFor(client, fakeLlm({}));
     await expect(
       toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } }),

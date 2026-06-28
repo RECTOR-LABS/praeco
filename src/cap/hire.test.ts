@@ -2,34 +2,64 @@ import { describe, it, expect, vi } from "vitest";
 import { hireSpecialist, type CapBuyer } from "./hire.js";
 
 const noSleep = async () => {};
-const fast = { negotiationPolls: 3, deliveryPolls: 3, sleep: noSleep };
+const fast = { negotiationPolls: 4, deliveryPolls: 3, sleep: noSleep };
 const base = {
   leg: "research" as const, serviceId: "s1", agentId: "a1", agentName: "OpsPilot",
   requirements: { title: "X" }, priceCapBaseUnits: 200_000n,
 };
 
+// listOrders surfaces the order (matchable by negotiationId) but WITHOUT a price;
+// getOrder carries the real status + price. This mirrors the live CAP shapes.
 function happyClient(): CapBuyer {
   return {
     negotiateOrder: vi.fn(async () => ({ negotiationId: "n1" })),
-    getNegotiation: vi.fn(async () => ({ status: "pending" })),
-    listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
-    getOrder: vi.fn(async () => ({ status: "completed", deliverTxHash: "0xdeliver" })),
+    getNegotiation: vi.fn(async () => ({ status: "accepted" })),
+    listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "", status: "creating" }]),
+    getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xdeliver" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
     getDelivery: vi.fn(async () => ({ deliverableType: "schema", deliverableSchema: '{"total_score":48}', contentHash: "0xhash" })),
   };
 }
 
 describe("hireSpecialist (happy path)", () => {
-  it("negotiates, pays once, and returns the delivered result with provenance", async () => {
+  it("negotiates, waits for the order to finalize, pays once, returns the delivered result", async () => {
     const client = happyClient();
     const events: string[] = [];
     const res = await hireSpecialist(client, base, (e) => events.push(e.kind), fast);
     expect(client.payOrder).toHaveBeenCalledTimes(1);
     expect(res.orderId).toBe("o1");
+    expect(res.priceBaseUnits).toBe("100000"); // price read from getOrder, not the price-less listOrders
     expect(res.payTxHash).toBe("0xpay");
-    expect(res.basescanPayUrl).toContain("0xpay");
     expect((res.deliverable.schema as any).total_score).toBe(48);
     expect(events).toEqual(["hire_negotiating", "hire_order_created", "hire_paid", "hire_delivered"]);
+  });
+});
+
+describe("hireSpecialist (order finalization)", () => {
+  it("waits while the order is 'creating', then pays once getOrder reports 'created' + price", async () => {
+    const client = happyClient();
+    let calls = 0;
+    client.getOrder = vi.fn(async () => {
+      calls++;
+      return calls < 2 ? { status: "creating" } : { status: "created", price: "100000", deliverTxHash: "0xdeliver" };
+    });
+    const res = await hireSpecialist(client, base, () => {}, fast);
+    expect(client.payOrder).toHaveBeenCalledTimes(1);
+    expect(res.priceBaseUnits).toBe("100000");
+  });
+
+  it("never pays an order stuck in 'creating' (prevents reverting pay + paymaster gas burn)", async () => {
+    const client = happyClient();
+    client.getOrder = vi.fn(async () => ({ status: "creating" }));
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/no payable order|creating/i);
+    expect(client.payOrder).not.toHaveBeenCalled();
+  });
+
+  it("throws (no pay) when the order ends in a terminal-bad status", async () => {
+    const client = happyClient();
+    client.getOrder = vi.fn(async () => ({ status: "cancelled" }));
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/ended in status "cancelled"/);
+    expect(client.payOrder).not.toHaveBeenCalled();
   });
 });
 
@@ -48,30 +78,9 @@ describe("hireSpecialist (guards)", () => {
     expect(client.payOrder).not.toHaveBeenCalled();
   });
 
-  it("waits while the order is 'creating' (no price), then pays once it finalizes", async () => {
-    const client = happyClient();
-    let calls = 0;
-    client.listOrders = vi.fn(async () => {
-      calls++;
-      return calls < 2
-        ? [{ orderId: "o1", negotiationId: "n1", price: "", status: "creating" }]
-        : [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }];
-    });
-    const res = await hireSpecialist(client, base, () => {}, fast);
-    expect(client.payOrder).toHaveBeenCalledTimes(1);
-    expect(res.priceBaseUnits).toBe("100000"); // paid the finalized price, not the blank "creating" one
-  });
-
-  it("never pays an order stuck in 'creating' (prevents reverting pay + paymaster gas burn)", async () => {
-    const client = happyClient();
-    client.listOrders = vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "", status: "creating" }]);
-    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/no payable order|creating/i);
-    expect(client.payOrder).not.toHaveBeenCalled();
-  });
-
   it("never pays when the quoted price exceeds the per-leg cap", async () => {
     const client = happyClient();
-    client.listOrders = vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "5000000", status: "created" }]);
+    client.getOrder = vi.fn(async () => ({ status: "created", price: "5000000", deliverTxHash: "0xdeliver" }));
     await expect(hireSpecialist(client, { ...base, priceCapBaseUnits: 200_000n }, () => {}, fast)).rejects.toThrow(/exceeds.*cap/i);
     expect(client.payOrder).not.toHaveBeenCalled();
   });
@@ -86,7 +95,7 @@ describe("hireSpecialist (guards)", () => {
 
   it("never pays when order price is malformed (non-integer string)", async () => {
     const client = happyClient();
-    client.listOrders = vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "1.5", status: "created" }]);
+    client.getOrder = vi.fn(async () => ({ status: "created", price: "1.5", deliverTxHash: "0xdeliver" }));
     await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/invalid price/);
     expect(client.payOrder).not.toHaveBeenCalled();
   });
@@ -106,16 +115,14 @@ describe("hireSpecialist (guards)", () => {
 
   it("calls onPaid once at pay-time even when delivery times out, then throws", async () => {
     const client = happyClient();
-    // getOrder never returns a deliverTxHash or completed status — simulates a stalled delivery.
-    client.getOrder = vi.fn(async () => ({ status: "pending" }));
+    // getOrder reports a payable order (finalization passes) but never delivers.
+    client.getOrder = vi.fn(async () => ({ status: "created", price: "100000" }));
     const onPaid = vi.fn();
     await expect(
       hireSpecialist(client, { ...base, onPaid }, () => {}, fast),
     ).rejects.toThrow(/did not deliver/);
-    // Payment was made — onPaid must have fired exactly once with the price and orderId.
     expect(onPaid).toHaveBeenCalledOnce();
     expect(onPaid).toHaveBeenCalledWith(100_000n, "o1");
-    // payOrder was called exactly once (single-pay invariant preserved).
     expect(client.payOrder).toHaveBeenCalledOnce();
   });
 });

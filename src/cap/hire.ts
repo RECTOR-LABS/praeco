@@ -10,7 +10,7 @@ export interface CapBuyer {
   negotiateOrder(req: { serviceId: string; requirements?: string }): Promise<{ negotiationId: string }>;
   getNegotiation(id: string): Promise<{ status: string; rejectReason?: string }>;
   listOrders(opts: { role: string; page: number; pageSize: number }): Promise<Array<{ orderId: string; negotiationId: string; price: string; status: string }>>;
-  getOrder(id: string): Promise<{ status: string; deliverTxHash?: string }>;
+  getOrder(id: string): Promise<{ status: string; deliverTxHash?: string; price?: string }>;
   payOrder(id: string): Promise<{ txHash: string }>;
   getDelivery(id: string): Promise<{ deliverableType: string; deliverableText?: string; deliverableSchema?: string; contentHash: string }>;
 }
@@ -65,7 +65,7 @@ export async function hireSpecialist(
   opts: HirePollOpts = {},
 ): Promise<HireResult> {
   const sleep = opts.sleep ?? defaultSleep;
-  const negPolls = opts.negotiationPolls ?? 40;
+  const negPolls = opts.negotiationPolls ?? 60; // ~90s: tolerate slow "creating"->"created" finalization
   const negDelay = opts.negotiationDelayMs ?? 1500;
   const delPolls = opts.deliveryPolls ?? 60;
   const delDelay = opts.deliveryDelayMs ?? 3000;
@@ -76,8 +76,18 @@ export async function hireSpecialist(
   const neg = await client.negotiateOrder({ serviceId: p.serviceId, requirements: JSON.stringify(p.requirements) });
   emit("hire_negotiating", `negotiating ${p.agentName} (${p.serviceId})`, { negotiationId: neg.negotiationId });
 
-  // 2. Poll until the provider accepts (order created) or rejects.
-  let order: { orderId: string; negotiationId: string; price: string; status: string } | undefined;
+  // 2. Poll until the provider accepts AND the order finalizes on-chain.
+  // Two non-obvious CAP facts drive this (Phase-1 live findings 2026-06-28):
+  //   - listOrders surfaces the order (matchable by negotiationId) but OMITS the
+  //     price and shows a transient "creating" status; getOrder carries the real
+  //     status + price.
+  //   - paying a still-"creating" order reverts with a status error and the
+  //     ERC-4337 paymaster charges gas in USDC. So we must wait for "created"
+  //     (left "creating", has a price) before paying. OpsPilot (Phase-0)
+  //     finalized in ~1.5s and hid this; other providers take ~25s+.
+  const TERMINAL_BAD = new Set(["cancelled", "canceled", "rejected", "failed", "expired", "refunded"]);
+  let orderId: string | undefined;
+  let order: { orderId: string; price: string; status: string } | undefined;
   for (let i = 0; i < negPolls && !order; i++) {
     await sleep(negDelay);
     const n = await client.getNegotiation(neg.negotiationId);
@@ -85,18 +95,17 @@ export async function hireSpecialist(
     if (n.status !== "pending" && n.status !== "accepted") {
       throw new Error(`negotiation ${neg.negotiationId} ended in unexpected status "${n.status}" from ${p.agentName}`);
     }
-    const orders = await client.listOrders({ role: "buyer", page: 1, pageSize: 100 });
-    const found = orders.find((o) => o.negotiationId === neg.negotiationId);
-    // Pay only once the order has FINALIZED on-chain: it must have left the
-    // transient "creating" status AND carry a price. Paying a still-"creating"
-    // order reverts with a status error and burns paymaster gas — Phase-1 live
-    // finding (2026-06-28): ZERU/Foundr orders surface in listOrders as
-    // "creating" with an empty price for several seconds before becoming
-    // payable; OpsPilot (Phase-0) just happened to finalize fast enough to hide
-    // this race.
-    if (found && found.status !== "creating" && found.price) order = found;
+    if (!orderId) {
+      const orders = await client.listOrders({ role: "buyer", page: 1, pageSize: 100 });
+      orderId = orders.find((o) => o.negotiationId === neg.negotiationId)?.orderId;
+    }
+    if (orderId) {
+      const o = await client.getOrder(orderId);
+      if (TERMINAL_BAD.has(o.status)) throw new Error(`order ${orderId} from ${p.agentName} ended in status "${o.status}"`);
+      if (o.status !== "creating" && o.price) order = { orderId, price: o.price, status: o.status };
+    }
   }
-  if (!order) throw new Error(`no payable order from ${p.agentName} within the poll window — order never left "creating" (or the agent wallet is unfunded, gate #1)`);
+  if (!order) throw new Error(`no payable order from ${p.agentName} within the poll window — order never finalized to "created" (or the agent wallet is unfunded, gate #1)`);
 
   let priceBaseUnits: bigint;
   try {

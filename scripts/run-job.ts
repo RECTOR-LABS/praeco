@@ -126,7 +126,7 @@ function mockClient(): CapBuyer {
       const svcId = orderService[orderId] ?? "mock-research";
       return [{ orderId, negotiationId: lastNeg, price: servicePrices[svcId] ?? "100000", status: "created" }];
     },
-    getOrder: async () => ({ status: "completed", deliverTxHash: `0xmockdeliver${n}` }),
+    getOrder: async (id: string) => ({ status: "created", price: servicePrices[orderService[id] ?? "mock-research"] ?? "100000", deliverTxHash: `0xmockdeliver-${id}` }),
     payOrder: async () => ({ txHash: `0xmockpay${n}` }),
     getDelivery: async (id: string) => {
       const svcId = orderService[id] ?? "mock-research";
@@ -159,6 +159,12 @@ async function main() {
 
   const rec = await runLaunchJob(input, {
     config: cfg, llm, client, model, streamFn, fetchImpl,
+    // LIVE: tolerate slow on-chain finalization (~25s+ to "created") and the
+    // provider's delivery SLA (orders carry deliveryWindow=600s). Defaults are
+    // tighter and fine for the mock smoke.
+    hirePollOpts: LIVE
+      ? { negotiationPolls: 80, negotiationDelayMs: 2000, deliveryPolls: 90, deliveryDelayMs: 4000 }
+      : undefined,
     onEvent: (e) => console.log(`  • [${e.kind}]${e.leg ? " " + e.leg : ""} ${e.message}`),
   });
 
