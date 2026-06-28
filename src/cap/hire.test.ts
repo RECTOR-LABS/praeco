@@ -44,7 +44,28 @@ describe("hireSpecialist (guards)", () => {
   it("never pays when no order is created in the poll window (empty-wallet hang)", async () => {
     const client = happyClient();
     client.listOrders = vi.fn(async () => []);
-    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/no order created/i);
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/no payable order/i);
+    expect(client.payOrder).not.toHaveBeenCalled();
+  });
+
+  it("waits while the order is 'creating' (no price), then pays once it finalizes", async () => {
+    const client = happyClient();
+    let calls = 0;
+    client.listOrders = vi.fn(async () => {
+      calls++;
+      return calls < 2
+        ? [{ orderId: "o1", negotiationId: "n1", price: "", status: "creating" }]
+        : [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }];
+    });
+    const res = await hireSpecialist(client, base, () => {}, fast);
+    expect(client.payOrder).toHaveBeenCalledTimes(1);
+    expect(res.priceBaseUnits).toBe("100000"); // paid the finalized price, not the blank "creating" one
+  });
+
+  it("never pays an order stuck in 'creating' (prevents reverting pay + paymaster gas burn)", async () => {
+    const client = happyClient();
+    client.listOrders = vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "", status: "creating" }]);
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/no payable order|creating/i);
     expect(client.payOrder).not.toHaveBeenCalled();
   });
 

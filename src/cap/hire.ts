@@ -86,9 +86,17 @@ export async function hireSpecialist(
       throw new Error(`negotiation ${neg.negotiationId} ended in unexpected status "${n.status}" from ${p.agentName}`);
     }
     const orders = await client.listOrders({ role: "buyer", page: 1, pageSize: 100 });
-    order = orders.find((o) => o.negotiationId === neg.negotiationId);
+    const found = orders.find((o) => o.negotiationId === neg.negotiationId);
+    // Pay only once the order has FINALIZED on-chain: it must have left the
+    // transient "creating" status AND carry a price. Paying a still-"creating"
+    // order reverts with a status error and burns paymaster gas — Phase-1 live
+    // finding (2026-06-28): ZERU/Foundr orders surface in listOrders as
+    // "creating" with an empty price for several seconds before becoming
+    // payable; OpsPilot (Phase-0) just happened to finalize fast enough to hide
+    // this race.
+    if (found && found.status !== "creating" && found.price) order = found;
   }
-  if (!order) throw new Error(`no order created by ${p.agentName} within the poll window — is the agent wallet funded? (gate #1)`);
+  if (!order) throw new Error(`no payable order from ${p.agentName} within the poll window — order never left "creating" (or the agent wallet is unfunded, gate #1)`);
 
   let priceBaseUnits: bigint;
   try {
