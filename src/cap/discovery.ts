@@ -227,12 +227,19 @@ const LEG_KEYWORDS: Record<LegKind, string[]> = {
   og_image: ["image", "logo", " art", "design", "graphic", "visual", "picture", "banner", "thumbnail", "photo", "meme", "avatar", "render", "illustrat", "icon", "poster", "img"],
 };
 
-/** Leg-relevance: leg keywords weigh 2, distinctive query words weigh 1. */
-export function legRelevance(haystack: string, leg: LegKind, query: string): number {
-  const hay = ` ${haystack.toLowerCase()} `;
-  let score = 0;
-  for (const k of LEG_KEYWORDS[leg]) if (hay.includes(k)) score += 2;
-  for (const w of query.toLowerCase().split(/[^a-z0-9]+/)) if (w.length > 3 && hay.includes(w)) score += 1;
+/**
+ * Field-weighted leg-relevance. A service's own NAME is the strongest identity
+ * signal (×3); its description (×1) and the provider's coarse skill tags (×1)
+ * are supporting signals only — otherwise an agent's tags bleed a service into
+ * the wrong leg (e.g. a "Landing Page" service out-ranking the real image
+ * provider for og_image). Distinctive query words add ×1.
+ */
+export function legRelevance(name: string, description: string, tags: string[], leg: LegKind, query: string): number {
+  const kws = LEG_KEYWORDS[leg];
+  const hits = (t: string) => { const h = ` ${t.toLowerCase()} `; return kws.filter((k) => h.includes(k)).length; };
+  let score = 3 * hits(name) + hits(description) + hits(tags.join(" "));
+  const own = ` ${(name + " " + description).toLowerCase()} `;
+  for (const w of query.toLowerCase().split(/[^a-z0-9]+/)) if (w.length > 3 && own.includes(w)) score += 1;
   return score;
 }
 
@@ -255,7 +262,7 @@ export function discoverForLeg(
 ): RankedListing[] {
   const ranked: RankedListing[] = services.map((s) => {
     const a = agentsById.get(s.agentId);
-    const hay = `${s.name} ${s.description ?? ""} ${(a?.skillTagSlugs ?? []).join(" ")}`;
+    const tags = a?.skillTagSlugs ?? [];
     const completionRate = a?.completionRate ?? 0;
     const completedOrders = a?.completedOrders ?? 0;
     return {
@@ -264,8 +271,8 @@ export function discoverForLeg(
       completedOrders,
       completionRate,
       onlineStatus: a?.onlineStatus,
-      skillTagSlugs: a?.skillTagSlugs ?? [],
-      relevance: legRelevance(hay, leg, query),
+      skillTagSlugs: tags,
+      relevance: legRelevance(s.name, s.description ?? "", tags, leg, query),
       repScore: completionRate * Math.log10(completedOrders + 1),
     };
   });

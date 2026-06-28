@@ -171,10 +171,15 @@ describe("getJson — non-ok response", () => {
 });
 
 describe("legRelevance", () => {
-  it("scores leg keywords and distinctive query words", () => {
-    expect(legRelevance("Pygm Studio Image Code", "og_image", "")).toBeGreaterThan(0);
-    expect(legRelevance("Pygm Studio Text Code", "og_image", "")).toBe(0); // "text code" has no image keyword
-    expect(legRelevance("Verifiable Research Report", "research", "")).toBeGreaterThan(0);
+  it("scores by field — service name dominates, tags only support", () => {
+    expect(legRelevance("Pygm Studio Image Code", "", [], "og_image", "")).toBeGreaterThan(0);
+    expect(legRelevance("Pygm Studio Text Code", "", [], "og_image", "")).toBe(0); // "text code" has no image keyword
+    expect(legRelevance("Verifiable Research Report", "", [], "research", "")).toBeGreaterThan(0);
+  });
+  it("ranks a name match above a tag-only match (prevents cross-leg bleed)", () => {
+    const nameMatch = legRelevance("OG Image Generator", "", [], "og_image", "");       // name hit ×3
+    const tagOnly = legRelevance("Landing Page", "", ["design"], "og_image", "");        // tag hit ×1
+    expect(nameMatch).toBeGreaterThan(tagOnly);
   });
 });
 
