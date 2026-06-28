@@ -24,6 +24,11 @@ const input = process.env.JOB_REPO
   : { text: process.env.JOB_TEXT ?? "A privacy-first habit tracker named Streaky for indie developers." };
 
 const cfg = loadConfig();
+// The smoke runs against a MOCK catalog (mock-* serviceIds), so real-marketplace
+// SVC_* pins from .env don't apply — clear them or the authoritative pin fails
+// closed (pinned id absent from the mock catalog → no candidates). Pins are a
+// live-run operator override only.
+if (!LIVE) cfg.preferredServiceIds = {};
 const { models, model, streamFn } = createGlmModels();
 // Thin adapter: keeps llm.ts decoupled from pi-ai's generic Models type.
 const llm = createLlm({ complete: (m, c) => models.complete(m, c) }, model);
@@ -163,7 +168,7 @@ async function main() {
     // provider's delivery SLA (orders carry deliveryWindow=600s). Defaults are
     // tighter and fine for the mock smoke.
     hirePollOpts: LIVE
-      ? { negotiationPolls: 80, negotiationDelayMs: 2000, deliveryPolls: 90, deliveryDelayMs: 4000 }
+      ? { negotiationPolls: 80, negotiationDelayMs: 2000, deliveryPolls: 120, deliveryDelayMs: 5000 } // delivery: 120×5s = 600s, matching the order's deliveryWindow SLA
       : undefined,
     onEvent: (e) => console.log(`  • [${e.kind}]${e.leg ? " " + e.leg : ""} ${e.message}`),
   });

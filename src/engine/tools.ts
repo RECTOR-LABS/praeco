@@ -9,14 +9,14 @@ import { Type } from "@earendil-works/pi-ai";
 import type { AgentTool, AgentToolResult } from "@earendil-works/pi-agent-core";
 import type { RunContext } from "./context.js";
 import type { LegKind, ServiceCandidate } from "../types.js";
-import { listServices, listAgents, resolveCandidate, discoverForLeg } from "../cap/discovery.js";
+import { listServices, listAgents, getAgent, candidateFromAgent, discoverForLeg, type AgentRecord } from "../cap/discovery.js";
 import { hireSpecialist } from "../cap/hire.js";
 import { assertFunded } from "../cap/wallet.js";
 import { reviewDeliverable } from "./qa.js";
 import { toProvenanceCard, deliverableToText } from "./provenance.js";
-import { baseUnitsToUsd } from "../constants.js";
+import { baseUnitsToUsd, REQUIRED_LEGS } from "../constants.js";
 
-const usd = (b: string) => baseUnitsToUsd(BigInt(b));
+const usd = (b: string) => { try { return baseUnitsToUsd(BigInt(b)); } catch { return "?"; } }; // never let a malformed price crash a display path
 const text = (s: string, details: unknown = {}): AgentToolResult<unknown> => ({ content: [{ type: "text", text: s }], details });
 
 export function buildTools(ctx: RunContext): AgentTool<any>[] {
@@ -31,28 +31,41 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
     execute: async (_id, params: any) => {
       const leg = params.leg as LegKind;
       const query = String(params.query ?? "");
+      if (!REQUIRED_LEGS.includes(leg)) {
+        return text(`Unknown leg "${params.leg}". Use one of: ${REQUIRED_LEGS.join(", ")}.`, { count: 0 });
+      }
       ctx.worklog.emit({ kind: "leg_search", at: Date.now(), leg, message: `searching: ${query}` });
       // Fetch the marketplace catalog once per run, then reuse across legs/searches.
-      if (!ctx.catalog || !ctx.agentsById) {
-        ctx.catalog = await listServices(ctx.config.apiUrl, ctx.fetchImpl);
-        const agents = await listAgents(ctx.config.apiUrl, ctx.fetchImpl);
+      // Refetch if it's missing OR empty (a transient empty/200 response must not
+      // be cached for the whole run). The two catalogs are independent → parallel.
+      if (!ctx.catalog || !ctx.agentsById || ctx.catalog.length === 0) {
+        const [services, agents] = await Promise.all([
+          listServices(ctx.config.apiUrl, ctx.fetchImpl),
+          listAgents(ctx.config.apiUrl, ctx.fetchImpl),
+        ]);
+        ctx.catalog = services;
         ctx.agentsById = new Map(agents.map((a) => [a.agentId, a]));
       }
       const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
         preferredServiceId: ctx.config.preferredServiceIds[leg],
         limit: 5,
       });
-      // Resolve the top listings into full candidates (reads requirementSchema from the agent record).
-      const ranked: ServiceCandidate[] = [];
-      for (const h of top) {
+      // Resolve the top listings into full candidates (reads requirementSchema from
+      // the agent record). Dedup the /agents/{id} fetch per agentId (two services
+      // from the same provider share one fetch) and run them concurrently.
+      const agentCache = new Map<string, Promise<AgentRecord>>();
+      const resolved = await Promise.all(top.map(async (h) => {
         try {
-          const c = await resolveCandidate(ctx.config.apiUrl, h.serviceId, h.agentId, ctx.fetchImpl);
-          ctx.candidates.set(c.serviceId, c);
-          ranked.push(c);
+          let ap = agentCache.get(h.agentId);
+          if (!ap) { ap = getAgent(ctx.config.apiUrl, h.agentId, ctx.fetchImpl); agentCache.set(h.agentId, ap); }
+          return candidateFromAgent(await ap, h.serviceId);
         } catch (e) {
           ctx.worklog.emit({ kind: "error", at: Date.now(), leg, message: `could not resolve ${h.serviceId}: ${(e as Error).message}` });
+          return null;
         }
-      }
+      }));
+      const ranked: ServiceCandidate[] = [];
+      for (const c of resolved) if (c) { ctx.candidates.set(c.serviceId, c); ranked.push(c); }
       for (const c of ranked) {
         ctx.worklog.emit({ kind: "leg_candidate", at: Date.now(), leg, message: `${c.agentName} (${c.serviceId}) $${usd(c.priceBaseUnits)} rate ${(c.completionRate * 100).toFixed(1)}%` });
       }

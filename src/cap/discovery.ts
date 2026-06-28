@@ -93,17 +93,22 @@ export function parseRequirementSchema(raw: unknown): RequirementField[] {
   if (!Array.isArray(arr)) return [];
   return arr
     .filter((f): f is Record<string, unknown> => !!f && typeof f === "object")
-    .map((f) => ({ name: String(f.name ?? ""), type: String(f.type ?? "string"), required: Boolean(f.required) }))
+    // `required` may arrive as a bool or a stringified bool ("true"/"false");
+    // Boolean("false") would be truthy, so compare explicitly.
+    .map((f) => ({ name: String(f.name ?? ""), type: String(f.type ?? "string"), required: f.required === true || f.required === "true" }))
     .filter((f) => f.name);
 }
 
 function mapAgentService(s: Record<string, any>): AgentService {
+  // Derive the type from the PARSED schema, not the raw field: a present-but-empty
+  // schema string ("[]") is truthy and would mis-classify a free-text service as "schema".
+  const requirementSchema = parseRequirementSchema(s.requirementSchema);
   return {
     serviceId: String(s.serviceId ?? s.id ?? ""),
     title: String(s.name ?? s.title ?? ""),
     price: String(s.price ?? s.priceBaseUnits ?? "0"),
-    requirementType: String(s.requirementType ?? (s.requirementSchema ? "schema" : "text")),
-    requirementSchema: parseRequirementSchema(s.requirementSchema),
+    requirementType: String(s.requirementType ?? (requirementSchema.length ? "schema" : "text")),
+    requirementSchema,
     requirementText: s.requirementText ? String(s.requirementText) : undefined,
   };
 }
@@ -122,6 +127,7 @@ export async function listServices(
     const d = await getJson<any>(`${base(apiUrl)}/services?page=${page}&pageSize=${pageSize}`, fetchImpl);
     const items: any[] = Array.isArray(d?.items) ? d.items : Array.isArray(d) ? d : [];
     if (items.length === 0) break;
+    const before = out.length;
     for (const s of items) {
       const id = String(s.serviceId ?? s.id ?? "");
       if (!id || seen.has(id)) continue;
@@ -135,6 +141,7 @@ export async function listServices(
         orders7d: numOrUndef(s.orders7d),
       });
     }
+    if (out.length === before) break; // page yielded only already-seen items — stop (e.g. API ignores `page`)
     const total = Number(d?.total ?? 0);
     if ((total && out.length >= total) || items.length < pageSize) break;
   }
@@ -155,6 +162,7 @@ export async function listAgents(
     const d = await getJson<any>(`${base(apiUrl)}/agents?page=${page}&pageSize=${pageSize}`, fetchImpl);
     const items: any[] = Array.isArray(d?.agents) ? d.agents : Array.isArray(d) ? d : [];
     if (items.length === 0) break;
+    const before = out.length;
     for (const a of items) {
       const id = String(a.agentId ?? "");
       if (!id || seen.has(id)) continue;
@@ -171,6 +179,7 @@ export async function listAgents(
         services: Array.isArray(a.services) ? a.services.map(mapAgentService) : [],
       });
     }
+    if (out.length === before) break; // page yielded only already-seen items — stop (e.g. API ignores `page`)
     const total = Number(d?.total ?? 0);
     if ((total && out.length >= total) || items.length < pageSize) break;
   }
@@ -194,19 +203,13 @@ export async function getAgent(apiUrl: string, agentId: string, fetchImpl: Fetch
   };
 }
 
-/** Resolve a (serviceId, agentId) into a full candidate by reading the agent record. */
-export async function resolveCandidate(
-  apiUrl: string,
-  serviceId: string,
-  agentId: string,
-  fetchImpl: FetchFn = fetch,
-): Promise<ServiceCandidate> {
-  const agent = await getAgent(apiUrl, agentId, fetchImpl);
+/** Build a full candidate from an already-fetched agent record + a serviceId. */
+export function candidateFromAgent(agent: AgentRecord, serviceId: string): ServiceCandidate {
   const svc = agent.services.find((s) => s.serviceId === serviceId);
-  if (!svc) throw new Error(`service ${serviceId} not found on agent ${agentId}`);
+  if (!svc) throw new Error(`service ${serviceId} not found on agent ${agent.agentId}`);
   return {
     serviceId,
-    agentId,
+    agentId: agent.agentId,
     agentName: agent.name,
     title: svc.title,
     priceBaseUnits: String(svc.price ?? "0"),
@@ -218,6 +221,16 @@ export async function resolveCandidate(
     avgDeliveryText: agent.avgDeliveryText,
     onlineStatus: agent.onlineStatus,
   };
+}
+
+/** Resolve a (serviceId, agentId) into a full candidate by reading the agent record. */
+export async function resolveCandidate(
+  apiUrl: string,
+  serviceId: string,
+  agentId: string,
+  fetchImpl: FetchFn = fetch,
+): Promise<ServiceCandidate> {
+  return candidateFromAgent(await getAgent(apiUrl, agentId, fetchImpl), serviceId);
 }
 
 /** Keywords that mark a service as relevant to a launch-kit leg. */
@@ -236,6 +249,7 @@ const LEG_KEYWORDS: Record<LegKind, string[]> = {
  */
 export function legRelevance(name: string, description: string, tags: string[], leg: LegKind, query: string): number {
   const kws = LEG_KEYWORDS[leg];
+  if (!kws) return 0; // unknown leg (e.g. the LLM passed "image" instead of "og_image") — no crash
   const hits = (t: string) => { const h = ` ${t.toLowerCase()} `; return kws.filter((k) => h.includes(k)).length; };
   let score = 3 * hits(name) + hits(description) + hits(tags.join(" "));
   const own = ` ${(name + " " + description).toLowerCase()} `;
@@ -245,7 +259,7 @@ export function legRelevance(name: string, description: string, tags: string[], 
 
 const priceOf = (p: string): number => {
   const n = Number(p);
-  return Number.isFinite(n) ? n : Number.POSITIVE_INFINITY; // unparseable prices rank last
+  return p && Number.isFinite(n) ? n : Number.POSITIVE_INFINITY; // empty/unparseable prices rank last (Number("")===0 would otherwise sort cheapest)
 };
 
 /**
@@ -275,9 +289,12 @@ export function discoverForLeg(
   // Operator override: a pinned serviceId is AUTHORITATIVE — it's the sole
   // candidate for the leg, so the agent hires exactly the vetted provider (no
   // reputation-based override). Used for controlled/golden-path runs.
+  // Fail CLOSED: if the pinned id isn't in the catalog, return nothing rather
+  // than silently ranking — paying a different, unvetted provider on a
+  // controlled real-USDC run would defeat the whole point of pinning.
   if (opts.preferredServiceId) {
     const pinned = services.find((s) => s.serviceId === opts.preferredServiceId);
-    if (pinned) return [fuse(pinned, 999)];
+    return pinned ? [fuse(pinned, 999)] : [];
   }
   const ranked: RankedListing[] = services.map((s) =>
     fuse(s, legRelevance(s.name, s.description ?? "", agentsById.get(s.agentId)?.skillTagSlugs ?? [], leg, query)),

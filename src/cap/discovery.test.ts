@@ -207,9 +207,9 @@ describe("discoverForLeg", () => {
     expect(ranked.map((r) => r.serviceId)).toEqual(["ops-seo"]);
   });
 
-  it("falls back to ranking when the pinned service is not in the catalog", () => {
+  it("fails CLOSED when the pinned service is not in the catalog (no silent fallback to a different provider)", () => {
     const ranked = discoverForLeg(services, agentsById, "og_image", "og image", { preferredServiceId: "does-not-exist" });
-    expect(ranked[0].serviceId).toBe("pygm-image"); // pin ignored (absent), relevance ranking applies
+    expect(ranked).toEqual([]); // a pin must never resolve to an unvetted provider
   });
 
   it("respects the limit", () => {

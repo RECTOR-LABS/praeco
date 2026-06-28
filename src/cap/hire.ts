@@ -90,19 +90,26 @@ export async function hireSpecialist(
   let order: { orderId: string; price: string; status: string } | undefined;
   for (let i = 0; i < negPolls && !order; i++) {
     await sleep(negDelay);
-    const n = await client.getNegotiation(neg.negotiationId);
-    if (n.status === "rejected") throw new Error(`negotiation rejected by ${p.agentName}: ${n.rejectReason ?? "no reason"}`);
-    if (n.status !== "pending" && n.status !== "accepted") {
-      throw new Error(`negotiation ${neg.negotiationId} ended in unexpected status "${n.status}" from ${p.agentName}`);
-    }
+    // Phase 1: wait for the provider to accept + create the order. Once the
+    // order exists we stop polling the negotiation — it's settled (accepted),
+    // and a benign post-accept negotiation status must not abort a payable hire.
     if (!orderId) {
+      const n = await client.getNegotiation(neg.negotiationId);
+      if (n.status === "rejected") throw new Error(`negotiation rejected by ${p.agentName}: ${n.rejectReason ?? "no reason"}`);
+      if (n.status !== "pending" && n.status !== "accepted") {
+        throw new Error(`negotiation ${neg.negotiationId} ended in unexpected status "${n.status}" from ${p.agentName}`);
+      }
       const orders = await client.listOrders({ role: "buyer", page: 1, pageSize: 100 });
       orderId = orders.find((o) => o.negotiationId === neg.negotiationId)?.orderId;
     }
+    // Phase 2: poll the order itself until it finalizes. Pay ONLY in the
+    // confirmed-payable "created" state (allowlist, not "anything but creating")
+    // so an intermediate/post-pay status with a price can't trigger a reverting
+    // pay + wasted paymaster gas.
     if (orderId) {
       const o = await client.getOrder(orderId);
       if (TERMINAL_BAD.has(o.status)) throw new Error(`order ${orderId} from ${p.agentName} ended in status "${o.status}"`);
-      if (o.status !== "creating" && o.price) order = { orderId, price: o.price, status: o.status };
+      if (o.status === "created" && o.price) order = { orderId, price: o.price, status: o.status };
     }
   }
   if (!order) throw new Error(`no payable order from ${p.agentName} within the poll window — order never finalized to "created" (or the agent wallet is unfunded, gate #1)`);
