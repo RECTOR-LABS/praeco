@@ -250,8 +250,10 @@ const priceOf = (p: string): number => {
 
 /**
  * Rank catalog services for a leg: fuse each listing with its agent's reputation,
- * score leg-relevance, and order by preferred → relevance → reputation → price.
- * Only returns services that match the leg at all (or the pinned preferred one).
+ * score leg-relevance, and order by relevance → reputation → price. Returns only
+ * services that match the leg at all. A pinned `preferredServiceId` is an
+ * authoritative operator override: if present in the catalog it is the SOLE
+ * candidate returned (the agent hires exactly it — for controlled runs).
  */
 export function discoverForLeg(
   services: ServiceListing[],
@@ -260,28 +262,28 @@ export function discoverForLeg(
   query: string,
   opts: { preferredServiceId?: string; limit?: number } = {},
 ): RankedListing[] {
-  const ranked: RankedListing[] = services.map((s) => {
+  const fuse = (s: ServiceListing, relevance: number): RankedListing => {
     const a = agentsById.get(s.agentId);
-    const tags = a?.skillTagSlugs ?? [];
     const completionRate = a?.completionRate ?? 0;
     const completedOrders = a?.completedOrders ?? 0;
     return {
-      ...s,
-      agentName: a?.name ?? "",
-      completedOrders,
-      completionRate,
-      onlineStatus: a?.onlineStatus,
-      skillTagSlugs: tags,
-      relevance: legRelevance(s.name, s.description ?? "", tags, leg, query),
-      repScore: completionRate * Math.log10(completedOrders + 1),
+      ...s, agentName: a?.name ?? "", completedOrders, completionRate,
+      onlineStatus: a?.onlineStatus, skillTagSlugs: a?.skillTagSlugs ?? [],
+      relevance, repScore: completionRate * Math.log10(completedOrders + 1),
     };
-  });
-  const matches = ranked.filter((r) => r.relevance > 0 || r.serviceId === opts.preferredServiceId);
+  };
+  // Operator override: a pinned serviceId is AUTHORITATIVE — it's the sole
+  // candidate for the leg, so the agent hires exactly the vetted provider (no
+  // reputation-based override). Used for controlled/golden-path runs.
+  if (opts.preferredServiceId) {
+    const pinned = services.find((s) => s.serviceId === opts.preferredServiceId);
+    if (pinned) return [fuse(pinned, 999)];
+  }
+  const ranked: RankedListing[] = services.map((s) =>
+    fuse(s, legRelevance(s.name, s.description ?? "", agentsById.get(s.agentId)?.skillTagSlugs ?? [], leg, query)),
+  );
+  const matches = ranked.filter((r) => r.relevance > 0);
   matches.sort((a, b) => {
-    if (opts.preferredServiceId) {
-      if (a.serviceId === opts.preferredServiceId) return -1;
-      if (b.serviceId === opts.preferredServiceId) return 1;
-    }
     if (b.relevance !== a.relevance) return b.relevance - a.relevance;
     if (b.repScore !== a.repScore) return b.repScore - a.repScore;
     return priceOf(a.priceBaseUnits) - priceOf(b.priceBaseUnits);

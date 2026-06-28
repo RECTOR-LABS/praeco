@@ -202,9 +202,14 @@ describe("discoverForLeg", () => {
     expect(ranked.map((r) => r.serviceId)).not.toContain("swapgod"); // SwapGod has no image relevance
   });
 
-  it("ranks the pinned preferred service first regardless of relevance", () => {
+  it("treats a pinned preferred service as the SOLE candidate (authoritative operator override)", () => {
     const ranked = discoverForLeg(services, agentsById, "research", "market research", { preferredServiceId: "ops-seo" });
-    expect(ranked[0].serviceId).toBe("ops-seo");
+    expect(ranked.map((r) => r.serviceId)).toEqual(["ops-seo"]);
+  });
+
+  it("falls back to ranking when the pinned service is not in the catalog", () => {
+    const ranked = discoverForLeg(services, agentsById, "og_image", "og image", { preferredServiceId: "does-not-exist" });
+    expect(ranked[0].serviceId).toBe("pygm-image"); // pin ignored (absent), relevance ranking applies
   });
 
   it("respects the limit", () => {
