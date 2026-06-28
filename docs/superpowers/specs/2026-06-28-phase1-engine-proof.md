@@ -59,14 +59,20 @@ The fix sequence is visible live in run #4: `status:"creating"` (held, not paid)
 
 ---
 
-## The deferred gap (Phase 2)
+## The deferred gap (Phase 2) — sharpened by a controlled pinned run
 
-A clean QA-accepted 3-leg kit needs two quality refinements, both surfaced above:
+A follow-up **controlled run** (authoritative `SVC_*` pins, DeFi product) pinned Foundr→research + Pygm→copy/image and isolated exactly what remains:
 
-1. **Provider-type matching.** This is a crypto-specialized marketplace: research agents are ZERU (DeFi data), VERIS (project trust audit), Polymarket (wallet tracking), Foundr (idea analysis — the closest to launch research). None is a general market/competitor/audience researcher. Phase 2 should match the *type* of provider to the leg (and/or curate a known-good shortlist), so the research leg lands on Foundr-style idea/market analysis rather than a DeFi data feed or a trust auditor.
-2. **QA `swap` vs `redo`.** When a deliverable is the *wrong type* (not a fixable-by-retry quality miss), QA should return `swap` (different provider) instead of `redo` (same provider). Today the agent eventually swaps on its own, but it wastes hires getting there.
+- ✅ **Research leg is now QA-PROVEN clean.** Foundr "Idea Analysis" (`2aaf227e`) delivered on-brief market/competitive research and QA **accepted** it (order `9b173f31` completed, `deliverTx 0x2a971488…`; re-confirmed live order `…` payTx `0xdab5825e…`). The new **authoritative pin** (`feat 330c95d`: a pinned `SVC_*` is the sole candidate for its leg) made the agent hire exactly the vetted provider.
+- ❌ **Copy/image are blocked by deliverable FORMAT, not relevance.** Pygm Studio "Text Code" / "Image Code" return a **redemption code + a link to the Pygm platform**, not inline content — QA correctly rejects ("only a generic redemption code and a link… zero landing copy"). The engine composes/QA's **inline** deliverables; Pygm's content lives behind a code/URL.
 
-Neither blocks the engine; both are deliverable-quality tuning. With them, a controlled run (optionally pinning Foundr + Pygm via `SVC_*`) should produce a clean 3/3 kit + image (Pygm Studio Image, $0.50, 100%, delivers a text image-ref).
+So the real Phase-2 work, in priority order:
+
+1. **Deliverable-format matching (copy + image).** Find providers that deliver **inline** copy / an inline image URL (Foundr's research gave an inline summary + link and passed — its "Landing Page"/"Brand Identity" services are worth testing), **or** add an engine step that redeems a code / fetches a report link and feeds the *fetched content* to QA + compose. This is the true blocker for a clean 3/3.
+2. **QA `swap` vs `redo`.** On a wrong-*type*/wrong-*format* deliverable QA should return `swap`, not `redo`.
+3. **Pin safety.** The authoritative pin (good for forcing a vetted provider) has no escape if the pinned provider is bad → it redo-loops to MAX_TURNS (cost a wasted $0.20 Pygm redo here). Add a per-leg redo cap and/or a swap-fallback when a pin keeps failing QA.
+
+Provider notes for Phase 2: **research = Foundr Idea Analysis `2aaf227e` (proven, $0.10)**; **copy/image = NOT Pygm "Code" services** (they deliver codes) — needs an inline-content provider or a fetch/redeem step.
 
 ---
 
@@ -75,10 +81,11 @@ Neither blocks the engine; both are deliverable-quality tuning. With them, a con
 | | USDC |
 |---|---|
 | Agent wallet start | 1.888624 |
-| Agent wallet end | 1.266668 |
-| **Spent this session** | **0.621956** (≈$0.50 service across 6 hires + ≈$0.12 gas) |
+| After debugging runs (6 hires) | 1.266668 |
+| After controlled run (research+2×copy) | 0.740607 |
+| **Spent this session** | **1.148017** (~9 real hires + gas across debugging + the controlled run) |
 
-Money safety: every spend was a discovered-candidate-priced, cap-checked, funded-wallet-gated, single payment. The ~$0.06 gas burned in run #2 (bug 3) is the only "wasted" spend; bug 3 is fixed.
+Money safety: every spend was a discovered-candidate-priced, cap-checked, funded-wallet-gated, single payment. Wasted spend was small and bounded: ~$0.06 paymaster gas from the pay-race (bug 3, fixed) and ~$0.20 on a Pygm copy redo that the authoritative pin couldn't escape (Phase-2 pin-safety item). **Top up the agent wallet (~0.74 USDC left) before Phase-2 demo runs.**
 
 ---
 
