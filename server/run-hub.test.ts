@@ -29,6 +29,13 @@ it("finish marks done and persists", async () => {
   expect(hub.get("r1")!.status).toBe("done");
   expect(existsSync(join(process.env.RUNS_DIR!, "r1.json"))).toBe(true);
 });
+it("activeCount counts running runs by mode, ignores other modes", () => {
+  const hub = new RunHub();
+  hub.create("s1", "sandbox");
+  hub.create("s2", "sandbox");
+  expect(hub.activeCount("sandbox")).toBe(2);
+  expect(hub.activeCount("live")).toBe(0);
+});
 it("delivers buffered catch-up then continues with live events (reconnect boundary)", () => {
   const hub = new RunHub(); hub.create("r1", "sandbox");
   hub.publish("r1", ev("run_started"));  // id 1, buffered before subscribe

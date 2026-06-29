@@ -28,6 +28,11 @@ export class RunHub {
     // Acceptable at demo scale; revisit before high-throughput use.
   }
   fail(runId: string): void { const r = this.runs.get(runId); if (r) r.status = "error"; }
+  activeCount(mode: RunMode): number {
+    let n = 0;
+    for (const r of this.runs.values()) if (r.mode === mode && r.status === "running") n++;
+    return n;
+  }
   subscribe(runId: string, fromEventId: number, fn: (e: SseEvent) => void): () => void {
     const r = this.runs.get(runId); if (!r) return () => {};
     for (const e of r.buffer) if (e.id > fromEventId) fn(e); // catch-up replay
