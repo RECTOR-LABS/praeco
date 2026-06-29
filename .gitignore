@@ -5,3 +5,6 @@ dist
 .DS_Store
 runs/
 .superpowers/
+.next/
+/data/
+tsconfig.tsbuildinfo

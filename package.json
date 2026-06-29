@@ -9,6 +9,9 @@
     "node": ">=22.19.0"
   },
   "scripts": {
+    "dev:web": "next dev",
+    "build": "next build",
+    "start": "node .next/standalone/server.js",
     "test": "vitest",
     "test:run": "vitest run",
     "typecheck": "tsc --noEmit",
@@ -19,7 +22,17 @@
     "engine:run": "ENGINE_LIVE=1 tsx scripts/run-job.ts"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.2",
+    "@testing-library/user-event": "^14.6.1",
     "@types/node": "^26.0.1",
+    "@types/react": "^19.2.17",
+    "@types/react-dom": "^19.2.3",
+    "@vitejs/plugin-react": "^6.0.3",
+    "autoprefixer": "^10.5.2",
+    "jsdom": "^29.1.1",
+    "postcss": "^8.5.16",
+    "tailwindcss": "^3.4.19",
     "tsx": "^4.22.4",
     "typescript": "^6.0.3",
     "vitest": "^4.1.9"
@@ -28,7 +41,14 @@
     "@croo-network/sdk": "^0.2.1",
     "@earendil-works/pi-agent-core": "0.80.2",
     "@earendil-works/pi-ai": "^0.80.2",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
+    "lucide-react": "^1.22.0",
+    "next": "^15.5.19",
+    "react": "^19.2.7",
+    "react-dom": "^19.2.7",
+    "tailwind-merge": "^3.6.0",
     "zod": "^4.4.3"
   }
 }
