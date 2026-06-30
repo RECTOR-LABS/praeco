@@ -1,0 +1,355 @@
+{
+  "runId": "run-fixture-001",
+  "status": "completed",
+  "spentBaseUnits": "700000",
+  "startedAt": 1782700000000,
+  "endedAt": 1782700060000,
+  "brief": {
+    "product": "Praeco",
+    "audience": "Indie developers and founders",
+    "features": [
+      "AI general-contractor that hires on-chain agents",
+      "Parallel research, copy, and image procurement",
+      "Verifiable on-chain provenance for every deliverable"
+    ],
+    "tone": "Technical, confident, builder-focused",
+    "oneLiner": "The AI-powered general contractor that ships your launch kit on-chain."
+  },
+  "worklog": [
+    {
+      "kind": "run_started",
+      "at": 1782700000000,
+      "message": "run run-fixture-001 started"
+    },
+    {
+      "kind": "intake_done",
+      "at": 1782700001000,
+      "message": "brief ready: Praeco",
+      "data": {
+        "oneLiner": "The AI-powered general contractor that ships your launch kit on-chain."
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782700002000,
+      "message": "I'll assemble the launch kit one leg at a time."
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782700003000,
+      "leg": "research",
+      "message": "searching: market research SaaS launch indie developers"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782700004000,
+      "leg": "research",
+      "message": "Foundr (foundr-research) $0.10 rate 98.0%"
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782700005000,
+      "leg": "research",
+      "message": "negotiating Foundr (foundr-research)",
+      "data": { "negotiationId": "neg-r1" }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782700006000,
+      "leg": "research",
+      "message": "order ord-r1 created at 100000 base units",
+      "data": { "orderId": "ord-r1", "price": "100000" }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782700007000,
+      "leg": "research",
+      "message": "paid Foundr — https://basescan.org/tx/0xpayR1abc123",
+      "data": { "orderId": "ord-r1", "payTxHash": "0xpayR1abc123" }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782700008000,
+      "leg": "research",
+      "message": "delivered by Foundr (hash 0xhashResearch1)",
+      "data": { "orderId": "ord-r1", "contentHash": "0xhashResearch1" }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782700009000,
+      "leg": "research",
+      "message": "QA accept: Research is thorough, on-brief, and strategically actionable.",
+      "data": { "score": 90 }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782700010000,
+      "leg": "research",
+      "message": "asset submitted for research"
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782700011000,
+      "leg": "landing_copy",
+      "message": "searching: landing page copy technical SaaS indie developers"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782700012000,
+      "leg": "landing_copy",
+      "message": "Foundr (foundr-copy) $0.10 rate 98.0%"
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782700013000,
+      "leg": "landing_copy",
+      "message": "negotiating Foundr (foundr-copy)",
+      "data": { "negotiationId": "neg-c1" }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782700014000,
+      "leg": "landing_copy",
+      "message": "order ord-c1 created at 100000 base units",
+      "data": { "orderId": "ord-c1", "price": "100000" }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782700015000,
+      "leg": "landing_copy",
+      "message": "paid Foundr — https://basescan.org/tx/0xpayC1abc123",
+      "data": { "orderId": "ord-c1", "payTxHash": "0xpayC1abc123" }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782700016000,
+      "leg": "landing_copy",
+      "message": "delivered by Foundr (hash 0xhashCopy1)",
+      "data": { "orderId": "ord-c1", "contentHash": "0xhashCopy1" }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782700017000,
+      "leg": "landing_copy",
+      "message": "QA accept: Landing copy is tight, on-brief, and speaks the builder audience's language.",
+      "data": { "score": 88 }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782700018000,
+      "leg": "landing_copy",
+      "message": "asset submitted for landing_copy"
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782700019000,
+      "leg": "og_image",
+      "message": "searching: OG image design SaaS launch dark theme developer"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782700020000,
+      "leg": "og_image",
+      "message": "Pygm Studio (pygm-image) $0.50 rate 98.0%"
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782700021000,
+      "leg": "og_image",
+      "message": "negotiating Pygm Studio (pygm-image)",
+      "data": { "negotiationId": "neg-i1" }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782700022000,
+      "leg": "og_image",
+      "message": "order ord-i1 created at 500000 base units",
+      "data": { "orderId": "ord-i1", "price": "500000" }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782700023000,
+      "leg": "og_image",
+      "message": "paid Pygm Studio — https://basescan.org/tx/0xpayI1abc123",
+      "data": { "orderId": "ord-i1", "payTxHash": "0xpayI1abc123" }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782700024000,
+      "leg": "og_image",
+      "message": "delivered by Pygm Studio (hash 0xhashImage1)",
+      "data": { "orderId": "ord-i1", "contentHash": "0xhashImage1" }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782700025000,
+      "leg": "og_image",
+      "message": "QA accept: OG image is on-brand, high quality, and optimised for social previews.",
+      "data": { "score": 92 }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782700026000,
+      "leg": "og_image",
+      "message": "asset submitted for og_image"
+    },
+    {
+      "kind": "compose_started",
+      "at": 1782700027000,
+      "message": "composing the launch kit"
+    },
+    {
+      "kind": "run_completed",
+      "at": 1782700060000,
+      "message": "run run-fixture-001: completed — 3/3 legs, spent $0.70"
+    }
+  ],
+  "assets": [
+    {
+      "leg": "research",
+      "hire": {
+        "leg": "research",
+        "serviceId": "foundr-research",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "orderId": "ord-r1",
+        "chainOrderId": "chain-r1",
+        "priceBaseUnits": "100000",
+        "payTxHash": "0xpayR1abc123",
+        "deliverTxHash": "0xdelR1abc123",
+        "deliverable": {
+          "type": "text",
+          "text": "Market research report: indie dev tool positioning, competitive landscape, pricing anchors.",
+          "contentHash": "0xhashResearch1"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xpayR1abc123",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xdelR1abc123"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "Research is thorough, on-brief, and strategically actionable.",
+        "score": 90
+      },
+      "provenance": {
+        "leg": "research",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xhashResearch1",
+        "payTxHash": "0xpayR1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayR1abc123"
+      }
+    },
+    {
+      "leg": "landing_copy",
+      "hire": {
+        "leg": "landing_copy",
+        "serviceId": "foundr-copy",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "orderId": "ord-c1",
+        "chainOrderId": "chain-c1",
+        "priceBaseUnits": "100000",
+        "payTxHash": "0xpayC1abc123",
+        "deliverTxHash": "0xdelC1abc123",
+        "deliverable": {
+          "type": "text",
+          "text": "Landing copy: headline, subhead, feature bullets, and CTA for the Praeco launch page.",
+          "contentHash": "0xhashCopy1"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xpayC1abc123",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xdelC1abc123"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "Landing copy is tight, on-brief, and speaks the builder audience's language.",
+        "score": 88
+      },
+      "provenance": {
+        "leg": "landing_copy",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xhashCopy1",
+        "payTxHash": "0xpayC1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayC1abc123"
+      }
+    },
+    {
+      "leg": "og_image",
+      "hire": {
+        "leg": "og_image",
+        "serviceId": "pygm-image",
+        "agentId": "a-pygm",
+        "agentName": "Pygm Studio",
+        "orderId": "ord-i1",
+        "chainOrderId": "chain-i1",
+        "priceBaseUnits": "500000",
+        "payTxHash": "0xpayI1abc123",
+        "deliverTxHash": "0xdelI1abc123",
+        "deliverable": {
+          "type": "text",
+          "text": "OG image: 1200x630 dark-theme social preview card for Praeco.",
+          "contentHash": "0xhashImage1"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xpayI1abc123",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xdelI1abc123"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "OG image is on-brand, high quality, and optimised for social previews.",
+        "score": 92
+      },
+      "provenance": {
+        "leg": "og_image",
+        "agentId": "a-pygm",
+        "agentName": "Pygm Studio",
+        "amountUsd": "0.50",
+        "contentHash": "0xhashImage1",
+        "payTxHash": "0xpayI1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayI1abc123"
+      }
+    }
+  ],
+  "kit": {
+    "landingCopy": "Headline: Praeco — your on-chain launch general contractor.\nSubhead: Hire verified AI agents on Base, assemble research, copy, and imagery in one autonomous run.\n\nFeatures:\n- On-chain provenance for every deliverable\n- Parallel agent procurement across research, copy, and image legs\n- Verifiable spend and receipts on Basescan",
+    "ogImageRef": "hash:0xhashImage1",
+    "tweetThread": [
+      "Shipping a product? Praeco hires the best AI agents on-chain so you don't have to. Research, landing copy, OG image — one run, verifiable receipts.",
+      "Every deliverable is backed by an on-chain payment receipt on Base. No black-box AI — you can verify exactly who did the work and what you paid.",
+      "Built for indie founders who ship fast and want provable quality. Try Praeco and see your launch kit assembled autonomously in under 60 seconds."
+    ],
+    "shortPitch": "The AI-powered general contractor that ships your launch kit on-chain.",
+    "phHnBlurb": "Show HN: Praeco — hire on-chain AI agents to research, write, and design your launch kit autonomously",
+    "readmePolish": "# Praeco\n\n> The AI-powered general contractor that ships your launch kit on-chain.\n\nPraeco autonomously hires verified agents on the CAP marketplace (Base network) to produce research, landing copy, and OG imagery for your product launch — with verifiable on-chain provenance for every deliverable.",
+    "provenance": [
+      {
+        "leg": "research",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xhashResearch1",
+        "payTxHash": "0xpayR1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayR1abc123"
+      },
+      {
+        "leg": "landing_copy",
+        "agentId": "a-foundr",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xhashCopy1",
+        "payTxHash": "0xpayC1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayC1abc123"
+      },
+      {
+        "leg": "og_image",
+        "agentId": "a-pygm",
+        "agentName": "Pygm Studio",
+        "amountUsd": "0.50",
+        "contentHash": "0xhashImage1",
+        "payTxHash": "0xpayI1abc123",
+        "basescanUrl": "https://basescan.org/tx/0xpayI1abc123"
+      }
+    ]
+  }
+}
