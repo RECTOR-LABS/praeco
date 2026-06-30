@@ -1,7 +1,12 @@
 // @vitest-environment jsdom
 import { render, screen } from "@testing-library/react";
 import Landing from "./page";
-test("landing renders the brand", () => {
-  render(<Landing />);
+
+vi.mock("@/server/persistence", () => ({
+  listRecords: vi.fn(async () => []),
+}));
+
+test("landing renders the brand", async () => {
+  render(await Landing());
   expect(screen.getByRole("heading", { name: "Praeco" })).toBeInTheDocument();
 });
