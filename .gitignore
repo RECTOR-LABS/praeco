@@ -3,4 +3,8 @@ dist
 .env
 *.log
 .DS_Store
-runs/
+/runs/
+.superpowers/
+.next/
+/data/
+tsconfig.tsbuildinfo
