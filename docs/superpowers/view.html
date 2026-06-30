@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Praeco — Doc</title>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+<style>
+  :root { color-scheme: dark; }
+  body { background:#0d1117; color:#c9d1d9; font:16px/1.65 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif; margin:0; }
+  main { max-width:880px; margin:0 auto; padding:48px 24px 140px; }
+  h1,h2,h3,h4 { color:#e6edf3; line-height:1.25; margin-top:1.8em; }
+  h1,h2 { border-bottom:1px solid #21262d; padding-bottom:.3em; }
+  a { color:#58a6ff; }
+  code { background:#161b22; padding:.2em .4em; border-radius:6px; font-size:.88em; font-family:"SF Mono",ui-monospace,Menlo,Consolas,monospace; }
+  pre { background:#161b22; border:1px solid #21262d; border-radius:10px; padding:16px; overflow:auto; }
+  pre code { background:none; padding:0; font-size:.85em; line-height:1.5; }
+  table { border-collapse:collapse; margin:1em 0; display:block; overflow:auto; }
+  th,td { border:1px solid #30363d; padding:6px 13px; }
+  th { background:#161b22; }
+  tr:nth-child(2n) { background:#0f141a; }
+  blockquote { border-left:3px solid #30363d; margin:1em 0; padding:.2em 1em; color:#8b949e; }
+  hr { border:0; border-top:1px solid #21262d; margin:2em 0; }
+  ul,ol { padding-left:1.4em; }
+  li { margin:.3em 0; }
+  input[type=checkbox]{ margin-right:.5em; }
+  .docbar{position:fixed;top:0;left:0;right:0;background:#0a0e14;border-bottom:1px solid #21262d;padding:8px 18px;font:12px/1 "SF Mono",ui-monospace,monospace;color:#7d8aa0;z-index:10}
+  .docbar b{color:#56d364}
+</style>
+</head>
+<body>
+<div class="docbar"><b>praeco</b> · <span id="fname"></span></div>
+<main id="content">Loading…</main>
+<script>
+  const file = new URLSearchParams(location.search).get('file') || 'specs/2026-06-27-praeco-design.md';
+  const base = file.split('/').pop().replace(/\.md$/, '');
+  document.title = 'Praeco — ' + base;
+  document.getElementById('fname').textContent = file;
+  fetch(file)
+    .then(r => { if (!r.ok) throw new Error(r.status + ' — ' + file); return r.text(); })
+    .then(md => { document.getElementById('content').innerHTML = marked.parse(md); })
+    .catch(e => { document.getElementById('content').textContent = 'Error: ' + e; });
+</script>
+</body>
+</html>

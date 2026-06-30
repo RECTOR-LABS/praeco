@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Praeco — Phase 0 Plan</title>
+<style>
+  *{box-sizing:border-box;margin:0;padding:0}
+  :root{
+    --bg:#080b11; --panel:#0f141c; --line:#222b38; --line2:#30363d;
+    --txt:#c4cdd9; --dim:#7d8aa0; --head:#eef3fa;
+    --acc:#56d364; --acc2:#9af2a0; --warn:#e3b341;
+    --mono:"SF Mono",ui-monospace,Menlo,Consolas,monospace;
+    --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+  }
+  html,body{height:100%}
+  body{
+    background:var(--bg); color:var(--txt); font-family:var(--sans); overflow:hidden;
+    background-image:radial-gradient(900px 600px at 78% -10%, rgba(86,211,100,.10), transparent 60%),
+                     radial-gradient(700px 500px at 0% 110%, rgba(86,211,100,.06), transparent 55%);
+  }
+  #bar{position:fixed;top:0;left:0;height:3px;background:var(--acc);width:0;z-index:30;transition:width .35s ease;box-shadow:0 0 12px var(--acc)}
+  .wm{position:fixed;left:34px;bottom:26px;font-family:var(--mono);font-size:13px;letter-spacing:.18em;color:var(--dim);z-index:20}
+  .wm b{color:var(--acc)}
+  .count{position:fixed;right:34px;bottom:26px;font-family:var(--mono);font-size:13px;color:var(--dim);z-index:20}
+  #dots{position:fixed;right:30px;top:50%;transform:translateY(-50%);display:flex;flex-direction:column;gap:9px;z-index:20}
+  #dots button{width:8px;height:8px;border-radius:50%;border:0;background:#2a3340;cursor:pointer;padding:0;transition:.2s}
+  #dots button.on{background:var(--acc);box-shadow:0 0 8px var(--acc);transform:scale(1.25)}
+  #stage{position:relative;height:100vh;width:100vw}
+  .slide{position:absolute;inset:0;display:flex;flex-direction:column;justify-content:center;
+    padding:6vh 9vw;opacity:0;visibility:hidden;transform:translateY(22px);
+    transition:opacity .5s ease,transform .5s ease}
+  .slide.active{opacity:1;visibility:visible;transform:none}
+  .eyebrow{font-family:var(--mono);font-size:13px;letter-spacing:.22em;color:var(--acc);margin-bottom:18px;text-transform:uppercase}
+  h1{font-size:clamp(40px,7vw,86px);color:var(--head);line-height:1.02;letter-spacing:-.02em}
+  h2{font-size:clamp(28px,4.4vw,52px);color:var(--head);line-height:1.08;letter-spacing:-.015em;margin-bottom:22px}
+  .lead{font-size:clamp(18px,2.2vw,26px);color:var(--txt);max-width:60ch;line-height:1.5}
+  .big-quote{font-size:clamp(22px,3.2vw,40px);color:var(--head);max-width:26ch;line-height:1.22;font-weight:600}
+  .big-quote .g{color:var(--acc)}
+  .sub{color:var(--dim);font-size:clamp(15px,1.6vw,19px);margin-top:18px;max-width:62ch;line-height:1.55}
+  .meta{margin-top:38px;font-family:var(--mono);font-size:13px;color:var(--dim);letter-spacing:.04em}
+  .meta b{color:var(--acc2)}
+  ul.clean{list-style:none;display:flex;flex-direction:column;gap:13px;margin-top:8px}
+  ul.clean li{font-size:clamp(16px,1.85vw,21px);line-height:1.4;padding-left:30px;position:relative;color:var(--txt)}
+  ul.clean li .num{position:absolute;left:0;top:0;font-family:var(--mono);font-size:.8em;color:var(--acc)}
+  ul.clean li::marker{content:""}
+  ul.clean li b{color:var(--head)}
+  ul.clean li .you{color:var(--warn);font-family:var(--mono);font-size:.7em;letter-spacing:.1em;border:1px solid var(--line2);border-radius:4px;padding:1px 6px;margin-left:6px}
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:18px 20px}
+  .card h3{color:var(--head);font-size:clamp(15px,1.7vw,19px);margin-bottom:6px}
+  .card h3.warn{color:var(--warn)}
+  .card p{color:var(--dim);font-size:clamp(13px,1.4vw,15px);line-height:1.5}
+  .card code{font-family:var(--mono);color:var(--acc2);font-size:.9em}
+  .pill{display:inline-block;font-family:var(--mono);font-size:12px;color:var(--acc);border:1px solid var(--line2);border-radius:999px;padding:5px 12px;margin:6px 8px 0 0}
+  .flow{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:18px;font-family:var(--mono);font-size:clamp(12px,1.4vw,15px)}
+  .flow span{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px 12px;color:var(--txt)}
+  .flow i{color:var(--acc);font-style:normal}
+  .note{margin-top:26px;color:var(--dim);font-size:14px;border-left:2px solid var(--acc);padding-left:14px;max-width:60ch;line-height:1.5}
+  .kept{color:var(--acc)}
+</style>
+</head>
+<body>
+<div id="bar"></div>
+<div class="wm"><b>praeco</b> · phase 0 plan</div>
+<div class="count" id="count">01 / 09</div>
+<div id="dots"></div>
+<div id="stage">
+
+  <section class="slide active">
+    <div class="eyebrow">Implementation Plan · Phase 0</div>
+    <h1>Phase&nbsp;0</h1>
+    <p class="lead" style="margin-top:22px">De-risk + Foundation.</p>
+    <p class="big-quote" style="margin-top:16px">Prove the whole stack works end-to-end <span class="g">before</span> we build the engine.</p>
+    <div class="meta">~2 days · 7 tasks · gates Phase 1 · deadline <b>Jul 9</b></div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">01 · Why de-risk first</div>
+    <h2>Verify reality, then plan detail.</h2>
+    <p class="lead">The spec has <b style="color:var(--head)">8 open questions</b> — testnet vs mainnet? listing fee? does the SDK search the marketplace? is reputation data queryable? — that directly shape the engine.</p>
+    <p class="sub">Answer them with real smoke tests first, so Phase-1 code isn't built on guesses (or invented APIs).</p>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">02 · Definition of done</div>
+    <h2>Three proofs.</h2>
+    <ul class="clean">
+      <li><span class="num">✓</span> A real CAP hire <b>settles USDC on Base</b> — with a Basescan receipt</li>
+      <li><span class="num">✓</span> <b>GLM-5.2 via Pi SDK</b> generates text, JSON, and tool-calls</li>
+      <li><span class="num">✓</span> A <b>FINDINGS doc</b> answers every open question → Phase 1 unblocked</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">03 · Seven tasks</div>
+    <ul class="clean">
+      <li><span class="num">1</span> Repo skeleton — TS / pnpm / vitest, MIT license, config loader</li>
+      <li><span class="num">2</span> CROO dashboard: agent + service → key + funded wallet <span class="you">YOU</span></li>
+      <li><span class="num">3</span> GLM-5.2 smoke via <b>pi-ai</b></li>
+      <li><span class="num">4</span> CAP connect smoke (auth + WebSocket)</li>
+      <li><span class="num">5</span> Discovery — resolve serviceIds + reputation source</li>
+      <li><span class="num">6</span> <b>Real hire + settle</b> on Base — the core de-risk</li>
+      <li><span class="num">7</span> FINDINGS doc → gate Phase 1</li>
+    </ul>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">04 · Stack (verified)</div>
+    <h2>One LLM, two SDKs.</h2>
+    <div>
+      <span class="pill">TypeScript</span><span class="pill">Node ≥22.19</span><span class="pill">pnpm</span><span class="pill">vitest</span><span class="pill">@earendil-works/pi-ai</span><span class="pill">GLM-5.2:cloud</span><span class="pill">@croo-network/sdk</span><span class="pill">Base · USDC</span>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">05 · Already confirmed (the APIs)</div>
+    <div class="grid2">
+      <div class="card"><h3>CAP hire flow</h3><p><code>negotiateOrder</code> → on <code>OrderCreated</code> → <code>payOrder</code> (txHash) → <code>getDelivery</code></p></div>
+      <div class="card"><h3>Pi SDK LLM</h3><p><code>complete({provider, model:"glm-5.2:cloud", messages, tools})</code> → <code>{text, toolCalls}</code></p></div>
+      <div class="card"><h3 class="warn">⚠ No marketplace search</h3><p>SDK needs a known <code>serviceId</code> → use CAP MCP <code>marketplace.search</code> or a curated roster.</p></div>
+      <div class="card"><h3 class="warn">⚠ Registration = dashboard</h3><p>Agent + service + SDK key are created in the CROO dashboard, not in code.</p></div>
+    </div>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">06 · Your inputs (RECTOR)</div>
+    <h2>Three things to unblock Tasks 3–6.</h2>
+    <ul class="clean">
+      <li><span class="num">→</span> CROO dashboard: create the <b>Praeco</b> agent + a service → <code style="font-family:var(--mono);color:var(--acc2)">CROO_SDK_KEY</code> + AA wallet</li>
+      <li><span class="num">→</span> Fund the AA wallet with <b>~$5 USDC</b> on Base</li>
+      <li><span class="num">→</span> Your <b>Ollama Cloud API key</b></li>
+    </ul>
+    <p class="note">I scaffold Task 1 immediately — no keys needed. These unblock the rest.</p>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">07 · The core de-risk · Task 6</div>
+    <p class="big-quote">One real hire — pay an agent <span class="g">$0.10</span>, get the delivery, settle on Base, capture the receipt.</p>
+    <div class="flow">
+      <span>negotiateOrder</span><i>→</i><span>OrderCreated</span><i>→</i><span>payOrder · txHash</span><i>→</i><span>OrderCompleted</span><i>→</i><span>getDelivery</span>
+    </div>
+    <p class="note">If that one trace works, the whole thesis holds — for ~$0.10 and a few hours. Testnet first if available; else a tiny authorized mainnet order.</p>
+  </section>
+
+  <section class="slide">
+    <div class="eyebrow">Phase 0 → Phase 1</div>
+    <p class="big-quote">Prove it, <span class="g">then</span> build the engine.</p>
+    <div class="meta">Next phases: engine → doors → traction → submit · deadline <b>Jul 9</b></div>
+  </section>
+
+</div>
+<script>
+  const slides=[...document.querySelectorAll('.slide')];
+  const dotsWrap=document.getElementById('dots');
+  const bar=document.getElementById('bar');
+  const count=document.getElementById('count');
+  let i=0;
+  slides.forEach((_,k)=>{const b=document.createElement('button');b.onclick=()=>go(k);dotsWrap.appendChild(b);});
+  const dots=[...dotsWrap.children];
+  const pad=n=>String(n).padStart(2,'0');
+  function go(n){
+    i=Math.max(0,Math.min(slides.length-1,n));
+    slides.forEach((s,k)=>s.classList.toggle('active',k===i));
+    dots.forEach((d,k)=>d.classList.toggle('on',k===i));
+    bar.style.width=(i/(slides.length-1)*100)+'%';
+    count.textContent=pad(i+1)+' / '+pad(slides.length);
+  }
+  function next(){go(i+1)} function prev(){go(i-1)}
+  addEventListener('keydown',e=>{
+    if(['ArrowRight','ArrowDown',' ','PageDown'].includes(e.key)){e.preventDefault();next();}
+    else if(['ArrowLeft','ArrowUp','PageUp'].includes(e.key)){e.preventDefault();prev();}
+    else if(e.key==='Home'){go(0);} else if(e.key==='End'){go(slides.length-1);}
+  });
+  addEventListener('click',e=>{ if(e.target.closest('#dots'))return; (e.clientX>innerWidth*0.4)?next():prev(); });
+  go(0);
+</script>
+</body>
+</html>

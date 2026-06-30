@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="512" height="512" viewBox="0 0 512 512">
+  <defs>
+    <linearGradient id="g" gradientUnits="userSpaceOnUse" x1="150" y1="120" x2="356" y2="396">
+      <stop offset="0" stop-color="#56d364"/>
+      <stop offset="1" stop-color="#9af2a0"/>
+    </linearGradient>
+  </defs>
+  <rect width="512" height="512" rx="116" fill="#0d1117"/>
+  <!-- bowl -->
+  <rect x="150" y="120" width="206" height="156" rx="78" fill="url(#g)"/>
+  <!-- stem -->
+  <rect x="150" y="120" width="80" height="276" rx="22" fill="url(#g)"/>
+  <!-- counter (carves the loop, matches bg) -->
+  <rect x="226" y="166" width="92" height="64" rx="32" fill="#0d1117"/>
+</svg>
