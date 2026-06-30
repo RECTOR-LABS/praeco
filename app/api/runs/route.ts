@@ -7,7 +7,10 @@ export const dynamic = "force-dynamic";
 
 export async function POST(req: NextRequest) {
   try {
-    const body = parseStartRequest(await req.json());
+    let raw: unknown;
+    try { raw = await req.json(); }
+    catch { return NextResponse.json({ error: "invalid JSON body" }, { status: 400 }); }
+    const body = parseStartRequest(raw);
     const res = await startRun(body, req.headers);
     return NextResponse.json(res);
   } catch (e) {

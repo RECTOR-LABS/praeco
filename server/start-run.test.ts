@@ -31,4 +31,8 @@ it("publishes an error event and fails the run when the runner rejects", async (
   const run = hub.get(runId)!;
   expect(run.status).toBe("error");
   expect(run.buffer.some((e) => e.event === "error")).toBe(true);
+  expect(run.buffer.some((e) => e.event === "run_aborted")).toBe(true);
+});
+it("rejects mode:replay with status 400 (replay is GET-only)", async () => {
+  await expect(startRun({ mode: "replay", text: "x" }, new Headers())).rejects.toMatchObject({ status: 400 });
 });

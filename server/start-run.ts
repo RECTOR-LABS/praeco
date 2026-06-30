@@ -3,7 +3,7 @@ import type { IntakeInput } from "@/src/engine/intake";
 import { runLaunchJob } from "@/src/engine/run";
 import type { StartRunRequest, StartRunResponse, RunMode } from "./types.js";
 import { hub } from "./run-hub.js";
-import { assertLiveAllowed, assertCapacity } from "./gating.js";
+import { assertLiveAllowed, assertCapacity, GateError } from "./gating.js";
 import { buildSandboxDeps, buildLiveDeps } from "./engine-deps.js";
 
 export type Runner = (runId: string, mode: RunMode, input: IntakeInput, onEvent: (e: WorklogEvent) => void) => Promise<RunRecord>;
@@ -21,6 +21,7 @@ export async function startRun(
   headers: Headers,
   opts: { runner?: Runner } = {},
 ): Promise<StartRunResponse> {
+  if (req.mode === "replay") throw new GateError("replay is read-only — use GET /api/runs/:id/stream", 400);
   if (req.mode === "live") assertLiveAllowed(headers);
   assertCapacity(hub.activeCount(req.mode), req.mode);
 
@@ -35,6 +36,7 @@ export async function startRun(
     .then((rec) => hub.finish(runId, rec))
     .catch((err) => {
       hub.publish(runId, { kind: "error", at: Date.now(), message: `run failed: ${(err as Error).message}` });
+      hub.publish(runId, { kind: "run_aborted", at: Date.now(), message: `run ${runId} aborted` });
       hub.fail(runId);
     });
 

@@ -20,6 +20,18 @@ it("captures the product and thinking narration", () => {
   expect(s.product).toBeTruthy();
   expect(s.thinking.length).toBeGreaterThan(0);
 });
+it("hire_paid is idempotent — feeding the same event twice yields ledger.length === 1 and single spend", () => {
+  const pay: WorklogEvent = { kind: "hire_paid", at: 3, leg: "landing_copy", message: "paid", data: { orderId: "o1", payTxHash: "0xdupe" } };
+  const seq: WorklogEvent[] = [
+    { kind: "hire_negotiating", at: 1, leg: "landing_copy", message: "negotiating DupeAgent (svc-1)", data: { negotiationId: "n1" } },
+    { kind: "hire_order_created", at: 2, leg: "landing_copy", message: "order o1 created", data: { orderId: "o1", price: "100000" } },
+    pay,
+    pay, // duplicate — same payTxHash → must be deduped
+  ];
+  const s = seq.reduce(theaterReducer, initialTheaterState());
+  expect(s.ledger).toHaveLength(1);
+  expect(s.spentUsd).toBe("0.10"); // single amount, not doubled
+});
 it("marks a leg blocked on a QA swap/redo (verdict word lives in the message; paid leg still bills)", () => {
   const seq: WorklogEvent[] = [
     { kind: "hire_negotiating", at: 1, leg: "landing_copy", message: "negotiating Pygm Studio (mock-copy)", data: { negotiationId: "n1" } },

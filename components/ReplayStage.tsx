@@ -1,7 +1,6 @@
 "use client";
 import { useState } from "react";
-import { useRunStream } from "@/components/theater/useRunStream";
-import { Theater } from "@/components/theater/Theater";
+import { TheaterStream } from "@/components/theater/TheaterStream";
 
 type Speed = "1" | "4" | "max";
 
@@ -9,7 +8,6 @@ const SPEED_LABELS: Record<Speed, string> = { "1": "1×", "4": "4×", max: "Skip
 
 export function ReplayStage({ runId }: { runId: string }) {
   const [speed, setSpeed] = useState<Speed>("1");
-  const state = useRunStream(runId, { speed });
 
   return (
     <div>
@@ -30,7 +28,7 @@ export function ReplayStage({ runId }: { runId: string }) {
           </button>
         ))}
       </div>
-      <Theater state={state} />
+      <TheaterStream key={speed} runId={runId} speed={speed} />
     </div>
   );
 }

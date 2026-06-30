@@ -49,7 +49,7 @@ export function theaterReducer(s: TheaterState, e: WorklogEvent): TheaterState {
     case "hire_paid": // data: { orderId, payTxHash } — build the receipt from the tx hash
       lane.phase = "paid";
       if (typeof d.payTxHash === "string") lane.basescanUrl = `https://basescan.org/tx/${d.payTxHash}`;
-      if (lane.agentName && lane.amountUsd && lane.basescanUrl)
+      if (lane.agentName && lane.amountUsd && lane.basescanUrl && !s.ledger.some((e) => e.basescanUrl === lane.basescanUrl))
         ledger = [...s.ledger, { agentName: lane.agentName, amountUsd: lane.amountUsd, basescanUrl: lane.basescanUrl }];
       break;
     case "qa_verdict": { // data: { score }; verdict word is in the message ("QA accept|redo|swap: …")
