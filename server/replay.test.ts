@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { it, expect } from "vitest";
 import type { RunRecord, WorklogEvent } from "@/src/types";
 import { replayDelays, replayStream } from "./replay.js";
 
@@ -20,4 +20,17 @@ it("replayStream yields monotonic ids in order", async () => {
   for await (const e of replayStream(rec, "max", async () => {})) { ids.push(e.id); kinds.push(e.event); }
   expect(ids).toEqual([1, 2, 3]);
   expect(kinds).toEqual(["run_started", "intake_done", "hire_paid"]);
+});
+
+const wl4: WorklogEvent[] = [
+  { kind: "run_started", at: 1000, message: "a" },
+  { kind: "intake_done", at: 1050, message: "b" },
+  { kind: "hire_paid", at: 9000, message: "c" },
+  { kind: "run_completed", at: 9010, message: "d" },
+];
+it("fromEventId skips already-seen events on reconnect", async () => {
+  const rec = { worklog: wl4 } as RunRecord;
+  const ids: number[] = [];
+  for await (const e of replayStream(rec, "max", async () => {}, 2)) { ids.push(e.id); }
+  expect(ids).toEqual([3, 4]);
 });

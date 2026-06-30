@@ -29,7 +29,7 @@ export function theaterReducer(s: TheaterState, e: WorklogEvent): TheaterState {
   if (e.kind === "intake_done") return { ...s, product: (d.oneLiner as string) ?? s.product };
   if (e.kind === "agent_step") return d.tool ? s : { ...s, thinking: [...s.thinking, e.message] };
   if (e.kind === "run_completed") return { ...s, status: "completed", endedAt: e.at };
-  if (e.kind === "run_aborted") return { ...s, status: s.ledger.length ? "partial" : "aborted", endedAt: e.at };
+  if (e.kind === "run_aborted") return { ...s, status: s.status === "failed" ? "failed" : (s.ledger.length ? "partial" : "aborted"), endedAt: e.at };
   if (e.kind === "error" && e.leg == null) return { ...s, status: s.status === "running" ? "failed" : s.status };
 
   const leg = e.leg as LegKind | undefined;

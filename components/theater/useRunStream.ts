@@ -9,7 +9,7 @@ export function useRunStream(runId: string, opts: { speed?: "1" | "4" | "max" } 
     const qs = opts.speed ? `?speed=${opts.speed}` : "";
     const es = new EventSource(`/api/runs/${runId}/stream${qs}`);
     const handler = (ev: MessageEvent) => {
-      try { dispatch(JSON.parse(ev.data) as WorklogEvent); } catch {}
+      try { dispatch(JSON.parse(ev.data) as WorklogEvent); } catch (err) { console.warn("[theater] dropped malformed SSE event", err); }
     };
     const kinds = [
       "run_started", "intake_done", "leg_search", "leg_candidate",

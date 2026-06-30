@@ -1,4 +1,4 @@
-import { describe, it, expect, beforeEach } from "vitest";
+import { it, expect, beforeEach } from "vitest";
 import { buildSandboxDeps } from "./engine-deps.js";
 
 beforeEach(() => {

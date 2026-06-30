@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { Play, Lock } from "lucide-react";
 import { listRecords } from "@/server/persistence";
 import { baseUnitsToUsd } from "@/src/constants";
 
@@ -21,7 +22,7 @@ export default async function Landing() {
             href={watchHref}
             className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/20 transition-colors"
           >
-            ▶ Watch a run
+            <Play size={16} aria-hidden /> Watch a run
           </Link>
           <Link
             href="/intake?mode=sandbox"
@@ -33,7 +34,7 @@ export default async function Landing() {
             href="/intake?mode=live"
             className="inline-flex items-center gap-2 rounded-lg border border-white/20 px-5 py-2.5 text-sm font-medium text-white hover:bg-white/5 transition-colors"
           >
-            Run live ⚿
+            <Lock size={16} aria-hidden /> Run live
           </Link>
         </div>
       </section>

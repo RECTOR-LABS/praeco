@@ -1,6 +1,7 @@
 import type { LaneState, Phase } from "./reducer";
-import { CheckCircle2, AlertCircle, ExternalLink, User } from "lucide-react";
+import { AlertCircle, User } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { BasescanLink } from "./BasescanLink";
 
 const LEG_LABEL: Record<string, string> = {
   research:     "Research",
@@ -99,18 +100,7 @@ export function Lane({ lane }: { lane: LaneState }) {
       )}
 
       {/* In-lane Basescan receipt chip */}
-      {lane.basescanUrl && (
-        <a
-          href={lane.basescanUrl}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
-        >
-          <CheckCircle2 className="h-3 w-3" />
-          Receipt
-          <ExternalLink className="h-3 w-3" />
-        </a>
-      )}
+      {lane.basescanUrl && <BasescanLink href={lane.basescanUrl} label="Receipt" />}
     </div>
   );
 }

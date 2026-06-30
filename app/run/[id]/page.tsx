@@ -15,7 +15,7 @@ export default function TheaterPage({
   return (
     <main className="min-h-screen bg-gray-950 text-white">
       <Theater state={state} />
-      {state.status !== "running" && (
+      {(state.status === "completed" || state.status === "partial") && (
         <div className="py-8 text-center">
           <Link
             href={`/kit/${id}`}

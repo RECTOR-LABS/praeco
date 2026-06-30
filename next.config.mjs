@@ -1,6 +1,5 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: "standalone",
   // Engine source uses NodeNext-style ".js" import specifiers that point at ".ts"
   // files. Teach webpack to resolve them, and keep the native/server SDKs out of
   // the bundle (they must run in Node, never the client).

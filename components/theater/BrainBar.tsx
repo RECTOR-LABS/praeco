@@ -1,3 +1,4 @@
+import type { FC } from "react";
 import type { TheaterState } from "./reducer";
 import { Activity, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -8,7 +9,7 @@ const STATUS_CONFIG = {
   partial:   { label: "Partial",   color: "text-yellow-400",  Icon: AlertCircle },
   aborted:   { label: "Aborted",   color: "text-gray-400",    Icon: XCircle },
   failed:    { label: "Failed",    color: "text-red-400",     Icon: XCircle },
-} as const satisfies Record<TheaterState["status"], { label: string; color: string; Icon: React.FC<{ className?: string }> }>;
+} as const satisfies Record<TheaterState["status"], { label: string; color: string; Icon: FC<{ className?: string }> }>;
 
 function elapsedLabel(startedAt?: number, endedAt?: number): string {
   if (!startedAt) return "—";

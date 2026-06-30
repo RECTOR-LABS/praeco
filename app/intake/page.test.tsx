@@ -3,8 +3,10 @@ import { render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import Intake from "./page";
 
+const mockPush = vi.fn();
+
 vi.mock("next/navigation", () => ({
-  useRouter: () => ({ push: vi.fn() }),
+  useRouter: () => ({ push: mockPush }),
   useSearchParams: () => new URLSearchParams(),
 }));
 
@@ -29,4 +31,5 @@ it("posts a sandbox run and routes to the theater", async () => {
       body: JSON.stringify({ mode: "sandbox", repoUrl: "https://github.com/a/b" }),
     }),
   );
+  expect(mockPush).toHaveBeenCalledWith("/run/run-1");
 });

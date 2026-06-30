@@ -34,7 +34,7 @@ Run from the repo root with the real `.env` present:
 while IFS='=' read -r key val; do
   case "$key" in
     CROO_API_URL|CROO_WS_URL|CROO_SDK_KEY|BASE_RPC_URL|OLLAMA_API_KEY|OLLAMA_BASE_URL|PRAECO_AGENT_ID|PRAECO_AGENT_WALLET)
-      printf '%s' "$val" | railway variable set --stdin "$key" --service praeco-web --skip-deploys >/dev/null && echo "set $key" ;;
+      printf '%s' "$val" | railway variable set --stdin "$key" --service praeco-web --skip-deploys >/dev/null 2>&1 && echo "set $key" || echo "FAILED $key (check the value/CLI)" ;;
   esac
 done < .env
 railway variable set RUNS_DIR=/data/runs NODE_ENV=production --service praeco-web --skip-deploys

@@ -1,4 +1,4 @@
-import { describe, it, expect } from "vitest";
+import { it, expect } from "vitest";
 import type { RunRecord, WorklogEvent } from "@/src/types";
 import fixture from "@/test/fixtures/run-completed.json";
 import { initialTheaterState, theaterReducer } from "./reducer.js";
@@ -10,6 +10,7 @@ it("advances each lane to accepted and sums spend", () => {
   const s = fold();
   expect(s.lanes.research.phase).toBe("accepted");
   expect(s.lanes.og_image.phase).toBe("accepted");
+  expect(s.lanes.landing_copy.phase).toBe("accepted");
   expect(s.status).toBe("completed");
   expect(s.spentUsd).toBe("0.70");
   expect(s.ledger).toHaveLength(3);
@@ -31,6 +32,15 @@ it("hire_paid is idempotent — feeding the same event twice yields ledger.lengt
   const s = seq.reduce(theaterReducer, initialTheaterState());
   expect(s.ledger).toHaveLength(1);
   expect(s.spentUsd).toBe("0.10"); // single amount, not doubled
+});
+it("run_aborted after a legless error preserves failed status", () => {
+  const seq: WorklogEvent[] = [
+    { kind: "run_started", at: 1, message: "started" },
+    { kind: "error", at: 2, message: "fatal: no legs available" },
+    { kind: "run_aborted", at: 3, message: "aborted" },
+  ];
+  const s = seq.reduce(theaterReducer, initialTheaterState());
+  expect(s.status).toBe("failed");
 });
 it("marks a leg blocked on a QA swap/redo (verdict word lives in the message; paid leg still bills)", () => {
   const seq: WorklogEvent[] = [

@@ -2,7 +2,14 @@
 
 import type { LaunchKit, ProvenanceCard } from "@/src/types";
 import { cn } from "@/lib/utils";
-import { Copy, Download, ExternalLink, FileImage } from "lucide-react";
+import { Copy, Download, FileImage } from "lucide-react";
+import { BasescanLink } from "@/components/theater/BasescanLink";
+
+function copyToClipboard(text: string) {
+  navigator.clipboard
+    .writeText(text)
+    .catch((err) => console.warn("[kit] clipboard write failed", err));
+}
 
 function SectionHeader({ label, onCopy }: { label: string; onCopy?: () => void }) {
   return (
@@ -41,27 +48,13 @@ function ProvenanceCardItem({ card }: { card: ProvenanceCard }) {
           {card.contentHash}
         </span>
       </div>
-      <a
-        href={card.basescanUrl}
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20"
-      >
-        <ExternalLink className="h-3 w-3" />
-        Basescan receipt
-      </a>
+      <BasescanLink href={card.basescanUrl} label="Basescan receipt" />
     </div>
   );
 }
 
 export function KitView({ kit }: { kit: LaunchKit }) {
   const isRealImage = /^https?:\/\//.test(kit.ogImageRef);
-
-  function copyToClipboard(text: string) {
-    navigator.clipboard.writeText(text).catch(() => {
-      /* silently ignore — clipboard may be unavailable in non-secure contexts */
-    });
-  }
 
   function downloadJson() {
     const blob = new Blob([JSON.stringify(kit, null, 2)], { type: "application/json" });
@@ -75,7 +68,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
 
   return (
     <div className="space-y-6 p-4">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-white">Launch Kit</h2>
         <button
@@ -88,7 +80,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </button>
       </div>
 
-      {/* OG Image */}
       <section className="space-y-2">
         <SectionHeader label="OG Image" />
         {isRealImage ? (
@@ -111,7 +102,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         )}
       </section>
 
-      {/* Short Pitch */}
       <section className="space-y-2">
         <SectionHeader label="Short Pitch" onCopy={() => copyToClipboard(kit.shortPitch)} />
         <p className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed">
@@ -119,7 +109,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </p>
       </section>
 
-      {/* Landing Copy */}
       <section className="space-y-2">
         <SectionHeader label="Landing Copy" onCopy={() => copyToClipboard(kit.landingCopy)} />
         <pre className="whitespace-pre-wrap rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed font-sans">
@@ -127,7 +116,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </pre>
       </section>
 
-      {/* PH / HN Blurb */}
       <section className="space-y-2">
         <SectionHeader label="PH / HN Blurb" onCopy={() => copyToClipboard(kit.phHnBlurb)} />
         <p className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed">
@@ -135,7 +123,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </p>
       </section>
 
-      {/* Tweet Thread */}
       <section className="space-y-2">
         <SectionHeader label="Tweet Thread" />
         <div className="space-y-2">
@@ -156,7 +143,6 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </div>
       </section>
 
-      {/* README Polish */}
       <section className="space-y-2">
         <SectionHeader label="README Polish" onCopy={() => copyToClipboard(kit.readmePolish)} />
         <pre className="whitespace-pre-wrap rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed font-sans">
@@ -164,13 +150,12 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         </pre>
       </section>
 
-      {/* Provenance */}
       {kit.provenance.length > 0 && (
         <section className="space-y-2">
           <SectionHeader label="Provenance" />
           <div className="space-y-2">
-            {kit.provenance.map((card, i) => (
-              <ProvenanceCardItem key={i} card={card} />
+            {kit.provenance.map((card) => (
+              <ProvenanceCardItem key={card.payTxHash} card={card} />
             ))}
           </div>
         </section>

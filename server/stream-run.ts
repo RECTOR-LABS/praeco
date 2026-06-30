@@ -36,7 +36,7 @@ export function streamRun(runId: string, opts: { lastEventId?: number; speed?: "
           controller.enqueue(enc.encode(sseFrame({ id: 1, event: "error", data: { kind: "error", at: Date.now(), message: `no run ${runId}` } })));
           controller.close(); return;
         }
-        for await (const e of replayStream(rec, opts.speed ?? "1")) {
+        for await (const e of replayStream(rec, opts.speed ?? "1", undefined, opts.lastEventId ?? 0)) {
           if (cancelled) break;
           controller.enqueue(enc.encode(sseFrame(e)));
         }

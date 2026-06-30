@@ -1,5 +1,5 @@
 import type { LedgerEntry } from "./reducer";
-import { ExternalLink, Receipt } from "lucide-react";
+import { BasescanLink } from "./BasescanLink";
 
 export function MoneyLedger({ entries }: { entries: LedgerEntry[] }) {
   if (entries.length === 0) return null;
@@ -9,21 +9,16 @@ export function MoneyLedger({ entries }: { entries: LedgerEntry[] }) {
         On-chain receipts
       </h3>
       <ul className="divide-y divide-white/5">
-        {entries.map((entry, i) => (
-          <li key={i} className="flex items-center justify-between gap-4 py-2 text-sm">
+        {entries.map((entry) => (
+          <li key={entry.basescanUrl} className="flex items-center justify-between gap-4 py-2 text-sm">
             <span className="font-medium text-gray-200">{entry.agentName}</span>
             <div className="flex items-center gap-3">
               <span className="font-semibold text-emerald-400">${entry.amountUsd}</span>
-              <a
+              <BasescanLink
                 href={entry.basescanUrl}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-xs text-blue-400 transition-colors hover:text-blue-300"
-              >
-                <Receipt className="h-3 w-3" />
-                Basescan ✓
-                <ExternalLink className="h-3 w-3" />
-              </a>
+                label="Basescan"
+                className="border-0 bg-transparent px-0 py-0 text-blue-400 hover:bg-transparent hover:text-blue-300"
+              />
             </div>
           </li>
         ))}
