@@ -14,34 +14,16 @@ function IntakeForm() {
   const searchParams = useSearchParams();
   const mode = searchParams.get("mode") ?? "sandbox";
   const [value, setValue] = useState("");
-  const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleSubmit(e: React.FormEvent) {
+  function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!value.trim()) return;
-    setError(null);
     setLoading(true);
-    try {
-      const res = await fetch("/api/runs", {
-        method: "POST",
-        headers: { "content-type": "application/json" },
-        body: JSON.stringify(detect(value, mode)),
-      });
-      if (!res.ok) {
-        const text = await res.text().catch(() => "");
-        let msg = "Something went wrong. Please try again.";
-        try { msg = (JSON.parse(text) as { error?: string }).error ?? msg; } catch {}
-        setError(msg);
-        return;
-      }
-      const data = (await res.json()) as { runId?: string };
-      router.push("/run/" + (data.runId as string));
-    } catch (err) {
-      setError((err as Error).message ?? "Network error. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+    // Navigate to the single-request live stream — the run executes inside the SSE
+    // response on the run page. No POST, no server-side run registry to break.
+    const params = new URLSearchParams(detect(value, mode));
+    router.push(`/run/live?${params.toString()}`);
   }
 
   return (
@@ -61,14 +43,6 @@ function IntakeForm() {
       >
         {loading ? "Running…" : "Try it free"}
       </button>
-      {error && (
-        <p
-          role="alert"
-          className="rounded-lg border border-red-500/20 bg-red-500/10 px-4 py-3 text-sm text-red-400"
-        >
-          {error}
-        </p>
-      )}
       {mode === "live" && !loading && (
         <p className="text-center text-xs text-gray-500">
           Live mode requires a valid <code className="font-mono">LIVE_RUN_TOKEN</code> — contact
