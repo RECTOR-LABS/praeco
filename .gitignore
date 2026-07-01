@@ -8,3 +8,5 @@ dist
 .next/
 /data/
 tsconfig.tsbuildinfo
+.agents/
+skills-lock.json
