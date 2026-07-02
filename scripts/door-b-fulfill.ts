@@ -1,4 +1,6 @@
-// Door B fulfillment CLI. Real: one shared AgentClient (provider + buyer roles, one WS).
+// Door B fulfillment CLI. Real: one shared AgentClient + WS for the whole process
+// lifetime (provider + buyer roles) — constructed once and reused across every
+// --watch iteration; a second WS on the same CROO_SDK_KEY is fatal, close-1008.
 // --sim: mock provider + sandbox engine ($0, no chain). --watch: poll loop.
 import "dotenv/config";
 import { AgentClient } from "@croo-network/sdk";
@@ -15,29 +17,37 @@ const sim = process.argv.includes("--sim");
 const watch = process.argv.includes("--watch");
 const log = (m: string) => console.log(`[door-b] ${m}`);
 
-async function once() {
+// Drives `run` once (no --watch), or forever every 15s (--watch), logging every
+// non-skipped result. Shared by the sim and real paths — only what `run` closes
+// over differs between them.
+async function runLoop(run: () => ReturnType<typeof fulfillOrder>) {
+  if (!watch) { const r = await run(); log(`result: ${JSON.stringify(r)}`); return; }
+  log("watch mode — polling every 15s (Ctrl-C to stop)");
+  for (;;) { const r = await run(); if (r.status !== "skipped") log(`result: ${JSON.stringify(r)}`); await new Promise((s) => setTimeout(s, 15000)); }
+}
+
+async function main() {
   if (sim) {
-    const provider = mockProvider({ brief: "A privacy-first habit tracker for indie developers" });
-    const runJob = (input: IntakeInput) => runLaunchJob(input, buildSandboxDeps(() => {}, `live-${Date.now()}`));
-    return fulfillOrder({ provider, runJob, poll: { attempts: 10, delayMs: 200 }, onLog: log });
+    return runLoop(() => {
+      const provider = mockProvider({ brief: "A privacy-first habit tracker for indie developers" });
+      const runJob = (input: IntakeInput) => runLaunchJob(input, buildSandboxDeps(() => {}, `live-${Date.now()}`));
+      return fulfillOrder({ provider, runJob, poll: { attempts: 10, delayMs: 200 }, onLog: log });
+    });
   }
+
+  // Real path: construct the client + WS exactly once, not per fulfill attempt —
+  // reused for every --watch iteration (or the single one-shot call).
   const cfg = loadConfig();
   const client = new AgentClient({ baseURL: cfg.crooApiUrl, wsURL: cfg.crooWsUrl, rpcURL: cfg.baseRpcUrl }, cfg.crooSdkKey);
-  await client.connectWebSocket(); // presence; providers won't transact with an offline agent
+  const stream = await client.connectWebSocket(); // presence; providers won't transact with an offline agent
   try {
     const provider = new AgentClientProvider(client as never);
     const runJob = (input: IntakeInput) =>
       runLaunchJob(input, buildLiveDepsWith(client, () => {}, `live-${Date.now()}`)); // shared client — one WS
     const assertFundedFn = () => assertFunded(cfg.baseRpcUrl, cfg.praecoAgentWallet, cfg.usdcTokenAddress, 1n, fetch as never);
-    return await fulfillOrder({ provider, runJob, assertFunded: assertFundedFn, onLog: log });
+    await runLoop(() => fulfillOrder({ provider, runJob, assertFunded: assertFundedFn, onLog: log }));
   } finally {
-    (client as unknown as { close?: () => void }).close?.();
+    stream.close?.(); // EventStream's close — AgentClient itself has no close()
   }
-}
-
-async function main() {
-  if (!watch) { const r = await once(); log(`result: ${JSON.stringify(r)}`); return; }
-  log("watch mode — polling every 15s (Ctrl-C to stop)");
-  for (;;) { const r = await once(); if (r.status !== "skipped") log(`result: ${JSON.stringify(r)}`); await new Promise((s) => setTimeout(s, 15000)); }
 }
 main().catch((e) => { console.error("[door-b] fatal:", (e as Error).message); process.exit(1); });
