@@ -32,3 +32,16 @@ export async function buildLiveDeps(onEvent: (e: WorklogEvent) => void, runId: s
   };
   return { deps, close: () => (live as unknown as { close?: () => void }).close?.() };
 }
+
+/** Build live engine deps that REUSE an existing AgentClient — so the Door B
+ *  provider WS and the engine's buyer role share ONE connection on the SDK key
+ *  (a second WS on the same key is fatal, close-1008). */
+export function buildLiveDepsWith(client: unknown, onEvent: (e: WorklogEvent) => void, runId: string): RunDeps {
+  const config = loadConfig();
+  const { model, streamFn, llm } = glm();
+  return {
+    config, llm, client: client as CapBuyer, model, streamFn,
+    fetchImpl: fetch as FetchFn, onEvent, runId,
+    hirePollOpts: { negotiationPolls: 80, negotiationDelayMs: 2000, deliveryPolls: 120, deliveryDelayMs: 5000 },
+  };
+}
