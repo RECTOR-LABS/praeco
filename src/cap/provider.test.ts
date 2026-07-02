@@ -2,7 +2,7 @@ import { describe, it, expect, vi } from "vitest";
 import { AgentClientProvider } from "./provider.js";
 
 const client = {
-  listNegotiations: vi.fn(async () => [{ negotiationId: "n1", status: "pending", requirements: '{"brief":"x"}', requireFundTransfer: false }]),
+  listNegotiations: vi.fn(async () => [{ negotiationId: "n1", status: "pending", requirements: '{"brief":"x"}' }]),
   acceptNegotiation: vi.fn(async () => ({ order: { orderId: "o1" } })),
   acceptNegotiationWithFundAddress: vi.fn(async () => ({ order: { orderId: "o2" } })),
   rejectNegotiation: vi.fn(async () => {}),
@@ -16,7 +16,7 @@ describe("AgentClientProvider", () => {
     const p = new AgentClientProvider(client as never);
     const out = await p.listInboundNegotiations();
     expect(client.listNegotiations).toHaveBeenCalledWith({ role: "provider", status: "pending" });
-    expect(out[0]).toEqual({ negotiationId: "n1", status: "pending", requirements: '{"brief":"x"}', requireFundTransfer: false });
+    expect(out[0]).toEqual({ negotiationId: "n1", status: "pending", requirements: '{"brief":"x"}' });
   });
   it("accepts a negotiation and returns the orderId", async () => {
     const p = new AgentClientProvider(client as never);

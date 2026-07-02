@@ -54,7 +54,15 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   }
   if (!paid) { log(`order ${orderId} not paid within window`); return { status: "skipped", orderId, reason: "payment timeout" }; }
 
-  const rec = await deps.runJob(input); // spends ~$0.70 — only now, post-payment
+  let rec: RunRecord;
+  try {
+    rec = await deps.runJob(input); // spends ~$0.70 — only now, post-payment
+  } catch (e) {
+    const reason = `engine failed: ${(e as Error).message}`;
+    log(`order ${orderId}: ${reason} — rejecting`);
+    await deps.provider.rejectOrder(orderId, reason);
+    return { status: "rejected", orderId, reason };
+  }
   log(`run ${rec.runId} completed (${rec.status}, spent ${rec.spentBaseUnits} base units) — delivering order ${orderId}`);
   const requested = (input.text ?? input.repoUrl ?? "").slice(0, 300);
   const text = `${kitToMarkdown(rec)}\n\n---\n\n_Original request: ${requested}_\n`;

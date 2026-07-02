@@ -63,4 +63,12 @@ describe("fulfillOrder", () => {
     const logged = onLog.mock.calls.map((c) => c[0] as string);
     expect(logged.some((m) => /completed .* delivering/.test(m) || /spent/.test(m))).toBe(true);
   });
+  it("rejects the order (not left hanging) when the engine throws", async () => {
+    const provider = { ...mockProvider({ paysAfter: 0 }) };
+    const rejectSpy = vi.spyOn(provider, "rejectOrder");
+    const runJob = async () => { throw new Error("engine boom"); };
+    const out = await fulfillOrder({ provider, runJob, poll: noSleep });
+    expect(out).toEqual({ status: "rejected", orderId: "mock-order", reason: expect.stringMatching(/engine failed/) });
+    expect(rejectSpy).toHaveBeenCalledWith("mock-order", expect.stringMatching(/engine failed/));
+  });
 });

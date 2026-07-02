@@ -1,7 +1,7 @@
 import { it, expect, beforeEach, vi } from "vitest";
 import { buildSandboxDeps } from "./engine-deps.js";
 
-vi.mock("@/src/config", () => ({ loadConfig: () => ({ crooApiUrl: "u", crooWsUrl: "w", crooSdkKey: "k", baseRpcUrl: "r", ollamaApiKey: "o", ollamaBaseUrl: "b", praecoAgentId: "id", praecoAgentWallet: "0x0", usdcTokenAddress: "0xu", runBudgetUsdc: "2.00", legCapUsdc: "0.60", preferredServiceIds: {} }) }));
+vi.mock("@/src/config", () => ({ loadConfig: () => ({ crooApiUrl: "u", crooWsUrl: "w", crooSdkKey: "k", baseRpcUrl: "r", ollamaApiKey: "o", ollamaBaseUrl: "b", praecoAgentId: "id", praecoAgentWallet: "0x0", usdcTokenAddress: "0xu", runBudgetUsdc: "2.00", legCapUsdc: "0.60", preferredServiceIds: { research: "real-pin" } }) }));
 vi.mock("@/src/llm/model", () => ({ createGlmModels: () => ({ models: { complete: vi.fn() }, model: {}, streamFn: vi.fn() }) }));
 vi.mock("@/src/llm/llm", () => ({ createLlm: () => ({}) }));
 
