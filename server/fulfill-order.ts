@@ -55,10 +55,16 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   if (!paid) { log(`order ${orderId} not paid within window`); return { status: "skipped", orderId, reason: "payment timeout" }; }
 
   const rec = await deps.runJob(input); // spends ~$0.70 — only now, post-payment
-  const requested = input.text ?? input.repoUrl ?? "";
+  log(`run ${rec.runId} completed (${rec.status}, spent ${rec.spentBaseUnits} base units) — delivering order ${orderId}`);
+  const requested = (input.text ?? input.repoUrl ?? "").slice(0, 300);
   const text = `${kitToMarkdown(rec)}\n\n---\n\n_Original request: ${requested}_\n`;
   const schema = kitProvenanceJson(rec);
-  const { contentHash } = await deps.provider.deliverOrder(orderId, { deliverableType: "text", deliverableText: text, deliverableSchema: schema });
-  log(`delivered order ${orderId} (${rec.status}) — contentHash ${contentHash}`);
-  return { status: "delivered", orderId, contentHash };
+  try {
+    const { contentHash } = await deps.provider.deliverOrder(orderId, { deliverableType: "text", deliverableText: text, deliverableSchema: schema });
+    log(`delivered order ${orderId} (${rec.status}) — contentHash ${contentHash}`);
+    return { status: "delivered", orderId, contentHash };
+  } catch (e) {
+    log(`delivery FAILED for order ${orderId} — run ${rec.runId} already spent ${rec.spentBaseUnits}; needs re-delivery: ${(e as Error).message}`);
+    throw e;
+  }
 }

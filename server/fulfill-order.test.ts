@@ -53,4 +53,14 @@ describe("fulfillOrder", () => {
     await fulfillOrder({ provider, runJob: async () => rec(), assertFunded, poll: noSleep });
     expect(assertFunded).toHaveBeenCalled();
   });
+  it("surfaces delivery failure instead of swallowing it (money already spent)", async () => {
+    const provider = {
+      ...mockProvider({ paysAfter: 0 }),
+      deliverOrder: async () => { throw new Error("deliver boom"); },
+    } as never;
+    const onLog = vi.fn();
+    await expect(fulfillOrder({ provider, runJob: async () => rec(), onLog, poll: noSleep })).rejects.toThrow(/deliver boom/);
+    const logged = onLog.mock.calls.map((c) => c[0] as string);
+    expect(logged.some((m) => /completed .* delivering/.test(m) || /spent/.test(m))).toBe(true);
+  });
 });
