@@ -1,0 +1,672 @@
+{
+  "runId": "run-1782634131276",
+  "status": "completed",
+  "brief": {
+    "product": "Privacy-first habit tracker",
+    "audience": "Indie developers",
+    "features": [
+      "100% local data storage",
+      "Zero third-party tracking or analytics",
+      "Keyboard-first navigation",
+      "Minimalist, distraction-free interface"
+    ],
+    "tone": "Technical, straightforward, and privacy-conscious",
+    "oneLiner": "Build your best streaks without compromising your data privacy."
+  },
+  "assets": [
+    {
+      "leg": "research",
+      "hire": {
+        "leg": "research",
+        "serviceId": "mock-research",
+        "agentId": "ma1",
+        "agentName": "ProofResearch",
+        "orderId": "ord-1",
+        "chainOrderId": "ord-1",
+        "priceBaseUnits": "100000",
+        "payTxHash": "0xmockpay1",
+        "deliverTxHash": "0xmockdeliver-ord-1",
+        "deliverable": {
+          "type": "text",
+          "text": "Market research: privacy-first habit trackers resonate with indie developers (25-40). Top pains: guilt-driven streak loss, data exfiltration by SaaS vendors, tool sprawl across paid tiers. Competitive whitespace: incumbents (Habitica, Streaks) skew gamified and cloud-dependent. Positioning opportunity = calm, local-first, no mandatory cloud, developer CLI. Willingness to pay: one-time purchase preferred; OSS with optional self-hosted sync resonates strongly.",
+          "contentHash": "0xmockhashord-1"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xmockpay1",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xmockdeliver-ord-1"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "The research deliverable is highly on-brief, accurately identifying the target audience (indie developers 25-40), their core pain points (data exfiltration, tool sprawl), and the competitive whitespace (cloud-dependent gamified apps). It clearly aligns with the product features (local-first, zero tracking, CLI) and provides actionable insights on positioning and willingness to pay. It is concise, technical, and perfectly usable for the next stages of the launch.",
+        "score": 95
+      },
+      "provenance": {
+        "leg": "research",
+        "agentId": "ma1",
+        "agentName": "ProofResearch",
+        "amountUsd": "0.10",
+        "contentHash": "0xmockhashord-1",
+        "payTxHash": "0xmockpay1",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay1"
+      }
+    },
+    {
+      "leg": "landing_copy",
+      "hire": {
+        "leg": "landing_copy",
+        "serviceId": "mock-copy",
+        "agentId": "ma2",
+        "agentName": "Foundr",
+        "orderId": "ord-2",
+        "chainOrderId": "ord-2",
+        "priceBaseUnits": "100000",
+        "payTxHash": "0xmockpay2",
+        "deliverTxHash": "0xmockdeliver-ord-2",
+        "deliverable": {
+          "type": "text",
+          "text": "Headline: Streaky — habit tracking, local-first.\nSubhead: Privacy-first habit tracker built for indie developers. Your data stays on your machine. No account. No cloud dependency. No subscription.\nFeatures: Local SQLite store · AES-256 encrypted export · CLI + lightweight web UI · Zero telemetry · Self-hostable sync.\nCTA: Install now — npm install -g streaky — MIT licensed, open source.",
+          "contentHash": "0xmockhashord-2"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xmockpay2",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xmockdeliver-ord-2"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "The landing copy is on-brief and high quality. The headline is concise and technical. The subhead clearly communicates privacy-first positioning and key differentiators (local data, no account, no cloud, no subscription) for the indie developer audience. Features section uses developer-appropriate terminology (SQLite, AES-256, CLI, telemetry, self-hostable) and covers all briefed features including local storage, zero tracking, and keyboard-first/CLI navigation. The CTA is actionable with a concrete npm install command and MIT licensing note, reinforcing the open-source, no-nonsense tone. Straightforward, privacy-conscious, and ready to use.",
+        "score": 88
+      },
+      "provenance": {
+        "leg": "landing_copy",
+        "agentId": "ma2",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xmockhashord-2",
+        "payTxHash": "0xmockpay2",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay2"
+      }
+    },
+    {
+      "leg": "og_image",
+      "hire": {
+        "leg": "og_image",
+        "serviceId": "mock-image",
+        "agentId": "ma3",
+        "agentName": "Pygm Studio",
+        "orderId": "ord-3",
+        "chainOrderId": "ord-3",
+        "priceBaseUnits": "500000",
+        "payTxHash": "0xmockpay3",
+        "deliverTxHash": "0xmockdeliver-ord-3",
+        "deliverable": {
+          "type": "text",
+          "text": "https://images.mock.local/streaky-og-1200x630.png\nOG image spec: dark background (#0D1117), 'Streaky' in bold monospace center-left, tagline 'Private. Local. Yours.' in muted grey (#6B7280) below, right panel shows a minimal streak-calendar grid. 1200×630px optimised for Twitter/LinkedIn preview cards. Minimal indie-dev aesthetic — no gradients, no stock imagery.",
+          "contentHash": "0xmockhashord-3"
+        },
+        "basescanPayUrl": "https://basescan.org/tx/0xmockpay3",
+        "basescanDeliverUrl": "https://basescan.org/tx/0xmockdeliver-ord-3"
+      },
+      "verdict": {
+        "action": "accept",
+        "reason": "The OG image design is perfectly aligned with the brief. The dark background (#0D1117) and monospace typography strongly resonate with indie developers and a technical aesthetic. The minimalist layout with the 'Streaky' title and 'Private. Local. Yours.' tagline effectively communicates the privacy-first message without unnecessary clutter or stock imagery. The 1200x630 dimensions and layout are correctly optimized for social preview cards.",
+        "score": 95
+      },
+      "provenance": {
+        "leg": "og_image",
+        "agentId": "ma3",
+        "agentName": "Pygm Studio",
+        "amountUsd": "0.50",
+        "contentHash": "0xmockhashord-3",
+        "payTxHash": "0xmockpay3",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay3"
+      }
+    }
+  ],
+  "kit": {
+    "landingCopy": "Headline: Streaky — habit tracking, local-first.\nSubhead: Privacy-first habit tracker built for indie developers. Your data stays on your machine. No account. No cloud dependency. No subscription.\nFeatures: Local SQLite store · AES-256 encrypted export · CLI + lightweight web UI · Zero telemetry · Self-hostable sync.\nCTA: Install now — npm install -g streaky — MIT licensed, open source.",
+    "ogImageRef": "hash:0xmockhashord-3",
+    "tweetThread": [
+      "Indie devs: your habit tracker shouldn't require an account or exfiltrate your data to the cloud. Meet Streaky—local-first, MIT-licensed habit tracking. No accounts, no telemetry, no gamified bloat. Just your streaks. 🧵",
+      "1/ 100% local data storage via SQLite. Your behavioral data never leaves your machine unless you explicitly export it (AES-256 encrypted, naturally). No vendor lock-in, no cloud dependency.",
+      "2/ Built for the terminal-first workflow. Keyboard-driven navigation, a minimalist web UI for when you need it, and a robust CLI to mark off habits without breaking your coding flow.",
+      "3/ Zero third-party tracking or analytics. We don't know what you're doing, and we don't want to. Build your best streaks without compromising your data privacy.",
+      "4/ Stop paying monthly subscriptions for cloud-dependent habit SaaS. Streaky is open source and ready to go. \n\nInstall now: npm install -g streaky"
+    ],
+    "shortPitch": "Streaky: local-first, MIT-licensed habit tracking for devs. No cloud, no accounts, zero telemetry. Just SQLite and your streaks.",
+    "phHnBlurb": "Hey HN, I built Streaky because existing habit trackers are either cloud-dependent SaaS traps or too gamified for my workflow. Streaky is a privacy-first habit tracker built for indie developers. It uses a 100% local SQLite database, features zero third-party tracking or analytics, and requires no accounts. You interact with it via a keyboard-first CLI and a minimalist, distraction-free local web UI. If you want to sync across devices, you can self-host the sync server. It's MIT licensed and installed via npm. Build your streaks without selling your behavioral data.",
+    "readmePolish": "# Streaky — habit tracking, local-first.\n\nPrivacy-first habit tracker built for indie developers. Your data stays on your machine. No account. No cloud dependency. No subscription.\n\n## Features\n- **100% Local Storage:** Your data lives in a local SQLite store. No cloud lock-in.\n- **Zero Telemetry:** No third-party tracking or analytics. Period.\n- **Keyboard-First Navigation:** Built for the terminal. Mark off habits via CLI or a minimalist, distraction-free web UI.\n- **Secure Exports:** AES-256 encrypted exports for when you need to move your data.\n- **Self-Hostable Sync:** Optional, self-hosted sync for multi-device workflows.\n\n## Quick Start\nInstall globally via npm:\n```bash\nnpm install -g streaky\n```\n*MIT licensed, open source.*",
+    "provenance": [
+      {
+        "leg": "research",
+        "agentId": "ma1",
+        "agentName": "ProofResearch",
+        "amountUsd": "0.10",
+        "contentHash": "0xmockhashord-1",
+        "payTxHash": "0xmockpay1",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay1"
+      },
+      {
+        "leg": "landing_copy",
+        "agentId": "ma2",
+        "agentName": "Foundr",
+        "amountUsd": "0.10",
+        "contentHash": "0xmockhashord-2",
+        "payTxHash": "0xmockpay2",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay2"
+      },
+      {
+        "leg": "og_image",
+        "agentId": "ma3",
+        "agentName": "Pygm Studio",
+        "amountUsd": "0.50",
+        "contentHash": "0xmockhashord-3",
+        "payTxHash": "0xmockpay3",
+        "basescanUrl": "https://basescan.org/tx/0xmockpay3"
+      }
+    ]
+  },
+  "worklog": [
+    {
+      "kind": "run_started",
+      "at": 1782634131276,
+      "message": "run run-1782634131276 started"
+    },
+    {
+      "kind": "intake_done",
+      "at": 1782634135604,
+      "message": "brief ready: Privacy-first habit tracker",
+      "data": {
+        "oneLiner": "Build your best streaks without compromising your data privacy."
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634136630,
+      "message": "calling search_marketplace",
+      "data": {
+        "tool": "search_marketplace",
+        "args": {
+          "leg": "research",
+          "query": "privacy habit tracker market research indie developers"
+        }
+      }
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782634136633,
+      "leg": "research",
+      "message": "searching: privacy habit tracker market research indie developers"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782634136635,
+      "leg": "research",
+      "message": "ProofResearch (mock-research) $0.10 rate 98.0%"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634136635,
+      "message": "I'll start by searching for a research specialist for the first leg. Let me find candidates."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634137808,
+      "message": "calling get_service_schema",
+      "data": {
+        "tool": "get_service_schema",
+        "args": {
+          "serviceId": "mock-research"
+        }
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634137808,
+      "message": "Good candidate — 98% completion rate, 500 orders, only $0.10. Let me get its schema."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634141586,
+      "message": "calling hire_specialist",
+      "data": {
+        "tool": "hire_specialist",
+        "args": {
+          "leg": "research",
+          "serviceId": "mock-research",
+          "requirements": {
+            "brief": "Research the market for a privacy-first habit tracker app targeting indie developers. Key areas: 1) Competitive landscape — existing habit trackers (Streaks, Habitica, Loop, etc.), their privacy posture, and gaps. 2) Indie developer audience profile — what privacy concerns they have, what tools they already use, what messaging resonates. 3) Positioning recommendations — how to differentiate a privacy-first habit tracker (no cloud sync by default, local-first storage, open-source, encryption). 4) Key messaging angles for landing page copy. 5) Pricing/monetization insights. Deliver a concise research brief (1-2 pages) that the landing copy writer can directly use."
+          }
+        }
+      }
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782634141587,
+      "leg": "research",
+      "message": "negotiating ProofResearch (mock-research)",
+      "data": {
+        "negotiationId": "neg-1"
+      }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782634143087,
+      "leg": "research",
+      "message": "order ord-1 created at 100000 base units",
+      "data": {
+        "orderId": "ord-1",
+        "price": "100000"
+      }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782634143087,
+      "leg": "research",
+      "message": "paid ProofResearch — https://basescan.org/tx/0xmockpay1",
+      "data": {
+        "orderId": "ord-1",
+        "payTxHash": "0xmockpay1"
+      }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782634146088,
+      "leg": "research",
+      "message": "delivered by ProofResearch (hash 0xmockhashord-1)",
+      "data": {
+        "orderId": "ord-1",
+        "contentHash": "0xmockhashord-1"
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634146088,
+      "message": "Simple schema. Let me hire ProofResearch with a detailed brief."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634147021,
+      "message": "calling qa_review",
+      "data": {
+        "tool": "qa_review",
+        "args": {
+          "orderId": "ord-1"
+        }
+      }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782634156104,
+      "leg": "research",
+      "message": "QA accept: The research deliverable is highly on-brief, accurately identifying the target audience (indie developers 25-40), their core pain points (data exfiltration, tool sprawl), and the competitive whitespace (cloud-dependent gamified apps). It clearly aligns with the product features (local-first, zero tracking, CLI) and provides actionable insights on positioning and willingness to pay. It is concise, technical, and perfectly usable for the next stages of the launch.",
+      "data": {
+        "score": 95
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634156104,
+      "message": "Deliverable looks solid. Let me QA review it."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634157055,
+      "message": "calling submit_asset",
+      "data": {
+        "tool": "submit_asset",
+        "args": {
+          "orderId": "ord-1"
+        }
+      }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782634157055,
+      "leg": "research",
+      "message": "asset submitted for research"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634157055,
+      "message": "QA accepted. Submitting the research asset."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634161924,
+      "message": "calling search_marketplace",
+      "data": {
+        "tool": "search_marketplace",
+        "args": {
+          "leg": "landing_copy",
+          "query": "landing page copy privacy habit tracker technical"
+        }
+      }
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782634161924,
+      "leg": "landing_copy",
+      "message": "searching: landing page copy privacy habit tracker technical"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782634161925,
+      "leg": "landing_copy",
+      "message": "Foundr (mock-copy) $0.10 rate 98.0%"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782634161925,
+      "leg": "landing_copy",
+      "message": "Pygm Studio (mock-image) $0.50 rate 98.0%"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634161925,
+      "message": "Research leg complete. Now moving to **landing_copy**. Let me search for a copywriting specialist."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634175578,
+      "message": "calling get_service_schema",
+      "data": {
+        "tool": "get_service_schema",
+        "args": {
+          "serviceId": "mock-copy"
+        }
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634175578,
+      "message": "Foundr looks great — $0.10, 98% completion rate, 500 orders. Let me get its schema."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634179059,
+      "message": "calling hire_specialist",
+      "data": {
+        "tool": "hire_specialist",
+        "args": {
+          "leg": "landing_copy",
+          "requirements": {
+            "brief": "Write landing page copy for a privacy-first habit tracker. Audience: indie developers (25-40). Tone: technical, straightforward, privacy-conscious. No fluff, no hype. Key positioning from research: local-first storage, zero cloud tracking, optional self-hosted sync, open-source, developer-friendly CLI. Competitors (Habitica, Streaks) are cloud-dependent and gamified — we are calm, private, and developer-respecting. Monetization: one-time purchase / OSS with optional self-host. Deliver: 1) Hero headline + subheadline, 2) Three feature blocks with short copy (local-first storage, zero tracking, CLI integration), 3) A 'How it works' 3-step section, 4) A privacy comparison vs incumbents, 5) CTA copy (primary + secondary). Keep it concise, developer-native, and skimmable."
+          }
+        }
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634179060,
+      "message": "Now let me hire Foundr with a detailed brief informed by the research."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634181087,
+      "message": "calling hire_specialist",
+      "data": {
+        "tool": "hire_specialist",
+        "args": {
+          "leg": "landing_copy",
+          "serviceId": "mock-copy",
+          "requirements": {
+            "brief": "Write landing page copy for a privacy-first habit tracker. Audience: indie developers (25-40). Tone: technical, straightforward, privacy-conscious. No fluff, no hype. Key positioning from research: local-first storage, zero cloud tracking, optional self-hosted sync, open-source, developer-friendly CLI. Competitors (Habitica, Streaks) are cloud-dependent and gamified — we are calm, private, and developer-respecting. Monetization: one-time purchase / OSS with optional self-host. Deliver: 1) Hero headline + subheadline, 2) Three feature blocks with short copy (local-first storage, zero tracking, CLI integration), 3) A 'How it works' 3-step section, 4) A privacy comparison vs incumbents, 5) CTA copy (primary + secondary). Keep it concise, developer-native, and skimmable."
+          }
+        }
+      }
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782634181088,
+      "leg": "landing_copy",
+      "message": "negotiating Foundr (mock-copy)",
+      "data": {
+        "negotiationId": "neg-2"
+      }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782634182589,
+      "leg": "landing_copy",
+      "message": "order ord-2 created at 100000 base units",
+      "data": {
+        "orderId": "ord-2",
+        "price": "100000"
+      }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782634182589,
+      "leg": "landing_copy",
+      "message": "paid Foundr — https://basescan.org/tx/0xmockpay2",
+      "data": {
+        "orderId": "ord-2",
+        "payTxHash": "0xmockpay2"
+      }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782634185591,
+      "leg": "landing_copy",
+      "message": "delivered by Foundr (hash 0xmockhashord-2)",
+      "data": {
+        "orderId": "ord-2",
+        "contentHash": "0xmockhashord-2"
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634185591,
+      "message": "Let me retry with the serviceId included."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634186658,
+      "message": "calling qa_review",
+      "data": {
+        "tool": "qa_review",
+        "args": {
+          "orderId": "ord-2"
+        }
+      }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782634190860,
+      "leg": "landing_copy",
+      "message": "QA accept: The landing copy is on-brief and high quality. The headline is concise and technical. The subhead clearly communicates privacy-first positioning and key differentiators (local data, no account, no cloud, no subscription) for the indie developer audience. Features section uses developer-appropriate terminology (SQLite, AES-256, CLI, telemetry, self-hostable) and covers all briefed features including local storage, zero tracking, and keyboard-first/CLI navigation. The CTA is actionable with a concrete npm install command and MIT licensing note, reinforcing the open-source, no-nonsense tone. Straightforward, privacy-conscious, and ready to use.",
+      "data": {
+        "score": 88
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634190860,
+      "message": "Great copy. Let me QA review it."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634191870,
+      "message": "calling submit_asset",
+      "data": {
+        "tool": "submit_asset",
+        "args": {
+          "orderId": "ord-2"
+        }
+      }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782634191870,
+      "leg": "landing_copy",
+      "message": "asset submitted for landing_copy"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634191870,
+      "message": "QA accepted. Submitting the landing copy asset."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634195951,
+      "message": "calling search_marketplace",
+      "data": {
+        "tool": "search_marketplace",
+        "args": {
+          "leg": "og_image",
+          "query": "OG image privacy habit tracker minimalist developer"
+        }
+      }
+    },
+    {
+      "kind": "leg_search",
+      "at": 1782634195951,
+      "leg": "og_image",
+      "message": "searching: OG image privacy habit tracker minimalist developer"
+    },
+    {
+      "kind": "leg_candidate",
+      "at": 1782634195951,
+      "leg": "og_image",
+      "message": "Pygm Studio (mock-image) $0.50 rate 98.0%"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634195951,
+      "message": "Two legs done. Now on to the final leg — **og_image**. Let me search for an OG image specialist."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634197479,
+      "message": "calling get_service_schema",
+      "data": {
+        "tool": "get_service_schema",
+        "args": {
+          "serviceId": "mock-image"
+        }
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634197479,
+      "message": "Pygm Studio — $0.50, within the $0.60 cap, 98% rate, 500 orders. Let me get its schema."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634199518,
+      "message": "calling hire_specialist",
+      "data": {
+        "tool": "hire_specialist",
+        "args": {
+          "leg": "og_image",
+          "requirements": {
+            "brief": "Create an Open Graph image (1200x630px) for a privacy-first habit tracker called 'Streaky'. Audience: indie developers. Tone: technical, straightforward, privacy-conscious, calm. Design direction: minimalist, dark or muted background with a clean monospace headline like 'Streaky — habit tracking, local-first.' Include a subtle visual element representing privacy/local storage (e.g., a lock icon, a local disk, or a shield). No gamified/streak-flame imagery. Keep it developer-native: think terminal aesthetic, muted palette, no flashy gradients. Should look good when shared on Twitter, Hacker News, or Discord."
+          },
+          "serviceId": "mock-image"
+        }
+      }
+    },
+    {
+      "kind": "hire_negotiating",
+      "at": 1782634199518,
+      "leg": "og_image",
+      "message": "negotiating Pygm Studio (mock-image)",
+      "data": {
+        "negotiationId": "neg-3"
+      }
+    },
+    {
+      "kind": "hire_order_created",
+      "at": 1782634201019,
+      "leg": "og_image",
+      "message": "order ord-3 created at 500000 base units",
+      "data": {
+        "orderId": "ord-3",
+        "price": "500000"
+      }
+    },
+    {
+      "kind": "hire_paid",
+      "at": 1782634201019,
+      "leg": "og_image",
+      "message": "paid Pygm Studio — https://basescan.org/tx/0xmockpay3",
+      "data": {
+        "orderId": "ord-3",
+        "payTxHash": "0xmockpay3"
+      }
+    },
+    {
+      "kind": "hire_delivered",
+      "at": 1782634204020,
+      "leg": "og_image",
+      "message": "delivered by Pygm Studio (hash 0xmockhashord-3)",
+      "data": {
+        "orderId": "ord-3",
+        "contentHash": "0xmockhashord-3"
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634204020,
+      "message": "Hiring Pygm Studio for the OG image."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634205042,
+      "message": "calling qa_review",
+      "data": {
+        "tool": "qa_review",
+        "args": {
+          "orderId": "ord-3"
+        }
+      }
+    },
+    {
+      "kind": "qa_verdict",
+      "at": 1782634208078,
+      "leg": "og_image",
+      "message": "QA accept: The OG image design is perfectly aligned with the brief. The dark background (#0D1117) and monospace typography strongly resonate with indie developers and a technical aesthetic. The minimalist layout with the 'Streaky' title and 'Private. Local. Yours.' tagline effectively communicates the privacy-first message without unnecessary clutter or stock imagery. The 1200x630 dimensions and layout are correctly optimized for social preview cards.",
+      "data": {
+        "score": 95
+      }
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634208078,
+      "message": "Excellent. Let me QA review it."
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634209372,
+      "message": "calling submit_asset",
+      "data": {
+        "tool": "submit_asset",
+        "args": {
+          "orderId": "ord-3"
+        }
+      }
+    },
+    {
+      "kind": "asset_submitted",
+      "at": 1782634209372,
+      "leg": "og_image",
+      "message": "asset submitted for og_image"
+    },
+    {
+      "kind": "agent_step",
+      "at": 1782634209372,
+      "message": "QA accepted. Submitting the OG image asset — the final leg."
+    },
+    {
+      "kind": "compose_started",
+      "at": 1782634209372,
+      "message": "composing the launch kit"
+    },
+    {
+      "kind": "run_completed",
+      "at": 1782634219848,
+      "message": "run run-1782634131276: completed — 3/3 legs, spent $0.70"
+    }
+  ],
+  "spentBaseUnits": "700000",
+  "startedAt": 1782634131276,
+  "endedAt": 1782634219848
+}

@@ -11,25 +11,31 @@ vi.mock("next/navigation", () => ({
 }));
 
 beforeEach(() => {
-  (globalThis as any).fetch = vi.fn(
-    async () =>
-      new Response(JSON.stringify({ runId: "run-1" }), { status: 200 }),
-  );
+  mockPush.mockClear();
 });
 
-it("posts a sandbox run and routes to the theater", async () => {
+it("navigates to the live run stream with a GitHub repo as repoUrl", async () => {
   render(<Intake />);
   await userEvent.type(
     screen.getByPlaceholderText(/one-liner or github/i),
     "https://github.com/a/b",
   );
   await userEvent.click(screen.getByRole("button", { name: /try it free|run/i }));
-  expect((globalThis as any).fetch).toHaveBeenCalledWith(
-    "/api/runs",
-    expect.objectContaining({
-      method: "POST",
-      body: JSON.stringify({ mode: "sandbox", repoUrl: "https://github.com/a/b" }),
-    }),
+  const expected =
+    "/run/live?" +
+    new URLSearchParams({ mode: "sandbox", repoUrl: "https://github.com/a/b" }).toString();
+  expect(mockPush).toHaveBeenCalledWith(expected);
+});
+
+it("passes free text as text, not repoUrl", async () => {
+  render(<Intake />);
+  await userEvent.type(
+    screen.getByPlaceholderText(/one-liner or github/i),
+    "a privacy-first habit tracker",
   );
-  expect(mockPush).toHaveBeenCalledWith("/run/run-1");
+  await userEvent.click(screen.getByRole("button", { name: /try it free|run/i }));
+  const expected =
+    "/run/live?" +
+    new URLSearchParams({ mode: "sandbox", text: "a privacy-first habit tracker" }).toString();
+  expect(mockPush).toHaveBeenCalledWith(expected);
 });
