@@ -1,5 +1,9 @@
-import { it, expect, beforeEach } from "vitest";
+import { it, expect, beforeEach, vi } from "vitest";
 import { buildSandboxDeps } from "./engine-deps.js";
+
+vi.mock("@/src/config", () => ({ loadConfig: () => ({ crooApiUrl: "u", crooWsUrl: "w", crooSdkKey: "k", baseRpcUrl: "r", ollamaApiKey: "o", ollamaBaseUrl: "b", praecoAgentId: "id", praecoAgentWallet: "0x0", usdcTokenAddress: "0xu", runBudgetUsdc: "2.00", legCapUsdc: "0.60", preferredServiceIds: { research: "real-pin" } }) }));
+vi.mock("@/src/llm/model", () => ({ createGlmModels: () => ({ models: { complete: vi.fn() }, model: {}, streamFn: vi.fn() }) }));
+vi.mock("@/src/llm/llm", () => ({ createLlm: () => ({}) }));
 
 beforeEach(() => {
   // Minimal env so loadConfig() passes (values unused by the mock path).
@@ -15,4 +19,12 @@ it("sandbox deps use the mock client and clear live SVC_* pins", () => {
   expect(typeof deps.client.negotiateOrder).toBe("function");
   expect(deps.config.preferredServiceIds).toEqual({}); // pins cleared for the mock catalog
   expect(deps.onEvent).toBeTypeOf("function");
+});
+
+it("buildLiveDepsWith reuses the passed client (no new AgentClient/WS)", async () => {
+  const { buildLiveDepsWith } = await import("./engine-deps.js");
+  const client = { marker: "shared" };
+  const deps = buildLiveDepsWith(client as never, () => {}, "run-1");
+  expect(deps.client).toBe(client);
+  expect(deps.runId).toBe("run-1");
 });

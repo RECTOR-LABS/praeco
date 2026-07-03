@@ -19,7 +19,9 @@
     "smoke:cap": "tsx scripts/cap-connect.ts",
     "smoke:hire": "tsx scripts/cap-hire.ts",
     "engine:smoke": "tsx scripts/run-job.ts",
-    "engine:run": "ENGINE_LIVE=1 tsx scripts/run-job.ts"
+    "engine:run": "ENGINE_LIVE=1 tsx scripts/run-job.ts",
+    "door-b:sim": "tsx scripts/door-b-fulfill.ts --sim",
+    "door-b:fulfill": "tsx scripts/door-b-fulfill.ts"
   },
   "devDependencies": {
     "@testing-library/jest-dom": "^6.9.1",
