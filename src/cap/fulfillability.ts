@@ -5,14 +5,17 @@
  * cheapest full kit fits the run budget. If not → reject-with-reason: never
  * accept + charge for a job we can't fully fulfill (the 2026-07-04 defect).
  *
- * Reuses the engine's own discoverForLeg so the gate faithfully predicts the
- * run — same discovery, same fail-closed pins, same self-exclusion.
+ * Reuses the engine's own discoverForLeg with the SAME candidate limit, pins,
+ * and self-exclusion, so the gate predicts what the engine can STAFF. It is a
+ * necessary (not sufficient) check: the engine still hires by relevance and may
+ * QA-redo, so a passing order can still partial-fail — that's graceful
+ * degradation, bounded by the engine's own per-leg cap + run budget.
  */
 import type { LegKind } from "../types.js";
 import type { Config } from "../config.js";
 import type { FetchFn } from "./wallet.js";
 import { listServices, listAgents, discoverForLeg, type ServiceListing, type AgentRecord } from "./discovery.js";
-import { REQUIRED_LEGS, usdToBaseUnits, baseUnitsToUsd } from "../constants.js";
+import { REQUIRED_LEGS, SEARCH_CANDIDATE_LIMIT, usdToBaseUnits, baseUnitsToUsd } from "../constants.js";
 
 export interface LegAssessment {
   leg: LegKind;
@@ -38,11 +41,16 @@ export interface AssessOpts {
 
 /** Canonical per-leg query — approximates a real LLM search so an unpinned
  *  pre-check doesn't under-count via an empty query. Ignored when a leg is
- *  pinned (discoverForLeg short-circuits on the pin). */
+ *  pinned (discoverForLeg short-circuits on the pin).
+ *  INVARIANT: every word here must be a LEG_KEYWORDS entry for its leg.
+ *  legRelevance adds a bonus for any query word found in a candidate's
+ *  name/description, so a NON-keyword word (e.g. "social"/"preview") would let
+ *  the gate match services the engine's own query never would → a false
+ *  "fulfillable" verdict (gate/engine drift). Keep these keyword-only. */
 export const DEFAULT_LEG_QUERIES: Record<LegKind, string> = {
   research: "market research competitive analysis report",
   landing_copy: "landing page marketing copy content",
-  og_image: "og image social preview banner design",
+  og_image: "og image banner visual graphic design",
 };
 
 /** Parse a USDC base-unit price string to bigint. Non-integer / junk → null
@@ -81,13 +89,19 @@ export function assessFulfillability(
 
   for (const leg of legs) {
     const pinned = opts.preferredServiceIds[leg];
+    // Same limit the engine's search_marketplace applies, so the gate never
+    // counts an affordable candidate the engine would truncate out of view.
     const ranked = discoverForLeg(services, agentsById, leg, queries[leg] ?? "", {
       preferredServiceId: pinned,
       excludeAgentId: opts.selfAgentId,
+      limit: SEARCH_CANDIDATE_LIMIT,
     });
+    // Reject 0-priced listings: "0" is discovery's missing-price sentinel
+    // (`price ?? "0"`), not a genuinely free specialist — an unknown price is
+    // not a confirmable-affordable one.
     const affordable = ranked
       .map((r) => parseBaseUnits(r.priceBaseUnits))
-      .filter((b): b is bigint => b !== null && b <= cap);
+      .filter((b): b is bigint => b !== null && b > 0n && b <= cap);
     const cheapest = affordable.length ? affordable.reduce((a, b) => (b < a ? b : a)) : undefined;
 
     const a: LegAssessment = { leg, candidates: ranked.length, affordable: affordable.length, cheapestBaseUnits: cheapest?.toString(), pinned };
@@ -95,7 +109,7 @@ export function assessFulfillability(
       allAffordable = false;
       if (pinned && !have.has(pinned)) a.note = `pinned service ${pinned} is offline (stale pin)`;
       else if (ranked.length === 0) a.note = `no live specialist matches this leg`;
-      else a.note = `cheapest candidate exceeds the $${baseUnitsToUsd(cap)} leg cap`;
+      else a.note = `no candidate priced within the $${baseUnitsToUsd(cap)} leg cap`;
     } else {
       cheapestSum += cheapest!;
     }

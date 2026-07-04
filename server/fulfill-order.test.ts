@@ -132,4 +132,15 @@ describe("fulfillOrder", () => {
     const out = await fulfillOrder({ provider, runJob: async () => rec(), poll: noSleep });
     expect(out.status).toBe("delivered");
   });
+  it("skips (never accepts) when the fulfillability check itself throws — daemon survives a catalog blip", async () => {
+    const provider = mockProvider({ paysAfter: 0 });
+    const acceptSpy = vi.spyOn(provider, "acceptNegotiation");
+    const runJob = vi.fn(async () => rec());
+    const checkFulfillable = async () => { throw new Error("catalog 503"); };
+    const out = await fulfillOrder({ provider, runJob, checkFulfillable, poll: noSleep });
+    expect(acceptSpy).not.toHaveBeenCalled();
+    expect(runJob).not.toHaveBeenCalled();
+    expect(out.status).toBe("skipped");
+    expect(out.reason).toMatch(/fulfillability check unavailable/);
+  });
 });

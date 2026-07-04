@@ -51,8 +51,13 @@ async function main() {
   try {
     // Pin hygiene: warn once on any pinned SVC_* absent from the live catalog
     // (fail-closed still protects money — this is visibility, not enforcement).
-    for (const { leg, serviceId } of findStalePins(await listServices(cfg.crooApiUrl, fetch as never), cfg.preferredServiceIds)) {
-      log(`WARNING: pinned ${leg} service ${serviceId} is not in the live catalog (stale pin — that leg is unfulfillable until refreshed)`);
+    // Best-effort: a transient catalog error here must not stop the watcher starting.
+    try {
+      for (const { leg, serviceId } of findStalePins(await listServices(cfg.crooApiUrl, fetch as never), cfg.preferredServiceIds)) {
+        log(`WARNING: pinned ${leg} service ${serviceId} is not in the live catalog (stale pin — that leg is unfulfillable until refreshed)`);
+      }
+    } catch (e) {
+      log(`stale-pin check skipped (${(e as Error).message})`);
     }
     const provider = new AgentClientProvider(client as never);
     const runJob = (input: IntakeInput) =>

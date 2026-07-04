@@ -49,7 +49,16 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   // Fulfillability gate: never accept + charge for a kit we can't fully staff
   // and afford. Read-only REST, runs before accept → a rejection costs $0.
   if (deps.checkFulfillable) {
-    const f = await deps.checkFulfillable();
+    let f: FulfillabilityAssessment;
+    try {
+      f = await deps.checkFulfillable();
+    } catch (e) {
+      // A transient catalog/network error must neither accept (we can't confirm
+      // the job) nor crash a long-running --watch daemon — skip and retry next poll.
+      const reason = `fulfillability check unavailable: ${(e as Error).message}`;
+      log(`skipping ${n.negotiationId}: ${reason}`);
+      return { status: "skipped", reason };
+    }
     if (!f.ok) {
       const reason = `cannot fulfill: ${f.reason ?? "required legs unavailable"}`;
       await deps.provider.rejectNegotiation(n.negotiationId, reason);

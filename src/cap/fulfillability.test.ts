@@ -1,6 +1,18 @@
 import { describe, it, expect } from "vitest";
-import { assessFulfillability, findStalePins, parseBaseUnits } from "./fulfillability.js";
+import { assessFulfillability, findStalePins, parseBaseUnits, checkFulfillability } from "./fulfillability.js";
 import type { ServiceListing, AgentRecord } from "./discovery.js";
+import type { Config } from "../config.js";
+
+/** Fetch stub keyed by URL substring; mirrors the live CAP public REST shapes. */
+function jsonFetch(map: Record<string, unknown | ((url: string) => unknown)>): typeof fetch {
+  return (async (url: string) => {
+    const key = Object.keys(map).find((k) => String(url).includes(k));
+    if (key === undefined) return new Response("not found", { status: 404 });
+    const v = map[key];
+    const body = typeof v === "function" ? (v as (u: string) => unknown)(String(url)) : v;
+    return new Response(JSON.stringify(body), { status: 200, headers: { "content-type": "application/json" } });
+  }) as unknown as typeof fetch;
+}
 
 const agent = (agentId: string): AgentRecord =>
   ({ agentId, name: agentId, completedOrders: 100, completionRate: 1, skillTagSlugs: [], services: [] });
@@ -44,7 +56,29 @@ describe("assessFulfillability", () => {
     const svcs = fullServices.map((s) => (s.serviceId === "i1" ? { ...s, priceBaseUnits: "700000" } : s));
     const r = assessFulfillability(svcs, fullAgents, base);
     expect(r.ok).toBe(false);
-    expect(r.reason).toMatch(/og_image: cheapest candidate exceeds the \$0.60 leg cap/);
+    expect(r.reason).toMatch(/og_image: no candidate priced within the \$0.60 leg cap/);
+  });
+  it("treats a 0/missing price (discovery's sentinel) as unaffordable, not free", () => {
+    const svcs = fullServices.map((s) => (s.serviceId === "i1" ? { ...s, priceBaseUnits: "0" } : s));
+    const r = assessFulfillability(svcs, fullAgents, base);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/og_image: no candidate priced within the \$0.60 leg cap/);
+  });
+  it("does not count an affordable candidate the engine's search limit would truncate", () => {
+    // research leg: 5 high-rep candidates over the $0.60 cap + 1 affordable low-rep
+    // one that sorts 6th → truncated by SEARCH_CANDIDATE_LIMIT → leg unfulfillable.
+    const overCap = Array.from({ length: 5 }, (_, i) => ({ serviceId: `hi${i}`, agentId: `hi${i}`, name: "Market Research Report", description: "competitive analysis", priceBaseUnits: "700000" }));
+    const svcs: ServiceListing[] = [
+      ...overCap,
+      { serviceId: "cheap", agentId: "lo", name: "Market Research Report", description: "competitive analysis", priceBaseUnits: "100000" },
+      { serviceId: "c1", agentId: "ac", name: "Landing Page Copy", description: "landing page copywriting and content", priceBaseUnits: "100000" },
+      { serviceId: "i1", agentId: "ai", name: "OG Image Generator", description: "og image banner visual design", priceBaseUnits: "500000" },
+    ];
+    const agents = new Map<string, AgentRecord>([["ac", agent("ac")], ["ai", agent("ai")], ["lo", { agentId: "lo", name: "lo", completedOrders: 1, completionRate: 0.5, skillTagSlugs: [], services: [] }]]);
+    for (let i = 0; i < 5; i++) agents.set(`hi${i}`, { agentId: `hi${i}`, name: `hi${i}`, completedOrders: 1000, completionRate: 1, skillTagSlugs: [], services: [] });
+    const r = assessFulfillability(svcs, agents, base);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/research: no candidate priced within the \$0.60 leg cap/);
   });
   it("rejects when the cheapest full kit exceeds the run budget", () => {
     const svcs = fullServices.map((s) => ({ ...s, priceBaseUnits: "500000" })); // each $0.50 <= cap
@@ -63,5 +97,40 @@ describe("findStalePins", () => {
   it("flags pinned ids absent from the catalog, ignores present + unset", () => {
     const stale = findStalePins(fullServices, { research: "r1", landing_copy: "gone" });
     expect(stale).toEqual([{ leg: "landing_copy", serviceId: "gone" }]);
+  });
+});
+
+describe("checkFulfillability (live wrapper)", () => {
+  const servicesPayload = {
+    items: [
+      { serviceId: "r1", agentId: "ar", name: "Verifiable Research Report", description: "market research competitive analysis", price: "100000" },
+      { serviceId: "c1", agentId: "ac", name: "Landing Page Copy", description: "landing page copywriting and content", price: "100000" },
+      { serviceId: "i1", agentId: "ai", name: "OG Image Generator", description: "og image banner visual design", price: "500000" },
+    ],
+    total: "3",
+  };
+  const agentsPayload = {
+    agents: [
+      { agentId: "ar", name: "AR", completedOrders: "100", completionRate: 100, onlineStatus: "online", skillTagSlugs: [] },
+      { agentId: "ac", name: "AC", completedOrders: "100", completionRate: 100, onlineStatus: "online", skillTagSlugs: [] },
+      { agentId: "ai", name: "AI", completedOrders: "100", completionRate: 100, onlineStatus: "online", skillTagSlugs: [] },
+    ],
+    total: "3",
+  };
+  const fetchImpl = jsonFetch({
+    "/public/services": (url: string) => (url.includes("page=1") ? servicesPayload : { items: [], total: "3" }),
+    "/public/agents": agentsPayload,
+  });
+  const cfg = { crooApiUrl: "https://api.test", preferredServiceIds: {}, praecoAgentId: "nobody", legCapUsdc: "0.60", runBudgetUsdc: "2.00" } as unknown as Config;
+
+  it("fetches both catalogs and reports all three legs fulfillable", async () => {
+    const r = await checkFulfillability(cfg, fetchImpl);
+    expect(r.ok).toBe(true);
+    expect(r.perLeg.map((l) => l.leg)).toEqual(["research", "landing_copy", "og_image"]);
+  });
+  it("applies the config's self-exclusion (praecoAgentId → excludeAgentId)", async () => {
+    const r = await checkFulfillability({ ...cfg, praecoAgentId: "ai" } as unknown as Config, fetchImpl);
+    expect(r.ok).toBe(false);
+    expect(r.reason).toMatch(/og_image: no live specialist/);
   });
 });
