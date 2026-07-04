@@ -37,7 +37,8 @@ function ctxFor(client: CapBuyer, llm: Llm): RunContext {
     llm, client, budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
     config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: {} },
     fetchImpl: fundedFetch, requiredLegs: ["research"], hirePollOpts: { negotiationPolls: 2, deliveryPolls: 2, sleep: async () => {} },
-    candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(), assets: new Map(),
+    candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
+    paidAttemptsByLeg: new Map(), escapedPins: new Set(), assets: new Map(),
   };
 }
 

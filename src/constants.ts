@@ -11,6 +11,9 @@ export const REQUIRED_LEGS: LegKind[] = ["research", "landing_copy", "og_image"]
 /** Hard backstop against a runaway agent loop (turns = one LLM call + its tool batch). */
 export const MAX_TURNS = 24;
 
+/** Max PAID hires per leg before the guard stops spending on it (bounds loss on an unsatisfiable leg). */
+export const MAX_PAID_ATTEMPTS_PER_LEG = 2;
+
 const SCALE = 10n ** BigInt(USDC_DECIMALS);
 
 /** Parse a decimal-dollar string to USDC base units. Rejects junk and >6dp precision. */
