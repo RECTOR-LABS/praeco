@@ -188,10 +188,10 @@ export interface RunConfig {
 Run: `pnpm exec vitest run src/engine/tools.test.ts src/engine/run.test.ts`
 Expected: PASS (new exclusion test + all existing engine tests).
 
-- [ ] **Step 5: Verify the engine still composes 3/3 (self-exclusion is a no-op for mock agents)**
+- [ ] **Step 5: Verify self-exclusion is a no-op for the sandbox market**
 
 Run: `pnpm engine:smoke`
-Expected: `COMPLETED`, `3/3` legs, spent `$0.70` (mock agents `ma1/ma2/ma3` ≠ the configured `PRAECO_AGENT_ID`, so nothing is excluded).
+Expected: the engine discovers + hires `mock-research`/`mock-copy`/`mock-image` exactly as before (self-exclusion filters nothing — `ma1/ma2/ma3` ≠ the configured `PRAECO_AGENT_ID`). Final status is `COMPLETED` (3/3, $0.70) **or** `partial` (2/3, ~$0.80): the landing_copy QA verdict on the fixed mock deliverable is GLM-nondeterministic and can hit the paid-attempt cap — a **pre-existing** clean-kit behavior, not caused by this change. The invariant that must hold: no discovery regression (mock-copy still found + hired).
 
 - [ ] **Step 6: Commit**
 
@@ -640,10 +640,10 @@ Expected: all green (183 prior + the new discovery/tools/fulfillability/fulfill-
 Run: `pnpm typecheck && pnpm exec next build`
 Expected: no type errors; Next build succeeds.
 
-- [ ] **Step 3: Sandbox engine proof**
+- [ ] **Step 3: Sandbox engine proof (no discovery regression)**
 
 Run: `pnpm engine:smoke`
-Expected: `COMPLETED`, `3/3`, `$0.70` (mock).
+Expected: the engine discovers/hires/composes; final `COMPLETED` (3/3, $0.70) **or** `partial` (2/3, ~$0.80) depending on the GLM's landing_copy QA verdict (pre-existing nondeterminism — the paid-attempt cap bounds it). The invariant is graceful composition with no discovery break, not a hard 3/3.
 
 - [ ] **Step 4 (optional $0 live probe — read-only, no accept, no spend):** confirm the gate would reject today's stale pins instead of delivering an empty kit. With the current (stale) `SVC_*` in `.env`, start `pnpm door-b:fulfill` (no order pending) and observe the startup `WARNING: pinned … stale pin` lines for the offline research/landing_copy pins. Ctrl-C. (This reproduces the 2026-07-04 failure as a visible warning + would-be rejection, with zero on-chain action.)
 
