@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { runLaunchJob, type EngineDriver } from "./run.js";
 import { buildTools } from "./tools.js";
+import { makeBeforeToolCall } from "./guard.js";
 import type { RunContext } from "./context.js";
 import type { Config } from "../config.js";
 import type { Llm } from "../llm/llm.js";
@@ -30,7 +31,10 @@ function happyClient(): CapBuyer {
     listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
     getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xd" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
-    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "https://cdn/og.png", contentHash: "0xh" })),
+    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText:
+      "Privacy-first habit tracker research: indie developers want local-first tools, no mandatory cloud, " +
+      "one-time purchase pricing, and calm developer-focused positioning against gamified incumbents like Habitica.",
+      contentHash: "0xh" })),
   };
 }
 
@@ -70,7 +74,7 @@ describe("runLaunchJob", () => {
     expect(rec.brief.product).toBe("Streaky");
     expect(rec.assets.map((a) => a.leg).sort()).toEqual(["landing_copy", "og_image", "research"].sort());
     expect(rec.spentBaseUnits).toBe("300000"); // 3 × $0.10
-    expect(rec.kit?.ogImageRef).toBe("https://cdn/og.png");
+    expect(rec.kit?.ogImageRef).toBe("hash:0xh");
     expect(rec.kit?.tweetThread).toEqual(["1/ Meet Streaky"]);
     const kinds = rec.worklog.map((e) => e.kind);
     expect(kinds).toContain("run_started");
@@ -124,5 +128,84 @@ describe("runLaunchJob", () => {
     expect(rec.kit).toBeUndefined();
     // The error event must be present with the compose failure message.
     expect(rec.worklog.some((e) => e.kind === "error" && e.message.includes("compose failed"))).toBe(true);
+  });
+});
+
+// A mock CAP client whose only-ever-hired provider ("pin-bad") delivers a
+// redemption code (no inline content). vi.fn records negotiations so the test
+// can prove the inline alternative in the catalog is NEVER paid (fail-closed pin).
+function failClosedClient(): CapBuyer {
+  let n = 0;
+  return {
+    negotiateOrder: vi.fn(async (_req: any) => ({ negotiationId: `neg-${++n}` })),
+    getNegotiation: vi.fn(async () => ({ status: "pending" })),
+    listOrders: vi.fn(async () => [{ orderId: `ord-${n}`, negotiationId: `neg-${n}`, price: "100000", status: "created" }]),
+    getOrder: vi.fn(async (id: string) => ({ status: "created", price: "100000", deliverTxHash: `0xd-${id}` })),
+    payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
+    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "Your report is ready. Redeem code RSCH-9F2A at https://pygm.studio/r/RSCH-9F2A", contentHash: "0xh" })),
+  };
+}
+
+// Catalog with the pinned bad provider + an inline research alternative that
+// must NEVER be hired (the pin is authoritative + fail-closed).
+const failClosedFetch = (async (url: string, init?: RequestInit) => {
+  if (init?.method === "POST") return new Response(JSON.stringify({ result: "0x00000000000000000000000000000000000000000000000000000000001e8480" }), { status: 200 });
+  const u = String(url);
+  const agents: Record<string, unknown> = {
+    pygm: { agent: { agentId: "pygm", name: "Pygm", completedOrders: "1401", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["content-creative"], services: [{ serviceId: "pin-bad", name: "Research Redemption Code", price: "100000", requirementType: "text", requirementSchema: "[]", deliverableType: "text" }] } },
+    zeru: { agent: { agentId: "zeru", name: "ZERU", completedOrders: "500", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["research-report"], services: [{ serviceId: "inline-good", name: "Verifiable Research Report", price: "100000", requirementType: "text", requirementSchema: "[]", deliverableType: "text" }] } },
+  };
+  const m = u.match(/\/public\/agents\/([^/?]+)/);
+  if (m) return new Response(JSON.stringify(agents[m[1]] ?? {}), { status: 200 });
+  if (u.includes("/public/agents")) return new Response(JSON.stringify({ agents: [
+    { agentId: "pygm", name: "Pygm", completedOrders: "1401", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["content-creative"] },
+    { agentId: "zeru", name: "ZERU", completedOrders: "500", completionRate: 100, onlineStatus: "online", skillTagSlugs: ["research-report"] },
+  ], total: "2" }), { status: 200 });
+  if (u.includes("/public/services")) return new Response(JSON.stringify(u.includes("page=1") ? { items: [
+    { serviceId: "pin-bad", agentId: "pygm", name: "Research Redemption Code", description: "research report", price: "100000", orders7d: "50" },
+    { serviceId: "inline-good", agentId: "zeru", name: "Verifiable Research Report", description: "market intelligence report", price: "100000", orders7d: "9" },
+  ], total: "2" } : { items: [], total: "2" }), { status: 200 });
+  return new Response("not found", { status: 404 });
+}) as unknown as typeof fetch;
+
+describe("runLaunchJob — §7 cap-only fail-closed on a bad pin", () => {
+  it("bounds spend to the cap and never pays an unvetted provider when a pinned provider keeps failing QA", async () => {
+    const client = failClosedClient();
+    // Faithful agent-loop stand-in: gate every hire through beforeToolCall, like the real loop.
+    const capDriver: EngineDriver = async (ctx: RunContext) => {
+      const tools = Object.fromEntries(buildTools(ctx).map((t) => [t.name, t]));
+      const guard = makeBeforeToolCall(ctx);
+      for (let i = 0; i < 3; i++) {
+        // Pin is authoritative + fail-closed: discovery only ever returns "pin-bad".
+        await tools.search_marketplace.execute("x", { leg: "research", query: "research" });
+        const blocked = await guard({ toolCall: { name: "hire_specialist" }, args: { leg: "research", serviceId: "pin-bad" } } as any);
+        if (blocked?.block) break; // cap reached — stop hiring (graceful, no unvetted spend)
+        const h = await tools.hire_specialist.execute("x", { leg: "research", serviceId: "pin-bad", requirements: { topic: "habits" } });
+        await tools.qa_review.execute("x", { orderId: (h.details as any).orderId }); // formatGate -> swap (pin stays fail-closed)
+      }
+      return {};
+    };
+
+    const rec = await runLaunchJob(
+      { text: "Streaky habit tracker" },
+      {
+        ...baseDeps(),
+        client,
+        fetchImpl: failClosedFetch,
+        config: { ...config, preferredServiceIds: { research: "pin-bad" } },
+        drive: capDriver,
+      },
+    );
+
+    // The cap bounds paid attempts to 2 — spend cannot exceed 2×price.
+    expect(client.payOrder).toHaveBeenCalledTimes(2);
+    expect(rec.spentBaseUnits).toBe("200000");
+    // Fail-closed: every negotiation was for the pinned provider — the inline
+    // alternative that EXISTS in the catalog is never paid.
+    const negotiated = (client.negotiateOrder as any).mock.calls.map((c: any[]) => c[0].serviceId);
+    expect(negotiated.every((s: string) => s === "pin-bad")).toBe(true);
+    // No leg succeeded → graceful abort (no kit, no asset from an unvetted provider).
+    expect(rec.status).toBe("aborted");
+    expect(rec.assets).toHaveLength(0);
   });
 });

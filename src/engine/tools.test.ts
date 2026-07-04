@@ -17,7 +17,10 @@ function happyClient(): CapBuyer {
     listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
     getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xd" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
-    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "research findings", contentHash: "0xh" })),
+    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText:
+      "Market research: indie developers want privacy-first, local-first habit tracking with no mandatory cloud, " +
+      "a one-time purchase over subscriptions, and strong open-source positioning against gamified incumbents.",
+      contentHash: "0xh" })),
   };
 }
 
@@ -28,13 +31,15 @@ const candidate: ServiceCandidate = {
   completedOrders: 100, completionRate: 0.99,
 };
 
-function ctxFor(client: CapBuyer, llm: Llm): RunContext {
+function ctxFor(client: CapBuyer, llm: Llm, over: Partial<RunContext> = {}): RunContext {
   return {
     brief: { product: "Streaky", audience: "builders", features: ["x"], tone: "playful", oneLiner: "Track habits." },
     llm, client, budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
     config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: {} },
     fetchImpl: fundedFetch, requiredLegs: ["research"], hirePollOpts: { negotiationPolls: 2, deliveryPolls: 2, sleep: async () => {} },
-    candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(), assets: new Map(),
+    candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
+    paidAttemptsByLeg: new Map(), assets: new Map(),
+    ...over,
   };
 }
 
@@ -179,5 +184,13 @@ describe("qa_review + submit_asset tools", () => {
     await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } });
     await toolMap(ctx).qa_review.execute("id", { orderId: "o1" });
     await expect(toolMap(ctx).submit_asset.execute("id", { orderId: "o1" })).rejects.toThrow(/has not passed QA/);
+  });
+});
+
+describe("§7 cap wiring", () => {
+  it("increments paidAttemptsByLeg when a hire is paid", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({}));
+    await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "x" } });
+    expect(ctx.paidAttemptsByLeg.get("research")).toBe(1);
   });
 });

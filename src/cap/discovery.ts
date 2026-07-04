@@ -38,6 +38,7 @@ export interface AgentService {
   requirementType: string;            // "schema" | "text"
   requirementSchema: RequirementField[];
   requirementText?: string;
+  deliverableType?: string;           // "text" | "schema" — what the provider returns (was dropped pre-§7)
 }
 
 export interface AgentRecord {
@@ -61,6 +62,7 @@ export interface RankedListing extends ServiceListing {
   skillTagSlugs: string[];
   relevance: number;
   repScore: number;
+  formatDeRank: number;   // 0 = inline provider; 1 = code/redemption-titled (last resort for a leg)
 }
 
 const base = (apiUrl: string) => `${apiUrl.replace(/\/$/, "")}/backend/v1/public`;
@@ -110,6 +112,7 @@ function mapAgentService(s: Record<string, any>): AgentService {
     requirementType: String(s.requirementType ?? (requirementSchema.length ? "schema" : "text")),
     requirementSchema,
     requirementText: s.requirementText ? String(s.requirementText) : undefined,
+    deliverableType: s.deliverableType ? String(s.deliverableType) : undefined,
   };
 }
 
@@ -220,6 +223,7 @@ export function candidateFromAgent(agent: AgentRecord, serviceId: string): Servi
     completionRate: agent.completionRate,
     avgDeliveryText: agent.avgDeliveryText,
     onlineStatus: agent.onlineStatus,
+    deliverableType: svc.deliverableType,
   };
 }
 
@@ -263,6 +267,20 @@ const priceOf = (p: string): number => {
 };
 
 /**
+ * A service whose title/description signals a redemption-code delivery format
+ * (e.g. Pygm "… Code" services) rather than inline content. These deliver a
+ * code + platform link, not usable copy/image (§7), so they are de-ranked below
+ * all inline providers for a leg — kept as last-resort candidates, not excluded.
+ */
+export function isCodeFormat(name: string, description: string): boolean {
+  // Fires when the NAME's TRAILING word is "code" (the Pygm "… Text/Image Code" tell —
+  // this deliberately also catches "… Promo Code" / "… QR Code" / "… Source Code": a broad
+  // but SOFT de-rank, never an exclusion) OR a redemption term appears anywhere in
+  // name+description. A leading/mid "No-Code …" (code not the trailing word) does NOT match.
+  return /\bcode\s*$/i.test(name.trim()) || /\bredemption\b|\bredeem\b|\bvoucher\b/i.test(`${name} ${description}`);
+}
+
+/**
  * Rank catalog services for a leg: fuse each listing with its agent's reputation,
  * score leg-relevance, and order by relevance → reputation → price. Returns only
  * services that match the leg at all. A pinned `preferredServiceId` is an
@@ -284,6 +302,7 @@ export function discoverForLeg(
       ...s, agentName: a?.name ?? "", completedOrders, completionRate,
       onlineStatus: a?.onlineStatus, skillTagSlugs: a?.skillTagSlugs ?? [],
       relevance, repScore: completionRate * Math.log10(completedOrders + 1),
+      formatDeRank: isCodeFormat(s.name, s.description ?? "") ? 1 : 0,
     };
   };
   // Operator override: a pinned serviceId is AUTHORITATIVE — it's the sole
@@ -301,6 +320,7 @@ export function discoverForLeg(
   );
   const matches = ranked.filter((r) => r.relevance > 0);
   matches.sort((a, b) => {
+    if (a.formatDeRank !== b.formatDeRank) return a.formatDeRank - b.formatDeRank; // inline (0) before code (1)
     if (b.relevance !== a.relevance) return b.relevance - a.relevance;
     if (b.repScore !== a.repScore) return b.repScore - a.repScore;
     return priceOf(a.priceBaseUnits) - priceOf(b.priceBaseUnits);

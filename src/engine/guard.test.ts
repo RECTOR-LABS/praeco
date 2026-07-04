@@ -16,6 +16,8 @@ function ctx(over: Partial<RunContext> = {}): RunContext {
       budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
       candidates: new Map([["s1", cand("100000")]]), assets: new Map(),
       requiredLegs: ["research"], pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
+      paidAttemptsByLeg: new Map(),
+      config: { apiUrl: "", rpcUrl: "", agentWallet: "", usdcTokenAddress: "", preferredServiceIds: {} },
     },
     over,
   ) as RunContext;
@@ -56,6 +58,13 @@ describe("makeBeforeToolCall", () => {
     const r = await makeBeforeToolCall(c)(call("hire_specialist", { leg: "research", serviceId: "s1" }));
     expect(r?.block).toBe(true);
     expect(r?.reason).toMatch(/run budget/);
+    expect(c.worklog.events.at(-1)?.kind).toBe("hire_blocked");
+  });
+  it("blocks a hire once the leg hits the paid-attempt cap", async () => {
+    const c = ctx({ paidAttemptsByLeg: new Map([["research", 2]]) });
+    const r = await makeBeforeToolCall(c)(call("hire_specialist", { leg: "research", serviceId: "s1" }));
+    expect(r?.block).toBe(true);
+    expect(r?.reason).toMatch(/cap/i);
     expect(c.worklog.events.at(-1)?.kind).toBe("hire_blocked");
   });
 });

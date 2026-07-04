@@ -8,7 +8,7 @@
 import type { Agent, BeforeToolCallContext, BeforeToolCallResult } from "@earendil-works/pi-agent-core";
 import type { RunContext } from "./context.js";
 import type { LegKind } from "../types.js";
-import { baseUnitsToUsd } from "../constants.js";
+import { baseUnitsToUsd, MAX_PAID_ATTEMPTS_PER_LEG } from "../constants.js";
 
 export function makeBeforeToolCall(
   ctx: RunContext,
@@ -21,6 +21,13 @@ export function makeBeforeToolCall(
       return { block: true, reason };
     };
     if (a.leg && ctx.assets.has(a.leg)) return block(`leg ${a.leg} already has a submitted asset — do not hire it again`);
+    // Per-leg paid-attempt cap bounds money loss on an unsatisfiable leg (incl. a pinned
+    // provider that keeps failing QA — the pin stays fail-closed, this just stops the spend).
+    // Safe as check-then-act: pi-agent-core runs hires sequentially (agent.ts) and onPaid
+    // increments synchronously, so no two hires race the same counter.
+    if (a.leg && (ctx.paidAttemptsByLeg.get(a.leg) ?? 0) >= MAX_PAID_ATTEMPTS_PER_LEG) {
+      return block(`leg ${a.leg} reached the ${MAX_PAID_ATTEMPTS_PER_LEG}-paid-hire cap without a QA-accepted asset — stop hiring for this leg and finish with the legs you have`);
+    }
     const c = a.serviceId ? ctx.candidates.get(a.serviceId) : undefined;
     if (!c) return block(`serviceId ${a.serviceId ?? "(none)"} was not discovered — call search_marketplace first`);
     const price = BigInt(c.priceBaseUnits);

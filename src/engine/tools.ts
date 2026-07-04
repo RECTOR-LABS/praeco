@@ -71,7 +71,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       }
       if (ranked.length === 0) return text(`No candidates found for "${params.query}". Try different keywords.`, { count: 0 });
       const summary = ranked
-        .map((c) => `- serviceId=${c.serviceId} agent="${c.agentName}" price=$${usd(c.priceBaseUnits)} completionRate=${(c.completionRate * 100).toFixed(1)}% orders=${c.completedOrders} requires=[${c.requirementSchema.map((f) => f.name + (f.required ? "*" : "")).join(", ")}]`)
+        .map((c) => `- serviceId=${c.serviceId} agent="${c.agentName}" price=$${usd(c.priceBaseUnits)} completionRate=${(c.completionRate * 100).toFixed(1)}% orders=${c.completedOrders} delivers=${c.deliverableType ?? "?"} requires=[${c.requirementSchema.map((f) => f.name + (f.required ? "*" : "")).join(", ")}]`)
         .join("\n");
       return text(`Candidates for ${leg} (best first):\n${summary}\n\nNext: get_service_schema, then hire_specialist with the best candidate.`, { candidates: ranked.map((c) => c.serviceId) });
     },
@@ -117,7 +117,11 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
           assertPayable,
           // Commit spend at pay-time so a delivery timeout cannot lose the accounting.
           // assertPayable already confirmed canAfford, so commit() cannot throw here.
-          onPaid: (price, orderId) => { ctx.budget.commit(price); ctx.paidOrderIds.add(orderId); },
+          onPaid: (price, orderId) => {
+            ctx.budget.commit(price);
+            ctx.paidOrderIds.add(orderId);
+            ctx.paidAttemptsByLeg.set(leg, (ctx.paidAttemptsByLeg.get(leg) ?? 0) + 1);
+          },
         },
         (e) => ctx.worklog.emit(e),
         ctx.hirePollOpts,

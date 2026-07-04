@@ -21,6 +21,15 @@ describe("extractImageRef", () => {
     expect(extractImageRef({ type: "schema", schema: { imageUrl: "https://cdn/og.png" }, contentHash: "0x" })).toBe("https://cdn/og.png");
     expect(extractImageRef({ type: "schema", schema: { url: "https://cdn/u.png" }, contentHash: "0x" })).toBe("https://cdn/u.png");
   });
+  it("matches url-ish fields case-insensitively and via common aliases (src/mediaUrl)", () => {
+    expect(extractImageRef({ type: "schema", schema: { imageURL: "https://cdn/og.png" }, contentHash: "0x" })).toBe("https://cdn/og.png");
+    expect(extractImageRef({ type: "schema", schema: { IMAGE_URL: "https://cdn/c.png" }, contentHash: "0x" })).toBe("https://cdn/c.png");
+    expect(extractImageRef({ type: "schema", schema: { src: "https://cdn/s.png" }, contentHash: "0x" })).toBe("https://cdn/s.png");
+    expect(extractImageRef({ type: "schema", schema: { mediaUrl: "https://cdn/m.jpg" }, contentHash: "0x" })).toBe("https://cdn/m.jpg");
+  });
+  it("keeps URL_FIELDS priority order (imageUrl wins over a generic link)", () => {
+    expect(extractImageRef({ type: "schema", schema: { link: "https://cdn/l.png", imageUrl: "https://cdn/i.png" }, contentHash: "0x" })).toBe("https://cdn/i.png");
+  });
   it("rejects junk-after-url text and falls back to hash", () => {
     expect(extractImageRef({ type: "text", text: "https://cdn/img.png (generated)", contentHash: "0xabc" })).toBe("hash:0xabc");
   });

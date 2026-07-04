@@ -31,6 +31,7 @@ export interface ServiceCandidate {
   avgDeliveryText?: string;
   onlineStatus?: string;
   orders7d?: number;
+  deliverableType?: string;      // "text" | "schema" — what the provider returns
 }
 
 export interface Deliverable {

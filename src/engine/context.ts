@@ -38,5 +38,6 @@ export interface RunContext {
   pendingHires: Map<string, HireResult>;      // orderId -> hire result awaiting QA/submit
   verdicts: Map<string, QaVerdict>;           // orderId -> QA verdict
   paidOrderIds: Set<string>;                  // idempotency ledger
+  paidAttemptsByLeg: Map<LegKind, number>;    // paid hires per leg (money-loss bound, §7)
   assets: Map<LegKind, LaunchAsset>;          // submitted, QA-accepted, one per leg
 }

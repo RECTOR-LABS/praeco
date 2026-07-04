@@ -9,7 +9,8 @@ function ctx(): RunContext {
     brief: { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits." },
     budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
     requiredLegs: ["research", "landing_copy", "og_image"],
-    candidates: new Map(), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(), assets: new Map(),
+    candidates: new Map(), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
+    paidAttemptsByLeg: new Map(), assets: new Map(),
   } as RunContext;
 }
 
