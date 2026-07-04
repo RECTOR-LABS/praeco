@@ -5,6 +5,7 @@ import { useSearchParams } from "next/navigation";
 import { useLiveRunStream } from "@/components/theater/useLiveRunStream";
 import { Theater } from "@/components/theater/Theater";
 import { GridBackdrop } from "@/components/ui/GridBackdrop";
+import { Button } from "@/components/ui/button";
 
 function LiveRun() {
   const sp = useSearchParams();
@@ -17,12 +18,9 @@ function LiveRun() {
       <Theater state={state} />
       {done && (
         <div className="py-8 text-center">
-          <Link
-            href="/"
-            className="inline-flex items-center gap-2 rounded-lg border border-line bg-panel px-5 py-2.5 font-mono text-xs text-ink transition-colors hover:bg-panel-2"
-          >
-            ← Back home
-          </Link>
+          <Button asChild variant="outline">
+            <Link href="/">← Back home</Link>
+          </Button>
         </div>
       )}
     </main>

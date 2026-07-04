@@ -6,7 +6,8 @@ vi.mock("@/server/persistence", () => ({
   listRecords: vi.fn(async () => []),
 }));
 
-test("landing renders the brand", async () => {
+test("landing renders the brand and the hero headline", async () => {
   render(await Landing());
-  expect(screen.getByRole("heading", { name: "Praeco" })).toBeInTheDocument();
+  expect(screen.getByText("Praeco")).toBeInTheDocument(); // nav wordmark
+  expect(screen.getByRole("heading", { name: /ship your launch/i })).toBeInTheDocument();
 });

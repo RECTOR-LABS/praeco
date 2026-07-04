@@ -1,6 +1,13 @@
 "use client";
 import { Suspense, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Terminal, ArrowRight } from "lucide-react";
+import { ConsolePanel } from "@/components/ui/ConsolePanel";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { GridBackdrop } from "@/components/ui/GridBackdrop";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 
 function detect(value: string, mode: string): Record<string, string> {
   if (/^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/.test(value)) {
@@ -28,25 +35,28 @@ function IntakeForm() {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
-      <input
+      <div className="flex items-center justify-between">
+        <Label htmlFor="brief" className="font-mono text-[11px] uppercase tracking-wider text-muted-foreground">
+          Launch brief
+        </Label>
+        <StatusPill tone={mode === "live" ? "live" : "muted"}>{mode}</StatusPill>
+      </div>
+      <Input
+        id="brief"
         type="text"
         placeholder="Paste a one-liner or GitHub URL"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-gray-500 outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+        className="bg-panel-2 font-mono"
         autoFocus
       />
-      <button
-        type="submit"
-        disabled={loading || !value.trim()}
-        className="w-full rounded-lg bg-emerald-600 px-4 py-3 text-sm font-semibold text-white hover:bg-emerald-500 disabled:opacity-50 transition-colors"
-      >
+      <Button type="submit" disabled={loading || !value.trim()} className="w-full" size="lg">
         {loading ? "Running…" : "Try it free"}
-      </button>
+        {!loading && <ArrowRight className="h-4 w-4" />}
+      </Button>
       {mode === "live" && !loading && (
-        <p className="text-center text-xs text-gray-500">
-          Live mode requires a valid <code className="font-mono">LIVE_RUN_TOKEN</code> — contact
-          RECTOR to request access.
+        <p className="text-center text-xs text-muted-foreground">
+          Live mode requires a valid <code className="font-mono text-ink">LIVE_RUN_TOKEN</code> — contact RECTOR for access.
         </p>
       )}
     </form>
@@ -55,22 +65,22 @@ function IntakeForm() {
 
 export default function IntakePage() {
   return (
-    <main className="min-h-screen bg-gray-950 text-white flex items-center justify-center px-6">
-      <div className="w-full max-w-lg space-y-6">
-        <div className="text-center space-y-2">
-          <h1 className="text-3xl font-bold">Start a run</h1>
-          <p className="text-gray-400">
-            Describe your product or paste a GitHub repo URL.
+    <main className="relative isolate flex min-h-screen items-center justify-center bg-ground px-6 text-ink">
+      <GridBackdrop />
+      <ConsolePanel glow tone="live" className="w-full max-w-lg space-y-6 p-6">
+        <div className="space-y-1.5">
+          <h1 className="flex items-center gap-2 text-xl font-bold text-ink">
+            <Terminal className="h-5 w-5 text-live" aria-hidden />
+            Mission briefing
+          </h1>
+          <p className="text-sm text-muted-foreground">
+            Describe your product or paste a GitHub repo — Praeco assembles the launch kit.
           </p>
         </div>
-        <Suspense
-          fallback={
-            <div className="h-32 animate-pulse rounded-lg bg-white/5" />
-          }
-        >
+        <Suspense fallback={<div className="h-40 animate-pulse rounded-lg bg-panel-2" />}>
           <IntakeForm />
         </Suspense>
-      </div>
+      </ConsolePanel>
     </main>
   );
 }

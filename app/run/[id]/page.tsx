@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRunStream } from "@/components/theater/useRunStream";
 import { Theater } from "@/components/theater/Theater";
 import { GridBackdrop } from "@/components/ui/GridBackdrop";
+import { Button } from "@/components/ui/button";
 
 export default function TheaterPage({
   params,
@@ -19,12 +20,9 @@ export default function TheaterPage({
       <Theater state={state} />
       {(state.status === "completed" || state.status === "partial") && (
         <div className="py-8 text-center">
-          <Link
-            href={`/kit/${id}`}
-            className="inline-flex items-center gap-2 rounded-lg border border-live/30 bg-live/10 px-5 py-2.5 font-mono text-xs font-semibold text-live transition-colors hover:bg-live/20"
-          >
-            View kit →
-          </Link>
+          <Button asChild size="lg">
+            <Link href={`/kit/${id}`}>View kit →</Link>
+          </Button>
         </div>
       )}
     </main>
