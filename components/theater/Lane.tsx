@@ -1,12 +1,21 @@
 import type { LaneState, Phase } from "./reducer";
+import type { LegKind } from "@/src/types";
 import { AlertCircle, User } from "lucide-react";
-import { cn } from "@/lib/utils";
-import { BasescanLink } from "./BasescanLink";
+import { ConsolePanel } from "@/components/ui/ConsolePanel";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { PhaseRail } from "@/components/ui/PhaseRail";
+import { ReceiptChip } from "@/components/ui/ReceiptChip";
 
 const LEG_LABEL: Record<string, string> = {
   research:     "Research",
   landing_copy: "Landing copy",
   og_image:     "OG image",
+};
+
+const LANE_TONE: Record<LegKind, "research" | "copy" | "image"> = {
+  research: "research",
+  landing_copy: "copy",
+  og_image: "image",
 };
 
 // Ordered phase progression (blocked is a side-state, not in the rail).
@@ -27,80 +36,43 @@ const PHASE_LABEL: Record<Phase, string> = {
   blocked:     "Blocked",
 };
 
-function PhaseRail({ phase }: { phase: Phase }) {
-  const currentIdx = RAIL.indexOf(phase);
-  const isBlocked = phase === "blocked";
-  return (
-    <div className="flex gap-0.5">
-      {RAIL.map((step, i) => (
-        <div
-          key={step}
-          className={cn(
-            "h-1 flex-1 rounded-full",
-            isBlocked
-              ? "bg-red-500/60"
-              : i <= currentIdx
-              ? "bg-emerald-500"
-              : "bg-white/10",
-          )}
-        />
-      ))}
-    </div>
-  );
-}
-
 export function Lane({ lane }: { lane: LaneState }) {
   const isBlocked = lane.phase === "blocked";
   const isAccepted = lane.phase === "accepted";
+  const tone = LANE_TONE[lane.leg];
   return (
-    <div
-      className={cn(
-        "rounded-xl border p-4 space-y-3",
-        isBlocked
-          ? "border-red-500/30 bg-red-500/5"
-          : "border-white/10 bg-white/5",
-      )}
-    >
+    <ConsolePanel tone={isBlocked ? "danger" : tone} glow={lane.phase !== "idle"} className="space-y-3 p-4">
       {/* Header: label + phase badge */}
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-white">
+        <span className="font-mono text-xs uppercase tracking-wider text-ink">
           {LEG_LABEL[lane.leg] ?? lane.leg}
         </span>
-        <span
-          className={cn(
-            "shrink-0 rounded-full px-2 py-0.5 text-xs font-medium",
-            isBlocked
-              ? "bg-red-500/20 text-red-400"
-              : isAccepted
-              ? "bg-emerald-500/20 text-emerald-400"
-              : "bg-white/10 text-gray-400",
-          )}
-        >
+        <StatusPill tone={isBlocked ? "danger" : isAccepted ? "live" : tone}>
           {PHASE_LABEL[lane.phase]}
-        </span>
+        </StatusPill>
       </div>
 
       {/* Phase progress rail */}
-      <PhaseRail phase={lane.phase} />
+      <PhaseRail segments={RAIL.length} activeIndex={RAIL.indexOf(lane.phase)} blocked={isBlocked} />
 
       {/* Agent name */}
       {lane.agentName && (
-        <div className="flex items-center gap-1.5 text-sm text-gray-300">
-          <User className="h-3.5 w-3.5 shrink-0 text-gray-500" />
+        <div className="flex items-center gap-1.5 font-mono text-xs text-muted">
+          <User className="h-3.5 w-3.5 shrink-0" />
           {lane.agentName}
         </div>
       )}
 
       {/* Blocked note */}
       {isBlocked && lane.note && (
-        <div className="flex items-start gap-2 rounded-lg bg-red-500/10 px-3 py-2">
-          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
-          <p className="text-xs leading-relaxed text-red-300">{lane.note}</p>
+        <div className="flex items-start gap-2 rounded-lg border border-danger/20 bg-danger/5 px-3 py-2">
+          <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-danger" />
+          <p className="text-xs leading-relaxed text-danger">{lane.note}</p>
         </div>
       )}
 
       {/* In-lane Basescan receipt chip */}
-      {lane.basescanUrl && <BasescanLink href={lane.basescanUrl} label="Receipt" />}
-    </div>
+      {lane.basescanUrl && <ReceiptChip href={lane.basescanUrl} label="Receipt" />}
+    </ConsolePanel>
   );
 }

@@ -2,13 +2,16 @@ import type { FC } from "react";
 import type { TheaterState } from "./reducer";
 import { Activity, Clock, CheckCircle, XCircle, AlertCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { ConsolePanel } from "@/components/ui/ConsolePanel";
+import { LiveDot } from "@/components/ui/LiveDot";
+import { SpendMeter } from "@/components/ui/SpendMeter";
 
 const STATUS_CONFIG = {
-  running:   { label: "Running",   color: "text-emerald-400", Icon: Activity },
-  completed: { label: "Completed", color: "text-emerald-400", Icon: CheckCircle },
-  partial:   { label: "Partial",   color: "text-yellow-400",  Icon: AlertCircle },
-  aborted:   { label: "Aborted",   color: "text-gray-400",    Icon: XCircle },
-  failed:    { label: "Failed",    color: "text-red-400",     Icon: XCircle },
+  running:   { label: "Running",   color: "text-live",      Icon: Activity },
+  completed: { label: "Completed", color: "text-live",      Icon: CheckCircle },
+  partial:   { label: "Partial",   color: "text-lane-copy", Icon: AlertCircle },
+  aborted:   { label: "Aborted",   color: "text-muted",     Icon: XCircle },
+  failed:    { label: "Failed",    color: "text-danger",    Icon: XCircle },
 } as const satisfies Record<TheaterState["status"], { label: string; color: string; Icon: FC<{ className?: string }> }>;
 
 function elapsedLabel(startedAt?: number, endedAt?: number): string {
@@ -22,22 +25,26 @@ function elapsedLabel(startedAt?: number, endedAt?: number): string {
 export function BrainBar({ state }: { state: TheaterState }) {
   const cfg = STATUS_CONFIG[state.status];
   const { Icon } = cfg;
+  const running = state.status === "running";
   return (
-    <div className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-white/10 bg-white/5 px-4 py-3">
-      <div className="flex items-center gap-2">
-        <Icon className={cn("h-4 w-4", cfg.color)} />
-        <span className={cn("text-sm font-semibold", cfg.color)}>{cfg.label}</span>
-        {state.product && (
-          <span className="ml-1 text-sm text-gray-400 truncate max-w-xs">— {state.product}</span>
-        )}
-      </div>
-      <div className="flex items-center gap-4 text-sm">
-        <span className="flex items-center gap-1 text-gray-400">
+    <ConsolePanel className="px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex items-center gap-2">
+          {running && <LiveDot />}
+          <Icon className={cn("h-4 w-4", cfg.color)} />
+          <span className={cn("font-mono text-xs uppercase tracking-wider", cfg.color)}>{cfg.label}</span>
+          {state.product && (
+            <span className="ml-1 max-w-xs truncate text-sm text-muted">— {state.product}</span>
+          )}
+        </div>
+        <span className="flex items-center gap-1 font-mono text-xs text-muted">
           <Clock className="h-3.5 w-3.5" />
           {elapsedLabel(state.startedAt, state.endedAt)}
         </span>
-        <span className="font-semibold text-emerald-400">${state.spentUsd}</span>
       </div>
-    </div>
+      <div className="mt-3">
+        <SpendMeter spentUsd={state.spentUsd} budgetUsd="2.00" live={running} />
+      </div>
+    </ConsolePanel>
   );
 }
