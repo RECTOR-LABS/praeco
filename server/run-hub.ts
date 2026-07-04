@@ -41,6 +41,7 @@ export class RunHub {
   }
 }
 
-// Process-wide singleton (survives across requests on Railway's long-lived Node server).
+// Process-wide singleton. On a long-lived server it survives across requests; on Vercel it
+// lives per warm instance — fine, because a live run streams within a single request.
 const g = globalThis as unknown as { __praecoHub?: RunHub };
 export const hub: RunHub = g.__praecoHub ?? (g.__praecoHub = new RunHub());
