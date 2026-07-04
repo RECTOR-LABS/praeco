@@ -10,7 +10,7 @@ const STATUS_CONFIG = {
   running:   { label: "Running",   color: "text-live",      Icon: Activity },
   completed: { label: "Completed", color: "text-live",      Icon: CheckCircle },
   partial:   { label: "Partial",   color: "text-lane-copy", Icon: AlertCircle },
-  aborted:   { label: "Aborted",   color: "text-muted",     Icon: XCircle },
+  aborted:   { label: "Aborted",   color: "text-muted-foreground",     Icon: XCircle },
   failed:    { label: "Failed",    color: "text-danger",    Icon: XCircle },
 } as const satisfies Record<TheaterState["status"], { label: string; color: string; Icon: FC<{ className?: string }> }>;
 
@@ -34,10 +34,10 @@ export function BrainBar({ state }: { state: TheaterState }) {
           <Icon className={cn("h-4 w-4", cfg.color)} />
           <span className={cn("font-mono text-xs uppercase tracking-wider", cfg.color)}>{cfg.label}</span>
           {state.product && (
-            <span className="ml-1 max-w-xs truncate text-sm text-muted">— {state.product}</span>
+            <span className="ml-1 max-w-xs truncate text-sm text-muted-foreground">— {state.product}</span>
           )}
         </div>
-        <span className="flex items-center gap-1 font-mono text-xs text-muted">
+        <span className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5" />
           {elapsedLabel(state.startedAt, state.endedAt)}
         </span>

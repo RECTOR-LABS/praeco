@@ -57,7 +57,7 @@ export function Lane({ lane }: { lane: LaneState }) {
 
       {/* Agent name */}
       {lane.agentName && (
-        <div className="flex items-center gap-1.5 font-mono text-xs text-muted">
+        <div className="flex items-center gap-1.5 font-mono text-xs text-muted-foreground">
           <User className="h-3.5 w-3.5 shrink-0" />
           {lane.agentName}
         </div>

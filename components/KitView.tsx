@@ -15,12 +15,12 @@ function copyToClipboard(text: string) {
 function SectionHeader({ label, onCopy }: { label: string; onCopy?: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <h3 className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</h3>
+      <h3 className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted-foreground">{label}</h3>
       {onCopy && (
         <button
           type="button"
           onClick={onCopy}
-          className="inline-flex items-center gap-1 font-mono text-[11px] text-muted transition-colors hover:text-ink"
+          className="inline-flex items-center gap-1 font-mono text-[11px] text-muted-foreground transition-colors hover:text-ink"
         >
           <Copy className="h-3 w-3" />
           Copy
@@ -43,7 +43,7 @@ function ProvenanceCardItem({ card }: { card: ProvenanceCard }) {
         <span className="text-sm font-semibold text-ink">{card.agentName}</span>
         <StatusPill tone={LEG_TONE[card.leg] ?? "muted"}>{card.leg}</StatusPill>
       </div>
-      <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted">
+      <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted-foreground">
         <span className="tabular-nums text-live">{card.amountUsd} USDC</span>
         <span>·</span>
         <span className="max-w-[200px] truncate" title={card.contentHash}>
@@ -77,7 +77,7 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         <button
           type="button"
           onClick={downloadJson}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-1.5 font-mono text-[11px] text-muted transition-colors hover:bg-panel-2 hover:text-ink"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-1.5 font-mono text-[11px] text-muted-foreground transition-colors hover:bg-panel-2 hover:text-ink"
         >
           <Download className="h-3.5 w-3.5" />
           Download JSON
@@ -99,7 +99,7 @@ export function KitView({ kit }: { kit: LaunchKit }) {
               <FileImage className="h-4 w-4 text-lane-copy" aria-hidden="true" />
               <span className="text-sm font-medium text-lane-copy">OG image — asset reference</span>
             </div>
-            <p className="break-all font-mono text-xs text-muted">{kit.ogImageRef}</p>
+            <p className="break-all font-mono text-xs text-muted-foreground">{kit.ogImageRef}</p>
           </ConsolePanel>
         )}
       </section>
@@ -126,13 +126,13 @@ export function KitView({ kit }: { kit: LaunchKit }) {
         <div className="space-y-2">
           {kit.tweetThread.map((tweet, i) => (
             <ConsolePanel key={i} className="flex items-start gap-3 p-4">
-              <span className="mt-0.5 shrink-0 font-mono text-xs text-muted">{i + 1}</span>
+              <span className="mt-0.5 shrink-0 font-mono text-xs text-muted-foreground">{i + 1}</span>
               <p className="min-w-0 flex-1 text-sm leading-relaxed text-ink/90">{tweet}</p>
               <button
                 type="button"
                 aria-label={`Copy tweet ${i + 1}`}
                 onClick={() => copyToClipboard(tweet)}
-                className="shrink-0 text-muted transition-colors hover:text-ink"
+                className="shrink-0 text-muted-foreground transition-colors hover:text-ink"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>

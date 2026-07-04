@@ -12,7 +12,7 @@ export function ReplayStage({ runId }: { runId: string }) {
   return (
     <div>
       <div className="mx-auto flex max-w-5xl items-center gap-2 px-4 pb-2 pt-4">
-        <span className="mr-1 font-mono text-[10px] uppercase tracking-wider text-muted">Speed</span>
+        <span className="mr-1 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Speed</span>
         {(["1", "4", "max"] as Speed[]).map((s) => (
           <button
             key={s}
@@ -21,7 +21,7 @@ export function ReplayStage({ runId }: { runId: string }) {
             className={`rounded px-3 py-1 font-mono text-xs transition-colors ${
               s === speed
                 ? "bg-live/15 text-live"
-                : "border border-line text-muted hover:bg-panel-2"
+                : "border border-line text-muted-foreground hover:bg-panel-2"
             }`}
           >
             {SPEED_LABELS[s]}

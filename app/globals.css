@@ -1,13 +1,14 @@
 @import 'tailwindcss';
+@import "tw-animate-css";
 
 @custom-variant dark (&:is(.dark *));
 
+/* ── Mission Control design tokens ─────────────────────────────── */
 @theme {
   --color-ground: #05070c;
   --color-panel: #0b0f18;
   --color-panel-2: #111726;
   --color-ink: #cdd6e4;
-  --color-muted: #7f8ba5;
   --color-line: rgba(120, 150, 220, 0.14);
   --color-live: #43e08a;
   --color-danger: #f85149;
@@ -30,55 +31,131 @@
   --animate-log-in: log-in 0.28s ease-out;
 
   @keyframes pulse-dot {
-    0%,
-    100% {
-      opacity: 1;
-    }
-    50% {
-      opacity: 0.35;
-    }
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.35; }
   }
   @keyframes meter-sweep {
-    0% {
-      transform: translateX(-70%);
-    }
-    100% {
-      transform: translateX(180%);
-    }
+    0% { transform: translateX(-70%); }
+    100% { transform: translateX(180%); }
   }
   @keyframes log-in {
-    from {
-      opacity: 0;
-      transform: translateY(4px);
-    }
-    to {
-      opacity: 1;
-      transform: none;
-    }
+    from { opacity: 0; transform: translateY(4px); }
+    to { opacity: 1; transform: none; }
   }
 }
 
-/*
-  The default border color has changed to `currentcolor` in Tailwind CSS v4,
-  so we've added these compatibility styles to make sure everything still
-  looks the same as it did with Tailwind CSS v3.
+/* ── shadcn/ui token mapping (v4 @theme inline) ───────────────────
+   Maps shadcn's semantic color utilities (bg-background, bg-card,
+   text-primary, border-border, …) onto the CSS vars set in :root
+   below — themed to Mission Control. */
+@theme inline {
+  --font-heading: var(--font-sans);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+}
 
-  If we ever want to remove these styles, we need to add an explicit border
-  color utility to any element that depends on these defaults.
-*/
+/* ── shadcn semantic palette → Mission Control (dark-only) ──────── */
+:root {
+  color-scheme: dark;
+  --radius: 0.75rem;
+  --background: #05070c;
+  --foreground: #cdd6e4;
+  --card: #0b0f18;
+  --card-foreground: #cdd6e4;
+  --popover: #0b0f18;
+  --popover-foreground: #cdd6e4;
+  --primary: #43e08a;
+  --primary-foreground: #05070c;
+  --secondary: #111726;
+  --secondary-foreground: #cdd6e4;
+  --muted: #111726;
+  --muted-foreground: #7f8ba5;
+  --accent: #111726;
+  --accent-foreground: #cdd6e4;
+  --destructive: #f85149;
+  --border: rgba(120, 150, 220, 0.14);
+  --input: rgba(120, 150, 220, 0.18);
+  --ring: #43e08a;
+  --chart-1: #58a6ff;
+  --chart-2: #43e08a;
+  --chart-3: #e3b341;
+  --chart-4: #c297ff;
+  --chart-5: #f85149;
+  --sidebar: #0b0f18;
+  --sidebar-foreground: #cdd6e4;
+  --sidebar-primary: #43e08a;
+  --sidebar-primary-foreground: #05070c;
+  --sidebar-accent: #111726;
+  --sidebar-accent-foreground: #cdd6e4;
+  --sidebar-border: rgba(120, 150, 220, 0.14);
+  --sidebar-ring: #43e08a;
+}
+
+/* html always carries `dark`; keep the palette identical there. */
+.dark {
+  --background: #05070c;
+  --foreground: #cdd6e4;
+  --card: #0b0f18;
+  --card-foreground: #cdd6e4;
+  --popover: #0b0f18;
+  --popover-foreground: #cdd6e4;
+  --primary: #43e08a;
+  --primary-foreground: #05070c;
+  --secondary: #111726;
+  --secondary-foreground: #cdd6e4;
+  --muted: #111726;
+  --muted-foreground: #7f8ba5;
+  --accent: #111726;
+  --accent-foreground: #cdd6e4;
+  --destructive: #f85149;
+  --border: rgba(120, 150, 220, 0.14);
+  --input: rgba(120, 150, 220, 0.18);
+  --ring: #43e08a;
+}
+
 @layer base {
-  *,
-  ::after,
-  ::before,
-  ::backdrop,
-  ::file-selector-button {
-    border-color: var(--color-gray-200, currentcolor);
+  *, ::after, ::before, ::backdrop, ::file-selector-button {
+    border-color: var(--color-line, currentcolor);
+  }
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+  }
+  html {
+    @apply font-sans;
   }
 }
-
-:root { color-scheme: dark; }
-
-body { @apply bg-ground text-ink antialiased font-sans; }
 
 /* keyboard focus: a live-tinted ring on every interactive element */
 :focus-visible { outline: 2px solid #43e08a; outline-offset: 2px; border-radius: 4px; }

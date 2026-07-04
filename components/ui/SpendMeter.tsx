@@ -10,7 +10,7 @@ export function SpendMeter({
   const pct = Math.max(0, Math.min(100, (Number(spentUsd) / Number(budgetUsd || "1")) * 100));
   return (
     <div className="flex items-center gap-3">
-      <span className="font-mono text-[10px] uppercase tracking-wider text-muted">Spend</span>
+      <span className="font-mono text-[10px] uppercase tracking-wider text-muted-foreground">Spend</span>
       <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-live shadow-glow-live" style={{ width: `${pct}%` }} />
         {live && (
@@ -18,7 +18,7 @@ export function SpendMeter({
         )}
       </div>
       <span className="font-mono text-xs tabular-nums text-ink">
-        ${spentUsd} <span className="text-muted">/ ${budgetUsd}</span>
+        ${spentUsd} <span className="text-muted-foreground">/ ${budgetUsd}</span>
       </span>
     </div>
   );

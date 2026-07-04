@@ -6,7 +6,7 @@ export function MoneyLedger({ entries }: { entries: LedgerEntry[] }) {
   if (entries.length === 0) return null;
   return (
     <ConsolePanel className="p-4">
-      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-wider text-muted">
+      <h3 className="mb-3 font-mono text-[10px] uppercase tracking-wider text-muted-foreground">
         On-chain receipts
       </h3>
       <ul className="divide-y divide-line">

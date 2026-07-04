@@ -12,7 +12,7 @@ const pill = cva(
         copy: "bg-lane-copy/15 text-lane-copy",
         image: "bg-lane-image/15 text-lane-image",
         danger: "bg-danger/15 text-danger",
-        muted: "bg-white/10 text-muted",
+        muted: "bg-white/10 text-muted-foreground",
       },
     },
     defaultVariants: { tone: "muted" },
