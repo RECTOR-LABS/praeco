@@ -15,12 +15,52 @@ export const qaVerdictSchema = z.object({
   score: z.number().min(0).max(100).optional(),
 });
 
+/** Words with at least one alphanumeric char, after stripping URLs — the "substantive inline content" signal. */
+export const MIN_TEXT_WORDS = 20;
+export const MIN_IMAGE_SPEC_WORDS = 15;
+
+const IMAGE_URL_RE = /https?:\/\/\S+\.(?:png|jpe?g|webp|gif|svg|avif)(?:\?\S*)?/i;
+
+function substantiveWordCount(text: string): number {
+  const withoutUrls = text.replace(/https?:\/\/\S+/gi, " ");
+  return withoutUrls.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length;
+}
+
+/**
+ * Deterministic pre-LLM QA gate for the §7 deliverable-FORMAT problem. On the
+ * live marketplace, "Code" services return a redemption code + platform link
+ * with zero inline content — unusable for a launch kit. We reject that shape
+ * cheaply (no LLM spend) and steer the agent to a different provider (`swap`).
+ * Returns a swap verdict when the deliverable has no substantive inline content
+ * for its leg, else null (the LLM art-director pass runs as normal).
+ */
+export function formatGate(leg: LegKind, deliverable: Deliverable): QaVerdict | null {
+  const raw = deliverableToText(deliverable).trim();
+  if (!raw) {
+    return { action: "swap", reason: "deliverable is empty — no inline content for this leg; hire a provider that delivers inline content" };
+  }
+  if (leg === "og_image") {
+    // An image can legitimately arrive as an image URL OR a substantive spec/description.
+    // A bare platform/redemption link (not an image URL) with no spec is the failure mode.
+    if (IMAGE_URL_RE.test(raw)) return null;
+    if (substantiveWordCount(raw) >= MIN_IMAGE_SPEC_WORDS) return null;
+    return { action: "swap", reason: "og_image deliverable has neither an image URL nor a substantive spec (looks like a redemption code/link) — swap to a provider that delivers an inline image or a detailed image spec" };
+  }
+  const words = substantiveWordCount(raw);
+  if (words < MIN_TEXT_WORDS) {
+    return { action: "swap", reason: `${leg} deliverable has only ${words} words of inline content (redemption-code/link format, not usable prose) — swap to a provider that delivers inline ${leg}` };
+  }
+  return null;
+}
+
 export async function reviewDeliverable(
   llm: Llm,
   brief: LaunchBrief,
   leg: LegKind,
   deliverable: Deliverable,
 ): Promise<QaVerdict> {
+  const gated = formatGate(leg, deliverable);
+  if (gated) return gated; // deterministic swap — do not spend an LLM call on a wrong-format deliverable
   // Review a generous slice — research reports run long, and an over-tight limit
   // makes QA see a mid-sentence cutoff and wrongly reject it as "truncated/
   // incomplete" (Phase-1 live finding). GLM-5.2 has ample context for this.
@@ -38,6 +78,7 @@ export async function reviewDeliverable(
     `DELIVERABLE CONTENT:\n${content || "(empty)"}\n\n` +
     `Judge whether this deliverable is on-brief, high quality, and usable as-is for this leg.\n` +
     `Do NOT penalise content-type/format: an og_image deliverable provided as a URL or image description is fine — judge its quality and relevance, not its file type.\n` +
+    `The deliverable MUST contain the actual usable content inline. If it only provides a redemption code, an access link, or instructions to retrieve the content elsewhere (rather than the content itself), return "swap".\n` +
     `If the content ends with a "[deliverable truncated HERE for review display only ...]" marker, that is our review limit — judge the substance shown, do not flag it as incomplete.\n` +
     `Respond with JSON: {"action":"accept"|"redo"|"swap","reason":string,"score":0-100}.\n` +
     `Use "accept" if the deliverable is on-brief and high quality, "redo" if the same provider should retry for better quality, "swap" if a different provider is needed (e.g. wrong type of content for this leg).`;

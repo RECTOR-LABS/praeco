@@ -30,7 +30,10 @@ function happyClient(): CapBuyer {
     listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
     getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xd" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
-    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "https://cdn/og.png", contentHash: "0xh" })),
+    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText:
+      "Privacy-first habit tracker research: indie developers want local-first tools, no mandatory cloud, " +
+      "one-time purchase pricing, and calm developer-focused positioning against gamified incumbents like Habitica.",
+      contentHash: "0xh" })),
   };
 }
 
@@ -70,7 +73,7 @@ describe("runLaunchJob", () => {
     expect(rec.brief.product).toBe("Streaky");
     expect(rec.assets.map((a) => a.leg).sort()).toEqual(["landing_copy", "og_image", "research"].sort());
     expect(rec.spentBaseUnits).toBe("300000"); // 3 × $0.10
-    expect(rec.kit?.ogImageRef).toBe("https://cdn/og.png");
+    expect(rec.kit?.ogImageRef).toBe("hash:0xh");
     expect(rec.kit?.tweetThread).toEqual(["1/ Meet Streaky"]);
     const kinds = rec.worklog.map((e) => e.kind);
     expect(kinds).toContain("run_started");
