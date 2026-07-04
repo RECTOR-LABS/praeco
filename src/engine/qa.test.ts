@@ -31,6 +31,7 @@ describe("reviewDeliverable", () => {
     expect(prompt).toContain("landing_copy");
     expect(prompt).toContain("builders");
     expect(prompt).toContain("playful");
+    expect(prompt).toContain("local-first"); // the DELIVERABLE content must reach the QA prompt, not just the brief
     expect((llm.completeJson as any).mock.calls[0][1]).toBe(qaVerdictSchema);
   });
 
@@ -76,6 +77,11 @@ describe("formatGate", () => {
   it("passes an og_image delivered as a schema url field with no file extension", () => {
     const d: Deliverable = { type: "schema", schema: { imageUrl: "https://cdn.foundr.io/abc123" }, contentHash: "0x" };
     expect(formatGate("og_image", d)).toBeNull();
+  });
+
+  it("swaps an og_image redemption link even when an image extension hides in the query string", () => {
+    const g = formatGate("og_image", textDeliverable("Redeem at https://platform.com/redeem?img=logo.png"));
+    expect(g?.action).toBe("swap"); // .png in the query is not a real image URL
   });
 });
 

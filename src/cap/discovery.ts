@@ -273,7 +273,9 @@ const priceOf = (p: string): number => {
  * all inline providers for a leg — kept as last-resort candidates, not excluded.
  */
 export function isCodeFormat(name: string, description: string): boolean {
-  return /\bcode\b|\bredemption\b|\bredeem\b|\bvoucher\b/i.test(`${name} ${description}`);
+  // Narrowed to a trailing "Code" in the NAME (the Pygm "… Text/Image Code" tell) or an
+  // explicit redemption term — so "no-code", "source code", "promo code" etc. don't misfire.
+  return /\bcode\s*$/i.test(name.trim()) || /\bredemption\b|\bredeem\b|\bvoucher\b/i.test(`${name} ${description}`);
 }
 
 /**
@@ -309,7 +311,7 @@ export function discoverForLeg(
   // controlled real-USDC run would defeat the whole point of pinning.
   if (opts.preferredServiceId) {
     const pinned = services.find((s) => s.serviceId === opts.preferredServiceId);
-    return pinned ? [{ ...fuse(pinned, 999), formatDeRank: 0 }] : [];
+    return pinned ? [fuse(pinned, 999)] : [];
   }
   const ranked: RankedListing[] = services.map((s) =>
     fuse(s, legRelevance(s.name, s.description ?? "", agentsById.get(s.agentId)?.skillTagSlugs ?? [], leg, query)),

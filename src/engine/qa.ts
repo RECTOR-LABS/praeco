@@ -19,10 +19,17 @@ export const qaVerdictSchema = z.object({
 export const MIN_TEXT_WORDS = 20;
 export const MIN_IMAGE_SPEC_WORDS = 15;
 
-const IMAGE_URL_RE = /https?:\/\/\S+\.(?:png|jpe?g|webp|gif|svg|avif)(?:\?\S*)?/i;
+// Match an image extension only when it ends a URL PATH segment: [^\s?#]+ stops
+// before any query/fragment, so a redemption link like `…/redeem?img=logo.png`
+// (extension in the query) does NOT count as an image URL. The trailing lookahead
+// lets the extension be followed by punctuation/end but not more path.
+const IMAGE_URL_RE = /https?:\/\/[^\s?#]+\.(?:png|jpe?g|webp|gif|svg|avif)(?![\w/])/i;
 
 function substantiveWordCount(text: string): number {
-  const withoutUrls = text.replace(/https?:\/\/\S+/gi, " ");
+  // Strip URLs before counting prose. Bound the URL to non-quote/bracket chars so a
+  // JSON-stringified schema deliverable (`{"url":"…","headline":"real copy"}`) loses
+  // only the URL, not the adjacent key/value it would otherwise run into.
+  const withoutUrls = text.replace(/https?:\/\/[^\s"'<>]+/gi, " ");
   return withoutUrls.split(/\s+/).filter((w) => /[a-z0-9]/i.test(w)).length;
 }
 

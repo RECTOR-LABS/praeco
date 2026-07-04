@@ -243,4 +243,13 @@ describe("discoverForLeg — de-ranks code/redemption services", () => {
     expect(ranked.find((r) => r.serviceId === "pygm-image")?.formatDeRank).toBe(1);
     expect(ranked.find((r) => r.serviceId === "inline-image")?.formatDeRank).toBe(0);
   });
+
+  it("does NOT de-rank a legitimate inline provider that merely mentions 'code'", () => {
+    const svcs: ServiceListing[] = [
+      { serviceId: "no-code", agentId: "a", name: "No-Code Landing Page Copy", description: "source code not required", priceBaseUnits: "100000" },
+    ];
+    const agents = new Map<string, AgentRecord>([["a", { agentId: "a", name: "A", completedOrders: 10, completionRate: 1, skillTagSlugs: [], services: [] }]]);
+    const ranked = discoverForLeg(svcs, agents, "landing_copy", "landing page copy");
+    expect(ranked[0].formatDeRank).toBe(0); // "no-code"/"source code" must not trip isCodeFormat
+  });
 });
