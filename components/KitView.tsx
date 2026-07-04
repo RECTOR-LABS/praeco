@@ -75,9 +75,12 @@ function ProvenanceCardItem({ card }: { card: ProvenanceCard }) {
   );
 }
 
-export function KitView({ kit }: { kit: LaunchKit }) {
+export function KitView({ kit, spentUsd }: { kit: LaunchKit; spentUsd?: string }) {
   const isRealImage = /^https?:\/\//.test(kit.ogImageRef);
-  const spent = kit.provenance.reduce((s, c) => s + (Number(c.amountUsd) || 0), 0);
+  // Prefer the run's authoritative total spend (matches the landing's figure);
+  // fall back to summing the delivered receipts when it isn't supplied.
+  const receiptsTotal = kit.provenance.reduce((s, c) => s + (Number(c.amountUsd) || 0), 0);
+  const spentDisplay = spentUsd ?? receiptsTotal.toFixed(2);
   const specialists = new Set(kit.provenance.map((c) => c.agentName)).size;
 
   function downloadJson() {
@@ -105,7 +108,7 @@ export function KitView({ kit }: { kit: LaunchKit }) {
           </Button>
         </div>
         <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          <StatTile label="Spent" accent icon={<Coins className="h-3 w-3" />} value={`$${spent.toFixed(2)}`} />
+          <StatTile label="Spent" accent icon={<Coins className="h-3 w-3" />} value={`$${spentDisplay}`} />
           <StatTile label="Specialists" icon={<Users className="h-3 w-3" />} value={specialists} />
           <StatTile label="On-chain receipts" icon={<ReceiptText className="h-3 w-3" />} value={kit.provenance.length} />
         </div>

@@ -29,7 +29,7 @@ function IntakeForm() {
     setLoading(true);
     // Navigate to the single-request live stream — the run executes inside the SSE
     // response on the run page. No POST, no server-side run registry to break.
-    const params = new URLSearchParams(detect(value, mode));
+    const params = new URLSearchParams(detect(value.trim(), mode));
     router.push(`/run/live?${params.toString()}`);
   }
 
