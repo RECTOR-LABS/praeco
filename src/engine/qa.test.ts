@@ -72,6 +72,11 @@ describe("formatGate", () => {
     const g = formatGate("og_image", textDeliverable("Access your image at https://pygm.studio/r/XYZ"));
     expect(g?.action).toBe("swap");
   });
+
+  it("passes an og_image delivered as a schema url field with no file extension", () => {
+    const d: Deliverable = { type: "schema", schema: { imageUrl: "https://cdn.foundr.io/abc123" }, contentHash: "0x" };
+    expect(formatGate("og_image", d)).toBeNull();
+  });
 });
 
 describe("reviewDeliverable format-gate integration", () => {

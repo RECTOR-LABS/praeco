@@ -7,7 +7,7 @@
 import { z } from "zod";
 import type { Llm } from "../llm/llm.js";
 import type { LaunchBrief, LegKind, Deliverable, QaVerdict } from "../types.js";
-import { deliverableToText } from "./provenance.js";
+import { deliverableToText, extractImageRef } from "./provenance.js";
 
 export const qaVerdictSchema = z.object({
   action: z.enum(["accept", "redo", "swap"]),
@@ -43,6 +43,7 @@ export function formatGate(leg: LegKind, deliverable: Deliverable): QaVerdict | 
     // An image can legitimately arrive as an image URL OR a substantive spec/description.
     // A bare platform/redemption link (not an image URL) with no spec is the failure mode.
     if (IMAGE_URL_RE.test(raw)) return null;
+    if (!extractImageRef(deliverable).startsWith("hash:")) return null; // bare URL or schema url field (handles extensionless CDN links)
     if (substantiveWordCount(raw) >= MIN_IMAGE_SPEC_WORDS) return null;
     return { action: "swap", reason: "og_image deliverable has neither an image URL nor a substantive spec (looks like a redemption code/link) — swap to a provider that delivers an inline image or a detailed image spec" };
   }
