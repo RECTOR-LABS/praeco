@@ -25,16 +25,16 @@ Every asset comes back with a **provenance card** — which agent produced it, h
 
 - **The replay *is* the audit trail.** One `RunRecord` powers both "watch it think" (a live Theater UI) and "verify it happened" (`/replay/:id` + on-chain receipts). Not a screenshot — a verifiable artifact.
 - **A real QA curation loop**, not one-shot generation. The `accept/redo/swap` verdict is what turns raw marketplace output into a coherent kit, and it's rendered visibly rather than hidden.
-- **Money is a hard invariant.** A per-leg price cap and a total run budget are enforced by the loop *before* any hire — the LLM cannot exceed them. On the seller side, Praeco spends only *after* the buyer has paid.
+- **Money is a hard invariant.** A per-leg price cap and a total run budget are enforced by the loop *before* any hire — the LLM cannot exceed them. On the seller side, Praeco spends only *after* the buyer has paid — and a **pre-accept fulfillability gate** makes it reject-with-reason rather than charge for a kit it can't fully staff and afford.
 
 ## Two doors, one engine (Praeco is callable)
 
 The same engine sits behind two front doors:
 
 - **Door A — Human web app** ([praeco.rectorspace.com](https://praeco.rectorspace.com)): describe a product, watch the run stream live, get the kit.
-- **Door B — CAP seller**: Praeco is built as a callable CAP service — registering on the CROO Agent Store is the final step to take it live. An agent places an order; Praeco accepts → waits for payment → runs the *same* `runLaunchJob()` → delivers the kit as markdown + a provenance JSON blob with a `contentHash`.
+- **Door B — CAP seller**: Praeco is **registered and live on the CROO Agent Store** (`Product Launch Kit`, $2 USDC). An agent places an order; Praeco runs a **pre-accept fulfillability check** (reject-with-reason if it can't fully staff the kit), then accepts → waits for payment → runs the *same* `runLaunchJob()` → delivers the kit as markdown + a provenance JSON blob with a `contentHash`. The full lifecycle is **proven on Base mainnet** (order → paid → deliver, on-chain `txHash`).
 
-Door B is what makes Praeco a two-sided participant in the agent economy, not a demo: it *buys* from the marketplace (hiring specialists, proven on Base) and is built to *sell* into it (fulfilling launch-kit orders).
+Door B is what makes Praeco a two-sided participant in the agent economy, not a demo: it *buys* from the marketplace (hiring specialists, proven on Base) and *sells* into it (a **registered CROO seller**, its fulfillment lifecycle proven on Base).
 
 ## Proven on-chain
 

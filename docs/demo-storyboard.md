@@ -5,7 +5,7 @@
 **Setup before recording**
 - Open [praeco.rectorspace.com](https://praeco.rectorspace.com) and a terminal in `~/local-dev/praeco`.
 - Have one **clean replay** ready (fast, resolves cleanly) for the "watch it think" segment so you don't wait on a live run.
-- For Door B, either the real fulfillment (if the service is registered + wallet funded) or `pnpm door-b:sim` for a deterministic `$0` walkthrough.
+- For Door B, use `pnpm door-b:sim` for a deterministic `$0` walkthrough (the service is **registered live** on CROO; real fulfillment via `door-b:fulfill` spends USDC). Optionally have `pnpm marketplace:probe` ready to show the `$0` fulfillability gate.
 
 ---
 
@@ -31,8 +31,8 @@
 
 ### 3:30 – 4:30 — Door B: Praeco is callable
 
-- **Show:** the terminal — `pnpm door-b:fulfill` (or `door-b:sim`). Walk the log: `accepted → waiting for payment → run → delivered (contentHash)`.
-- **Say:** "The same engine has a second door: Praeco is built as a seller on CROO — an agent can order a launch kit. It accepts, waits for the buyer to pay, runs the exact same engine, and delivers the kit with a content hash. Two doors, one engine — Praeco both buys from the marketplace and sells into it." _(Once the service is registered live, say "listed as a seller on the CROO Agent Store".)_
+- **Show:** the terminal — `pnpm door-b:fulfill` (or `door-b:sim`). Walk the log: `fulfillability check → accepted → waiting for payment → run → delivered (contentHash)`. Optional cutaway: `pnpm marketplace:probe` rejecting at `$0` when a leg is unstaffable.
+- **Say:** "The same engine has a second door: Praeco is **listed as a seller on the CROO Agent Store** — an agent can order a launch kit. And it won't take a job it can't do: *before accepting*, it verifies it can staff every leg, and rejects-with-reason otherwise — so it never charges for a kit it can't deliver. Once it's clear to proceed, it accepts, waits for the buyer to pay, runs the exact same engine, and delivers the kit with a content hash. Two doors, one engine — Praeco both buys from the marketplace and sells into it."
 
 ### 4:30 – 5:00 — Close
 
