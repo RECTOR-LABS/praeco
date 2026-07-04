@@ -9,6 +9,9 @@ import { runLaunchJob } from "../src/engine/run.js";
 import { AgentClientProvider } from "../src/cap/provider.js";
 import { mockProvider } from "../src/cap/mock-provider.js";
 import { assertFunded } from "../src/cap/wallet.js";
+import { listServices } from "../src/cap/discovery.js";
+import { checkFulfillability, findStalePins } from "../src/cap/fulfillability.js";
+import { mockFetch } from "../src/cap/mock.js";
 import { buildSandboxDeps, buildLiveDepsWith } from "../server/engine-deps.js";
 import { fulfillOrder } from "../server/fulfill-order.js";
 import type { IntakeInput } from "../src/engine/intake.js";
@@ -28,10 +31,15 @@ async function runLoop(run: () => ReturnType<typeof fulfillOrder>) {
 
 async function main() {
   if (sim) {
+    // Mirror buildSandboxDeps: assess over the MOCK catalog with pins CLEARED
+    // (the real stale SVC_* would reject every sim order otherwise — spec §12).
+    const cfg = loadConfig();
+    const mfetch = mockFetch();
+    const checkFulfillable = () => checkFulfillability({ ...cfg, preferredServiceIds: {} }, mfetch);
     return runLoop(() => {
       const provider = mockProvider({ brief: "A privacy-first habit tracker for indie developers" });
       const runJob = (input: IntakeInput) => runLaunchJob(input, buildSandboxDeps(() => {}, `live-${Date.now()}`));
-      return fulfillOrder({ provider, runJob, poll: { attempts: 10, delayMs: 200 }, onLog: log });
+      return fulfillOrder({ provider, runJob, checkFulfillable, poll: { attempts: 10, delayMs: 200 }, onLog: log });
     });
   }
 
@@ -41,11 +49,22 @@ async function main() {
   const client = new AgentClient({ baseURL: cfg.crooApiUrl, wsURL: cfg.crooWsUrl, rpcURL: cfg.baseRpcUrl }, cfg.crooSdkKey);
   const stream = await client.connectWebSocket(); // presence; providers won't transact with an offline agent
   try {
+    // Pin hygiene: warn once on any pinned SVC_* absent from the live catalog
+    // (fail-closed still protects money — this is visibility, not enforcement).
+    // Best-effort: a transient catalog error here must not stop the watcher starting.
+    try {
+      for (const { leg, serviceId } of findStalePins(await listServices(cfg.crooApiUrl, fetch as never), cfg.preferredServiceIds)) {
+        log(`WARNING: pinned ${leg} service ${serviceId} is not in the live catalog (stale pin — that leg is unfulfillable until refreshed)`);
+      }
+    } catch (e) {
+      log(`stale-pin check skipped (${(e as Error).message})`);
+    }
     const provider = new AgentClientProvider(client as never);
     const runJob = (input: IntakeInput) =>
       runLaunchJob(input, buildLiveDepsWith(client, () => {}, `live-${Date.now()}`)); // shared client — one WS
     const assertFundedFn = () => assertFunded(cfg.baseRpcUrl, cfg.praecoAgentWallet, cfg.usdcTokenAddress, 1n, fetch as never);
-    await runLoop(() => fulfillOrder({ provider, runJob, assertFunded: assertFundedFn, onLog: log }));
+    const checkFulfillable = () => checkFulfillability(cfg, fetch as never);
+    await runLoop(() => fulfillOrder({ provider, runJob, assertFunded: assertFundedFn, checkFulfillable, onLog: log }));
   } finally {
     stream.close?.(); // EventStream's close — AgentClient itself has no close()
   }

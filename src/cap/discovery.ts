@@ -292,7 +292,7 @@ export function discoverForLeg(
   agentsById: Map<string, AgentRecord>,
   leg: LegKind,
   query: string,
-  opts: { preferredServiceId?: string; limit?: number } = {},
+  opts: { preferredServiceId?: string; limit?: number; excludeAgentId?: string } = {},
 ): RankedListing[] {
   const fuse = (s: ServiceListing, relevance: number): RankedListing => {
     const a = agentsById.get(s.agentId);
@@ -305,6 +305,10 @@ export function discoverForLeg(
       formatDeRank: isCodeFormat(s.name, s.description ?? "") ? 1 : 0,
     };
   };
+  // Self-exclusion: never offer the caller's own services as candidates (no
+  // self-hire). Applied before BOTH branches, so a pin pointing at an own
+  // service also fails closed rather than hiring itself.
+  const pool = opts.excludeAgentId ? services.filter((s) => s.agentId !== opts.excludeAgentId) : services;
   // Operator override: a pinned serviceId is AUTHORITATIVE — it's the sole
   // candidate for the leg, so the agent hires exactly the vetted provider (no
   // reputation-based override). Used for controlled/golden-path runs.
@@ -312,10 +316,10 @@ export function discoverForLeg(
   // than silently ranking — paying a different, unvetted provider on a
   // controlled real-USDC run would defeat the whole point of pinning.
   if (opts.preferredServiceId) {
-    const pinned = services.find((s) => s.serviceId === opts.preferredServiceId);
+    const pinned = pool.find((s) => s.serviceId === opts.preferredServiceId);
     return pinned ? [fuse(pinned, 999)] : [];
   }
-  const ranked: RankedListing[] = services.map((s) =>
+  const ranked: RankedListing[] = pool.map((s) =>
     fuse(s, legRelevance(s.name, s.description ?? "", agentsById.get(s.agentId)?.skillTagSlugs ?? [], leg, query)),
   );
   const matches = ranked.filter((r) => r.relevance > 0);

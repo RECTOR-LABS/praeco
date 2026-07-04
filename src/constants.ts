@@ -14,6 +14,11 @@ export const MAX_TURNS = 24;
 /** Max PAID hires per leg before the guard stops spending on it (bounds loss on an unsatisfiable leg). */
 export const MAX_PAID_ATTEMPTS_PER_LEG = 2;
 
+/** Top-N candidates a single marketplace search surfaces for a leg. Shared by the
+ *  engine's search_marketplace and the Door B fulfillability gate so the gate sees
+ *  exactly what the engine sees (no over-count of candidates the engine truncates). */
+export const SEARCH_CANDIDATE_LIMIT = 5;
+
 const SCALE = 10n ** BigInt(USDC_DECIMALS);
 
 /** Parse a decimal-dollar string to USDC base units. Rejects junk and >6dp precision. */

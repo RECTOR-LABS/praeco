@@ -216,6 +216,19 @@ describe("discoverForLeg", () => {
     const ranked = discoverForLeg(services, agentsById, "landing_copy", "copy", { limit: 1 });
     expect(ranked).toHaveLength(1);
   });
+
+  it("excludes the caller's own agent from ranked candidates (no self-hire)", () => {
+    const ranked = discoverForLeg(services, agentsById, "og_image", "og image generation", { excludeAgentId: "449c3ab5" });
+    expect(ranked.map((r) => r.agentId)).not.toContain("449c3ab5"); // both pygm services gone
+  });
+  it("excludes own agent even when its service is pinned (fail-closed, never self-hire)", () => {
+    const ranked = discoverForLeg(services, agentsById, "og_image", "og image", { preferredServiceId: "pygm-image", excludeAgentId: "449c3ab5" });
+    expect(ranked).toEqual([]);
+  });
+  it("still honors a pin for a non-excluded agent when excludeAgentId is set", () => {
+    const ranked = discoverForLeg(services, agentsById, "research", "market research", { preferredServiceId: "ops-seo", excludeAgentId: "449c3ab5" });
+    expect(ranked.map((r) => r.serviceId)).toEqual(["ops-seo"]);
+  });
 });
 
 describe("getAgent — captures deliverableType", () => {

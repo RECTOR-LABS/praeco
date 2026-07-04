@@ -14,7 +14,7 @@ import { hireSpecialist } from "../cap/hire.js";
 import { assertFunded } from "../cap/wallet.js";
 import { reviewDeliverable } from "./qa.js";
 import { toProvenanceCard, deliverableToText } from "./provenance.js";
-import { baseUnitsToUsd, REQUIRED_LEGS } from "../constants.js";
+import { baseUnitsToUsd, REQUIRED_LEGS, SEARCH_CANDIDATE_LIMIT } from "../constants.js";
 
 const usd = (b: string) => { try { return baseUnitsToUsd(BigInt(b)); } catch { return "?"; } }; // never let a malformed price crash a display path
 const text = (s: string, details: unknown = {}): AgentToolResult<unknown> => ({ content: [{ type: "text", text: s }], details });
@@ -48,7 +48,8 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       }
       const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
         preferredServiceId: ctx.config.preferredServiceIds[leg],
-        limit: 5,
+        excludeAgentId: ctx.config.selfAgentId,
+        limit: SEARCH_CANDIDATE_LIMIT,
       });
       // Resolve the top listings into full candidates (reads requirementSchema from
       // the agent record). Dedup the /agents/{id} fetch per agentId (two services

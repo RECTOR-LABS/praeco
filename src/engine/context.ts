@@ -18,6 +18,7 @@ export interface RunConfig {
   agentWallet: string;
   usdcTokenAddress: string;
   preferredServiceIds: Partial<Record<LegKind, string>>;
+  selfAgentId?: string; // Praeco's own agentId — excluded from discovery (no self-hire)
 }
 
 export interface RunContext {

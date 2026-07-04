@@ -1,6 +1,7 @@
 import type { CapProvider } from "@/src/cap/provider";
 import type { RunRecord } from "@/src/types";
 import type { IntakeInput } from "@/src/engine/intake";
+import type { FulfillabilityAssessment } from "@/src/cap/fulfillability";
 import { kitToMarkdown, kitProvenanceJson } from "./kit-markdown.js";
 
 export interface FulfillDeps {
@@ -9,6 +10,7 @@ export interface FulfillDeps {
   assertFunded?: () => Promise<void>;
   poll?: { attempts: number; delayMs: number; sleep?: (ms: number) => Promise<void> };
   deliver?: { attempts: number; delayMs: number };
+  checkFulfillable?: () => Promise<FulfillabilityAssessment>;
   onLog?: (m: string) => void;
 }
 export interface FulfillResult { status: "delivered" | "rejected" | "skipped"; orderId?: string; contentHash?: string; txHash?: string; reason?: string }
@@ -42,6 +44,28 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
     await deps.provider.rejectNegotiation(n.negotiationId, "requirements missing a valid 'brief'");
     log(`rejected ${n.negotiationId}: invalid brief`);
     return { status: "rejected", reason: "invalid brief" };
+  }
+
+  // Fulfillability gate: never accept + charge for a kit we can't fully staff
+  // and afford. Read-only REST, runs before accept → a rejection costs $0.
+  if (deps.checkFulfillable) {
+    let f: FulfillabilityAssessment;
+    try {
+      f = await deps.checkFulfillable();
+    } catch (e) {
+      // A transient catalog/network error must neither accept (we can't confirm
+      // the job) nor crash a long-running --watch daemon — skip and retry next poll.
+      const reason = `fulfillability check unavailable: ${(e as Error).message}`;
+      log(`skipping ${n.negotiationId}: ${reason}`);
+      return { status: "skipped", reason };
+    }
+    if (!f.ok) {
+      const reason = `cannot fulfill: ${f.reason ?? "required legs unavailable"}`;
+      await deps.provider.rejectNegotiation(n.negotiationId, reason);
+      log(`rejected ${n.negotiationId}: ${reason}`);
+      return { status: "rejected", reason };
+    }
+    log(`fulfillable: ${f.perLeg.map((l) => `${l.leg}=${l.affordable}`).join(" ")}`);
   }
 
   if (deps.assertFunded) await deps.assertFunded(); // accept costs provider gas
