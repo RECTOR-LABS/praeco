@@ -76,18 +76,21 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   const schema = kitProvenanceJson(rec);
   // The run's USDC is already spent, so retry a transient delivery failure before giving up.
   const deliver = deps.deliver ?? { attempts: 3, delayMs: 2000 };
+  // Never skip delivery after the engine has spent: clamp to at least one attempt so a
+  // caller passing attempts<=0 still delivers (and lastErr is always set on real failure).
+  const attempts = Math.max(1, deliver.attempts);
   let lastErr: unknown;
-  for (let i = 0; i < deliver.attempts; i++) {
+  for (let i = 0; i < attempts; i++) {
     try {
       const { contentHash, txHash } = await deps.provider.deliverOrder(orderId, { deliverableType: "text", deliverableText: text, deliverableSchema: schema });
       log(`delivered order ${orderId} (${rec.status}) — contentHash ${contentHash}${txHash ? ` txHash ${txHash}` : ""}`);
       return { status: "delivered", orderId, contentHash, txHash };
     } catch (e) {
       lastErr = e;
-      log(`delivery attempt ${i + 1}/${deliver.attempts} FAILED for order ${orderId}: ${(e as Error).message}`);
-      if (i < deliver.attempts - 1) await sleep(deliver.delayMs);
+      log(`delivery attempt ${i + 1}/${attempts} FAILED for order ${orderId}: ${(e as Error).message}`);
+      if (i < attempts - 1) await sleep(deliver.delayMs);
     }
   }
-  log(`delivery FAILED for order ${orderId} after ${deliver.attempts} attempts — run ${rec.runId} already spent ${rec.spentBaseUnits}; needs re-delivery: ${(lastErr as Error).message}`);
+  log(`delivery FAILED for order ${orderId} after ${attempts} attempts — run ${rec.runId} already spent ${rec.spentBaseUnits}; needs re-delivery: ${(lastErr as Error).message}`);
   throw lastErr;
 }

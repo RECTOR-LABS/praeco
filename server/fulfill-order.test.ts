@@ -87,6 +87,13 @@ describe("fulfillOrder", () => {
     expect(out.txHash).toMatch(/^0x/);
     expect(onLog.mock.calls.map((c) => c[0] as string).some((m) => /txHash 0x/.test(m))).toBe(true);
   });
+  it("clamps a non-positive deliver.attempts to one attempt (never skips delivery post-spend)", async () => {
+    // Before the clamp, attempts:0 skipped the loop and deref'd an undefined lastErr →
+    // TypeError after the engine already spent, delivering nothing.
+    const out = await fulfillOrder({ provider: mockProvider({ paysAfter: 0 }), runJob: async () => rec(), deliver: { attempts: 0, delayMs: 0 }, poll: noSleep });
+    expect(out.status).toBe("delivered");
+    expect(out.contentHash).toMatch(/^0x/);
+  });
   it("retries a transient delivery failure before succeeding", async () => {
     let calls = 0;
     const provider = { ...mockProvider({ paysAfter: 0 }), deliverOrder: async (_o: string, _req: DeliverReq) => {
