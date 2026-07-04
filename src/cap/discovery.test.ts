@@ -217,3 +217,30 @@ describe("discoverForLeg", () => {
     expect(ranked).toHaveLength(1);
   });
 });
+
+describe("getAgent — captures deliverableType", () => {
+  it("parses deliverableType from the agent service record", async () => {
+    const f = jsonFetch({ "/public/agents/13506a9a": OPS_AGENT });
+    const a = await getAgent("https://api.croo.network", "13506a9a", f);
+    expect(a.services[0].deliverableType).toBe("schema");
+  });
+});
+
+describe("discoverForLeg — de-ranks code/redemption services", () => {
+  const services: ServiceListing[] = [
+    { serviceId: "pygm-image", agentId: "pygm", name: "Pygm Studio Image Code", priceBaseUnits: "500000" },
+    { serviceId: "inline-image", agentId: "foundr", name: "OG Image Generator", description: "inline og image", priceBaseUnits: "500000" },
+  ];
+  const agentsById = new Map<string, AgentRecord>([
+    ["pygm", { agentId: "pygm", name: "Pygm", completedOrders: 1401, completionRate: 1, skillTagSlugs: [], services: [] }],
+    ["foundr", { agentId: "foundr", name: "Foundr", completedOrders: 500, completionRate: 1, skillTagSlugs: [], services: [] }],
+  ]);
+
+  it("ranks the inline image provider above the higher-reputation 'Code' provider", () => {
+    const ranked = discoverForLeg(services, agentsById, "og_image", "og image");
+    expect(ranked[0].serviceId).toBe("inline-image"); // de-ranked despite lower reputation
+    expect(ranked.map((r) => r.serviceId)).toContain("pygm-image"); // still present (de-rank, not exclude)
+    expect(ranked.find((r) => r.serviceId === "pygm-image")?.formatDeRank).toBe(1);
+    expect(ranked.find((r) => r.serviceId === "inline-image")?.formatDeRank).toBe(0);
+  });
+});
