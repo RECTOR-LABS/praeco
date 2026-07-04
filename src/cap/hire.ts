@@ -85,7 +85,13 @@ export async function hireSpecialist(
   //     ERC-4337 paymaster charges gas in USDC. So we must wait for "created"
   //     (left "creating", has a price) before paying. OpsPilot (Phase-0)
   //     finalized in ~1.5s and hid this; other providers take ~25s+.
-  const TERMINAL_BAD = new Set(["cancelled", "canceled", "rejected", "failed", "expired", "refunded"]);
+  // Terminal order statuses — the order will never finalize to a payable "created", so
+  // bail fast instead of polling the whole ~90s window. Verified against
+  // @croo-network/sdk@0.2.1 `OrderStatus`, kept in sync with ABORT_STATUSES in
+  // server/fulfill-order.ts. (The previous set used non-existent cancelled/canceled/
+  // failed/refunded and MISSED the real create_failed/pay_failed — a real on-chain
+  // failure then wasted the full poll window and threw a misleading "unfunded" error.)
+  const TERMINAL_BAD = new Set(["rejected", "rejecting", "expired", "create_failed", "pay_failed"]);
   let orderId: string | undefined;
   let order: { orderId: string; price: string; status: string } | undefined;
   for (let i = 0; i < negPolls && !order; i++) {
