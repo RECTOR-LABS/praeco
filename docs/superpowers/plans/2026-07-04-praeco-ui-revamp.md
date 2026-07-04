@@ -4,6 +4,14 @@
 
 **Goal:** Reskin the demo path (landing, intake, Theater, kit) into a cohesive cinematic "Mission Control" look for the DoraHacks demo, without changing any behavior.
 
+> **Update (2026-07-04) — executed on an upgraded foundation.** Tasks 1–2 (hand-rolled
+> Tailwind-3 tokens/primitives) were superseded mid-execution: per RECTOR, the project
+> was migrated to **Tailwind v4** (codemod) and adopted **shadcn/ui + Radix** (`radix`
+> base). shadcn's vars are themed onto the mission-control palette; primitives were
+> rebuilt on shadcn behind their APIs. Everything else in this plan (per-surface reskin,
+> preserved test assertions, verify/PR) executed as written. Commits: `243f475` (v4) →
+> `0983f2d` (shadcn) → `20258c6` (polish across all surfaces). 207 tests green.
+
 **Architecture:** A design-token layer (Tailwind theme + `globals.css` + `next/font`) feeds a small set of token-driven primitives in `components/ui/`. Each demo page/component is reskinned to consume tokens + primitives while preserving its props, data flow, and behavior. Presentation layer only.
 
 **Tech Stack:** Next.js 15 (App Router), Tailwind 3, `geist` (next/font, self-hosted), `class-variance-authority` + `clsx` + `tailwind-merge` (all present except `geist`), Lucide, Vitest + Testing Library.

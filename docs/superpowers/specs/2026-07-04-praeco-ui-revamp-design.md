@@ -1,5 +1,17 @@
 # Praeco UI Revamp — "Mission Control" Design (2026-07-04)
 
+> **Update (2026-07-04, mid-execution) — foundation pivot.** Per RECTOR's call, the
+> component foundation was upgraded to **Tailwind CSS v4** (official codemod) +
+> **shadcn/ui on Radix** (`radix` base, RSC), replacing the hand-rolled Tailwind-3
+> token layer this spec originally described. The mission-control aesthetic + tokens
+> are **preserved**: shadcn's semantic vars (`background`/`card`/`primary`/`muted`/
+> `border`/`ring`) are mapped onto the mission-control palette in `globals.css @theme`,
+> so shadcn components inherit the neon-dark look. Primitives were rebuilt on shadcn
+> behind their existing APIs (StatusPill→Badge, ConsolePanel→Card aesthetic,
+> buttons→Button). Dark-only + behavior-preserving + tests-green constraints held
+> (207 tests). Components adopted: Button, Card, Badge, Tabs, Tooltip, ScrollArea,
+> Progress, Separator, Dialog, Input, Label.
+
 ## Context & goal
 
 Praeco's engine and both doors are done and proven; the web app (Door A) is live on Vercel but visually **generic** — a 6-line `globals.css` (GitHub-dark, default system font), a thin landing (title + 3 buttons), competent-but-flat cards. For the **CROO Agent Hackathon demo (HARD deadline 2026-07-09)** we want the demo-path pages to be *the best they can be* — a distinctive, cinematic presentation that makes "an autonomous agent hiring, paying, and QA-ing specialists on-chain" feel alive.
