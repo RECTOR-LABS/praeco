@@ -1,0 +1,73 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 560" font-family="ui-sans-serif, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0,0 L10,5 L0,10 z" fill="#8B949E"/>
+    </marker>
+  </defs>
+
+  <rect x="0" y="0" width="900" height="560" rx="16" fill="#0D1117"/>
+  <text x="450" y="32" text-anchor="middle" fill="#8B949E" font-size="13" letter-spacing="2">PRAECO · TWO DOORS, ONE ENGINE</text>
+
+  <!-- Door A -->
+  <rect x="70" y="52" width="340" height="92" rx="12" fill="#161B22" stroke="#30363D"/>
+  <text x="92" y="80" fill="#6366F1" font-size="12" font-weight="700" letter-spacing="1">DOOR A</text>
+  <text x="92" y="103" fill="#E6EDF3" font-size="16" font-weight="600">Human Web App</text>
+  <text x="92" y="125" fill="#8B949E" font-size="11">praeco.rectorspace.com — describe a product, watch it build</text>
+
+  <!-- Door B -->
+  <rect x="490" y="52" width="340" height="92" rx="12" fill="#161B22" stroke="#30363D"/>
+  <text x="512" y="80" fill="#10B981" font-size="12" font-weight="700" letter-spacing="1">DOOR B</text>
+  <text x="512" y="103" fill="#E6EDF3" font-size="16" font-weight="600">CAP Seller (callable)</text>
+  <text x="512" y="125" fill="#8B949E" font-size="11">an inbound order on the CROO marketplace → same engine</text>
+
+  <!-- converging arrows -->
+  <path d="M240,146 C240,175 400,165 430,190" fill="none" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M660,146 C660,175 500,165 470,190" fill="none" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- engine container -->
+  <rect x="40" y="192" width="820" height="192" rx="14" fill="#0F141A" stroke="#30363D"/>
+  <text x="450" y="223" text-anchor="middle" fill="#E6EDF3" font-size="15" font-weight="700">ONE ENGINE
+    <tspan fill="#8B949E" font-weight="400" font-family="ui-monospace, SFMono-Regular, Menlo, monospace" font-size="13"> · runLaunchJob()</tspan>
+  </text>
+
+  <!-- loop pills -->
+  <g>
+    <!-- P1 Intake -->
+    <rect x="62" y="256" width="140" height="56" rx="10" fill="#161B22" stroke="#30363D"/>
+    <text x="132" y="282" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">Intake</text>
+    <text x="132" y="300" text-anchor="middle" fill="#8B949E" font-size="10">product or repo</text>
+    <!-- P2 Discover -->
+    <rect x="221" y="256" width="140" height="56" rx="10" fill="#161B22" stroke="#30363D"/>
+    <text x="291" y="282" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">Discover</text>
+    <text x="291" y="300" text-anchor="middle" fill="#8B949E" font-size="10">rank providers</text>
+    <!-- P3 Hire -->
+    <rect x="380" y="256" width="140" height="56" rx="10" fill="#161B22" stroke="#6366F1"/>
+    <text x="450" y="282" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">Hire</text>
+    <text x="450" y="300" text-anchor="middle" fill="#A5B4FC" font-size="10">pay USDC on Base</text>
+    <!-- P4 QA -->
+    <rect x="539" y="256" width="140" height="56" rx="10" fill="#161B22" stroke="#30363D"/>
+    <text x="609" y="282" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">QA</text>
+    <text x="609" y="300" text-anchor="middle" fill="#8B949E" font-size="10">accept · redo · swap</text>
+    <!-- P5 Compose -->
+    <rect x="698" y="256" width="140" height="56" rx="10" fill="#161B22" stroke="#30363D"/>
+    <text x="768" y="282" text-anchor="middle" fill="#E6EDF3" font-size="14" font-weight="600">Compose</text>
+    <text x="768" y="300" text-anchor="middle" fill="#8B949E" font-size="10">stitch the kit</text>
+
+    <!-- inter-pill arrows -->
+    <line x1="204" y1="284" x2="219" y2="284" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="363" y1="284" x2="378" y2="284" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="522" y1="284" x2="537" y2="284" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+    <line x1="681" y1="284" x2="696" y2="284" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+  </g>
+
+  <text x="450" y="344" text-anchor="middle" fill="#8B949E" font-size="11">the QA verdict drives the loop — every hire is real, every payment on-chain</text>
+
+  <!-- engine → output -->
+  <line x1="450" y1="384" x2="450" y2="410" stroke="#8B949E" stroke-width="1.5" marker-end="url(#arrow)"/>
+
+  <!-- output -->
+  <rect x="70" y="412" width="760" height="106" rx="12" fill="#161B22" stroke="#30363D"/>
+  <text x="92" y="440" fill="#E6EDF3" font-size="15" font-weight="700">LAUNCH KIT</text>
+  <text x="92" y="464" fill="#8B949E" font-size="12">landing copy · OG image · tweet thread · short pitch · PH/HN blurb · README polish</text>
+  <text x="92" y="494" fill="#10B981" font-size="11">every asset carries a provenance card — agent · $amount · contentHash · Basescan ↗</text>
+</svg>
