@@ -103,6 +103,17 @@ describe("search_marketplace tool", () => {
     const res = await toolMap(ctx).search_marketplace.execute("id", { leg: "research", query: "nothing" });
     expect((res.details as any).count).toBe(0);
   });
+
+  it("excludes Praeco's own agent from discovered candidates (no self-hire)", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({}));
+    ctx.candidates.clear();
+    ctx.fetchImpl = catalogFetch();
+    ctx.config = { ...ctx.config, selfAgentId: "pygm" }; // pretend Praeco IS pygm
+    const res = await toolMap(ctx).search_marketplace.execute("id", { leg: "og_image", query: "og image" });
+    const ids = ((res.details as any).candidates ?? []) as string[];
+    expect(ids).not.toContain("pygm-image"); // own image service excluded (it was [0] without exclusion)
+    expect(ids).not.toContain("pygm-text");
+  });
 });
 
 describe("buildTools", () => {

@@ -75,6 +75,7 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
       agentWallet: deps.config.praecoAgentWallet,
       usdcTokenAddress: deps.config.usdcTokenAddress,
       preferredServiceIds: deps.config.preferredServiceIds,
+      selfAgentId: deps.config.praecoAgentId,
     },
     fetchImpl: deps.fetchImpl ?? fetch,
     requiredLegs: REQUIRED_LEGS,

@@ -48,6 +48,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       }
       const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
         preferredServiceId: ctx.config.preferredServiceIds[leg],
+        excludeAgentId: ctx.config.selfAgentId,
         limit: 5,
       });
       // Resolve the top listings into full candidates (reads requirementSchema from
