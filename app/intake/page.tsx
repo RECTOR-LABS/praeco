@@ -33,7 +33,7 @@ function IntakeForm() {
         placeholder="Paste a one-liner or GitHub URL"
         value={value}
         onChange={(e) => setValue(e.target.value)}
-        className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-gray-500 outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+        className="w-full rounded-lg border border-white/20 bg-white/5 px-4 py-3 text-white placeholder-gray-500 outline-hidden focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
         autoFocus
       />
       <button

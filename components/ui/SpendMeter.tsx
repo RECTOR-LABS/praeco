@@ -14,7 +14,7 @@ export function SpendMeter({
       <div className="relative h-1.5 flex-1 overflow-hidden rounded-full bg-white/10">
         <div className="h-full rounded-full bg-live shadow-glow-live" style={{ width: `${pct}%` }} />
         {live && (
-          <div className="absolute inset-y-0 w-1/3 animate-meter-sweep bg-gradient-to-r from-transparent via-live/40 to-transparent" />
+          <div className="absolute inset-y-0 w-1/3 animate-meter-sweep bg-linear-to-r from-transparent via-live/40 to-transparent" />
         )}
       </div>
       <span className="font-mono text-xs tabular-nums text-ink">

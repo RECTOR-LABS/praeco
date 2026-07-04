@@ -23,7 +23,7 @@ export function ConsolePanel({
   return (
     <div
       className={cn(
-        "rounded-xl border border-line bg-panel/80 backdrop-blur-sm transition-shadow",
+        "rounded-xl border border-line bg-panel/80 backdrop-blur-xs transition-shadow",
         glow && tone ? GLOW[tone] : "",
         className,
       )}

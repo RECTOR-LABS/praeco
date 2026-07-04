@@ -1,6 +1,80 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import 'tailwindcss';
+
+@custom-variant dark (&:is(.dark *));
+
+@theme {
+  --color-ground: #05070c;
+  --color-panel: #0b0f18;
+  --color-panel-2: #111726;
+  --color-ink: #cdd6e4;
+  --color-muted: #7f8ba5;
+  --color-line: rgba(120, 150, 220, 0.14);
+  --color-live: #43e08a;
+  --color-danger: #f85149;
+
+  --color-lane-research: #58a6ff;
+  --color-lane-copy: #e3b341;
+  --color-lane-image: #c297ff;
+  --color-lane-money: #3fb950;
+
+  --font-sans: var(--font-geist-sans), system-ui, sans-serif;
+  --font-mono: var(--font-geist-mono), ui-monospace, monospace;
+
+  --shadow-glow-research: 0 0 16px -5px #58a6ff;
+  --shadow-glow-copy: 0 0 16px -5px #e3b341;
+  --shadow-glow-image: 0 0 16px -5px #c297ff;
+  --shadow-glow-live: 0 0 16px -5px #43e08a;
+
+  --animate-pulse-dot: pulse-dot 1.4s ease-in-out infinite;
+  --animate-meter-sweep: meter-sweep 2.4s ease-in-out infinite;
+  --animate-log-in: log-in 0.28s ease-out;
+
+  @keyframes pulse-dot {
+    0%,
+    100% {
+      opacity: 1;
+    }
+    50% {
+      opacity: 0.35;
+    }
+  }
+  @keyframes meter-sweep {
+    0% {
+      transform: translateX(-70%);
+    }
+    100% {
+      transform: translateX(180%);
+    }
+  }
+  @keyframes log-in {
+    from {
+      opacity: 0;
+      transform: translateY(4px);
+    }
+    to {
+      opacity: 1;
+      transform: none;
+    }
+  }
+}
+
+/*
+  The default border color has changed to `currentcolor` in Tailwind CSS v4,
+  so we've added these compatibility styles to make sure everything still
+  looks the same as it did with Tailwind CSS v3.
+
+  If we ever want to remove these styles, we need to add an explicit border
+  color utility to any element that depends on these defaults.
+*/
+@layer base {
+  *,
+  ::after,
+  ::before,
+  ::backdrop,
+  ::file-selector-button {
+    border-color: var(--color-gray-200, currentcolor);
+  }
+}
 
 :root { color-scheme: dark; }
 
