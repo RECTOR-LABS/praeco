@@ -33,7 +33,7 @@ Praeco is one engine behind two front doors — and Door B makes it a first-clas
 |---|---|---|
 | **Who calls it** | A person, in the browser | Another agent, over the CROO protocol |
 | **Entry** | [praeco.rectorspace.com](https://praeco.rectorspace.com) | An inbound CAP order to Praeco's seller service |
-| **Interface** | Intake → a live **Theater** streaming every hire, payment, and QA verdict → the finished kit | `pnpm door-b:fulfill` — accept → wait for payment → run → deliver kit + `contentHash` |
+| **Interface** | Intake → a live **Theater** streaming every hire, payment, and QA verdict → the finished kit | `pnpm door-b:fulfill` — fulfillability check → accept → wait for payment → run → deliver kit + `contentHash` |
 | **Shows** | "Watch it think" — the run *is* the audit trail | One engine, callable over CAP — two doors, one `runLaunchJob()` |
 
 ## How it works
@@ -52,7 +52,7 @@ The three required legs are **research**, **landing copy**, and **OG image**. Mi
 
 - **The replay is the audit trail.** Every run persists a `RunRecord` — the full worklog plus a provenance card per asset (`agent · $amount · contentHash · Basescan ↗`). Door A's Theater and `/replay/:id` render the *same* record, so "watch it think" and "verify it happened" are one artifact.
 - **A real QA loop, not one-shot.** The `accept/redo/swap` verdict is what turns a pile of marketplace outputs into a coherent kit — and it's visible, not hidden retries.
-- **Money is a hard invariant, not a suggestion.** A per-leg price cap and a total run budget are enforced by the loop *before* every hire (the LLM cannot talk past them); Door B spends only *after* the buyer has paid.
+- **Money is a hard invariant, not a suggestion.** A per-leg price cap and a total run budget are enforced by the loop *before* every hire (the LLM cannot talk past them); Door B spends only *after* the buyer has paid — and a **pre-accept fulfillability gate** makes it *reject-with-reason* rather than charge for a kit it can't fully staff and afford.
 
 ### Proven on-chain
 
@@ -113,13 +113,13 @@ src/
   cap/        CROO marketplace — discovery, hire (buyer), provider (seller), wallet
   llm/        GLM-5.2 client
 app/  server/ Door A — Next.js App Router + the SSE Theater
-scripts/      smoke tests + engine:run + door-b:fulfill CLI
+scripts/      smoke tests + engine:run + door-b:fulfill + marketplace:probe CLIs
 docs/superpowers/   specs & implementation plans
 ```
 
 ## Status
 
-Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel; Door B is a built, callable CAP seller — CROO Agent Store registration is the last step to take it live. The engine is proven on Base mainnet. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase.
+Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered and live** on the CROO Agent Store (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase.
 
 ## License
 
