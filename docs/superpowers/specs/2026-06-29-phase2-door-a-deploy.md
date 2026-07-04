@@ -1,5 +1,7 @@
 # Praeco Phase-2 Door A — Railway Deploy Runbook
 
+> ⚠️ **SUPERSEDED (2026-07-04) — do not follow.** Praeco Door A now deploys on **Vercel only** (`praeco.rectorspace.com`, git-auto-deploy from `main`). The Railway project was decommissioned and `railway.json` removed. Kept for historical record; for the current platform see `docs/superpowers/plans/2026-07-01-vercel-migration.md`.
+
 **Status (2026-06-30):** config ready (`railway.json`, `.env.example`); **live deploy BLOCKED** on Railway free-plan project quota — resolve the blocker, then run the steps below verbatim from the repo root.
 **Target:** one long-lived Next.js Node service (`praeco-web`). **Sandbox + replay only**; live (on-chain) mode stays disabled (no `LIVE_RUN_TOKEN`).
 **Prereqs:** Railway CLI ≥ 5.23 (`railway --version`), logged in (`railway whoami`).

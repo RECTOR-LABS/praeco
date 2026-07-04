@@ -5,9 +5,10 @@ import { getBundledRecord, listBundledRecords } from "./replays.js";
 
 export function runsDir(): string { return process.env.RUNS_DIR ?? "./runs"; }
 
-// On a serverless deploy there is no writable volume; writes are best-effort and
-// swallowed. Persisted demo runs ship bundled (server/replays.ts); new sandbox/live
-// runs are ephemeral there. On Railway / local this still writes to RUNS_DIR.
+// On a serverless deploy (Vercel) there is no writable volume; writes are best-effort and
+// swallowed. Persisted demo runs ship bundled (server/replays.ts); new sandbox/live runs
+// are ephemeral there. On a long-lived host with a persistent disk (e.g. local dev) this
+// still writes to RUNS_DIR.
 export async function saveRecord(rec: RunRecord): Promise<void> {
   try {
     await mkdir(runsDir(), { recursive: true });
@@ -23,7 +24,7 @@ async function loadFromFs(runId: string): Promise<RunRecord | null> {
 }
 
 export async function loadRecord(runId: string): Promise<RunRecord | null> {
-  // Bundled demo records first (work everywhere), then the local/Railway volume.
+  // Bundled demo records first (work everywhere), then a persistent-disk volume (local dev).
   return getBundledRecord(runId) ?? (await loadFromFs(runId));
 }
 
