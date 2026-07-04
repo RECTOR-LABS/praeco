@@ -2,10 +2,12 @@
 // "can the engine staff a CLEAN launch kit from the CURRENT live CROO
 // marketplace, right now?"
 //
-// It mirrors the Door B pre-accept gate EXACTLY — same checkFulfillability, same
-// findStalePins startup warning, same SEARCH_CANDIDATE_LIMIT / pins /
-// self-exclusion the engine uses — so its verdict is what `door-b:fulfill` and
-// `engine:run` would decide before spending a cent. Because a clean 3/3 depends
+// It mirrors the Door B pre-accept gate EXACTLY — the same assessFulfillability
+// the gate runs, the same findStalePins startup warning, the same
+// SEARCH_CANDIDATE_LIMIT / pins / self-exclusion the engine uses — so its verdict
+// is what `door-b:fulfill` and `engine:run` would decide before spending a cent.
+// It runs the verdict on the SAME catalog snapshot it displays (one fetch), so
+// the per-leg report and the verdict can never disagree. Because a clean 3/3 depends
 // on marketplace SUPPLY (each leg needs a live specialist that delivers usable
 // inline content within the leg cap), it also surfaces per-leg alternatives and,
 // with --deliverables, what each candidate actually DELIVERS.
@@ -22,11 +24,16 @@
 import "dotenv/config";
 import { loadConfig } from "../src/config.js";
 import { listServices, listAgents, discoverForLeg, getAgent } from "../src/cap/discovery.js";
-import { checkFulfillability, findStalePins, parseBaseUnits, DEFAULT_LEG_QUERIES } from "../src/cap/fulfillability.js";
+import { assessFulfillability, findStalePins, parseBaseUnits, DEFAULT_LEG_QUERIES } from "../src/cap/fulfillability.js";
 import { REQUIRED_LEGS, SEARCH_CANDIDATE_LIMIT, usdToBaseUnits, baseUnitsToUsd } from "../src/constants.js";
 
 const deep = process.argv.includes("--deliverables");
-const usd = (b: string | bigint) => `$${baseUnitsToUsd(typeof b === "bigint" ? b : BigInt(b))}`;
+// Degrade (never throw) on a malformed catalog price — a raw external price like
+// "0.5"/"N/A" would crash BigInt(); parseBaseUnits returns null for those.
+const usd = (b: string | bigint) => {
+  const v = typeof b === "bigint" ? b : parseBaseUnits(b);
+  return v === null ? `$?(${b})` : `$${baseUnitsToUsd(v)}`;
+};
 const withinCap = (price: string, cap: bigint) => {
   const b = parseBaseUnits(price);
   return b !== null && b > 0n && b <= cap;
@@ -86,7 +93,15 @@ async function main() {
     }
   }
 
-  const verdict = await checkFulfillability(cfg, fetch as never);
+  // Same verdict the Door B gate computes — but on the ONE snapshot already
+  // fetched above (no second crawl, no display/verdict drift).
+  const verdict = assessFulfillability(services, agentsById, {
+    legs: REQUIRED_LEGS,
+    preferredServiceIds: cfg.preferredServiceIds,
+    selfAgentId: cfg.praecoAgentId,
+    legCapBaseUnits: cap,
+    runBudgetBaseUnits: usdToBaseUnits(cfg.runBudgetUsdc),
+  });
   console.log(`\n=== GATE VERDICT (what fulfillOrder runs before accept) ===`);
   console.log(`  ok = ${verdict.ok}${verdict.reason ? `\n  reason: ${verdict.reason}` : ""}`);
   for (const l of verdict.perLeg) {
