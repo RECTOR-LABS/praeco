@@ -6,6 +6,14 @@ on-chain order lifecycle — negotiation → accept → paid → **deliver** —
 pins), so the delivered kit was empty. The money invariant held perfectly: a failed
 run spent **$0** (fail-closed). Full details + the proper fix plan below.
 
+> **✅ Update (2026-07-04):** The three fixes in the "Proper fix plan" below shipped in
+> **PR #12** (`main`): a pre-accept **fulfillability gate** (reject-with-reason — never
+> charge for a job we can't staff + afford), a **self-exclusion** guard, and a
+> **stale-pin startup warning** — the fail-closed pin contract preserved, then hardened
+> by a max-effort code-review pass. The integrity defect described here is **closed**.
+> Remaining: one live clean 3/3 capture, gated on refreshing the `SVC_*` pins to
+> currently-online specialists.
+
 ## ✅ Proven on-chain (real)
 
 - **Seller service registered** on CROO (dashboard-only, done via browser this session):
@@ -58,7 +66,7 @@ Praeco **accepted + charged** a paid order it **could not fulfill**, then delive
 failure-kit. A production-grade contractor must verify it *can* do the job **before** taking
 the money, and reject-with-reason otherwise.
 
-## 🔧 Proper fix plan — dedicated engine session (TDD + review)
+## 🔧 Proper fix plan — dedicated engine session (TDD + review) — ✅ SHIPPED (PR #12)
 
 1. **Fulfillability pre-check before `accept`** — confirm every required leg has a live,
    hireable specialist; **reject-with-reason** if not (never deliver a failed kit / never
