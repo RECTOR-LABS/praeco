@@ -8,7 +8,7 @@ export interface CapProvider {
   acceptNegotiation(negotiationId: string, providerFundAddress?: string): Promise<{ orderId: string }>;
   rejectNegotiation(negotiationId: string, reason: string): Promise<void>;
   getOrder(orderId: string): Promise<{ status: string; price?: string }>;
-  deliverOrder(orderId: string, req: DeliverReq): Promise<{ contentHash: string }>;
+  deliverOrder(orderId: string, req: DeliverReq): Promise<{ contentHash: string; txHash?: string }>;
   rejectOrder(orderId: string, reason: string): Promise<void>;
 }
 
@@ -19,7 +19,7 @@ interface SdkClient {
   acceptNegotiationWithFundAddress(id: string, addr: string): Promise<{ order: { orderId: string } }>;
   rejectNegotiation(id: string, reason: string): Promise<void>;
   getOrder(id: string): Promise<{ status: string; price?: string }>;
-  deliverOrder(id: string, req: DeliverReq): Promise<{ delivery: { contentHash: string } }>;
+  deliverOrder(id: string, req: DeliverReq): Promise<{ delivery: { contentHash: string }; txHash: string }>;
   rejectOrder(id: string, reason: string): Promise<void>;
 }
 
@@ -37,9 +37,9 @@ export class AgentClientProvider implements CapProvider {
   }
   rejectNegotiation(negotiationId: string, reason: string) { return this.client.rejectNegotiation(negotiationId, reason); }
   getOrder(orderId: string) { return this.client.getOrder(orderId); }
-  async deliverOrder(orderId: string, req: DeliverReq): Promise<{ contentHash: string }> {
+  async deliverOrder(orderId: string, req: DeliverReq): Promise<{ contentHash: string; txHash?: string }> {
     const res = await this.client.deliverOrder(orderId, req);
-    return { contentHash: res.delivery.contentHash };
+    return { contentHash: res.delivery.contentHash, txHash: res.txHash };
   }
   rejectOrder(orderId: string, reason: string) { return this.client.rejectOrder(orderId, reason); }
 }

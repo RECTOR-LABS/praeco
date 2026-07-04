@@ -15,7 +15,7 @@ export function mockProvider(opts: { brief?: string; paysAfter?: number } = {}):
     async acceptNegotiation() { listed = true; return { orderId: "mock-order" }; },
     async rejectNegotiation() { listed = true; },
     async getOrder() { const status = polls++ < paysAfter ? "creating" : "paid"; return { status, price: "2000000" }; },
-    async deliverOrder(_orderId: string, req: DeliverReq) { delivered.push(req); return { contentHash: `0xmockdeliverhash${delivered.length}` }; },
+    async deliverOrder(_orderId: string, req: DeliverReq) { delivered.push(req); return { contentHash: `0xmockdeliverhash${delivered.length}`, txHash: `0xmockdelivertx${delivered.length}` }; },
     async rejectOrder() {},
   };
 }

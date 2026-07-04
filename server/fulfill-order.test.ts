@@ -1,6 +1,7 @@
 import { describe, it, expect, vi } from "vitest";
 import { fulfillOrder } from "./fulfill-order.js";
 import { mockProvider } from "@/src/cap/mock-provider";
+import type { DeliverReq } from "@/src/cap/provider";
 
 const rec = (status = "completed", kit = true) => ({
   runId: "run-x", status, brief: { product: "P", audience: "a", features: [], tone: "t", oneLiner: "o" },
@@ -70,5 +71,32 @@ describe("fulfillOrder", () => {
     const out = await fulfillOrder({ provider, runJob, poll: noSleep });
     expect(out).toEqual({ status: "rejected", orderId: "mock-order", reason: expect.stringMatching(/engine failed/) });
     expect(rejectSpy).toHaveBeenCalledWith("mock-order", expect.stringMatching(/engine failed/));
+  });
+  it("aborts early (skipped) on a real terminal pre-payment status, without running the engine", async () => {
+    const provider = { ...mockProvider(), getOrder: async () => ({ status: "pay_failed", price: "2000000" }) } as never;
+    const runJob = vi.fn(async () => rec());
+    const out = await fulfillOrder({ provider, runJob, poll: noSleep });
+    expect(runJob).not.toHaveBeenCalled();
+    expect(out.status).toBe("skipped");
+    expect(out.reason).toMatch(/pay_failed/);
+  });
+  it("returns and logs the deliver txHash", async () => {
+    const onLog = vi.fn();
+    const out = await fulfillOrder({ provider: mockProvider({ paysAfter: 0 }), runJob: async () => rec(), onLog, poll: noSleep });
+    expect(out.status).toBe("delivered");
+    expect(out.txHash).toMatch(/^0x/);
+    expect(onLog.mock.calls.map((c) => c[0] as string).some((m) => /txHash 0x/.test(m))).toBe(true);
+  });
+  it("retries a transient delivery failure before succeeding", async () => {
+    let calls = 0;
+    const provider = { ...mockProvider({ paysAfter: 0 }), deliverOrder: async (_o: string, _req: DeliverReq) => {
+      calls++;
+      if (calls < 3) throw new Error("transient deliver");
+      return { contentHash: "0xok", txHash: "0xtx" };
+    } } as never;
+    const out = await fulfillOrder({ provider, runJob: async () => rec(), poll: noSleep });
+    expect(calls).toBe(3);
+    expect(out.status).toBe("delivered");
+    expect(out.contentHash).toBe("0xok");
   });
 });
