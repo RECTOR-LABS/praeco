@@ -84,7 +84,6 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
     verdicts: new Map(),
     paidOrderIds: new Set(),
     paidAttemptsByLeg: new Map(),
-    escapedPins: new Set(),
     assets: new Map(),
   };
 

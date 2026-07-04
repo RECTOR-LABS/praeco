@@ -38,7 +38,7 @@ function ctxFor(client: CapBuyer, llm: Llm, over: Partial<RunContext> = {}): Run
     config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: {} },
     fetchImpl: fundedFetch, requiredLegs: ["research"], hirePollOpts: { negotiationPolls: 2, deliveryPolls: 2, sleep: async () => {} },
     candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
-    paidAttemptsByLeg: new Map(), escapedPins: new Set(), assets: new Map(),
+    paidAttemptsByLeg: new Map(), assets: new Map(),
     ...over,
   };
 }
@@ -187,38 +187,10 @@ describe("qa_review + submit_asset tools", () => {
   });
 });
 
-describe("§7 cap + pin-escape wiring", () => {
+describe("§7 cap wiring", () => {
   it("increments paidAttemptsByLeg when a hire is paid", async () => {
     const ctx = ctxFor(happyClient(), fakeLlm({}));
     await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "x" } });
     expect(ctx.paidAttemptsByLeg.get("research")).toBe(1);
-  });
-
-  it("marks a pinned leg escaped when QA returns swap", async () => {
-    const ctx = ctxFor(happyClient(), fakeLlm({ action: "swap", reason: "wrong format" }), {
-      config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: { research: "s1" } },
-    });
-    await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "x" } });
-    await toolMap(ctx).qa_review.execute("id", { orderId: "o1" });
-    expect(ctx.escapedPins.has("research")).toBe(true);
-  });
-
-  it("does NOT escape a non-pinned leg on swap", async () => {
-    const ctx = ctxFor(happyClient(), fakeLlm({ action: "swap", reason: "wrong format" }));
-    await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "x" } });
-    await toolMap(ctx).qa_review.execute("id", { orderId: "o1" });
-    expect(ctx.escapedPins.has("research")).toBe(false);
-  });
-
-  it("omits an escaped pin from discovery (opens to alternatives)", async () => {
-    const ctx = ctxFor(happyClient(), fakeLlm({}), {
-      config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: { og_image: "pygm-image" } },
-      escapedPins: new Set(["og_image"]),
-    });
-    ctx.candidates.clear();
-    ctx.fetchImpl = catalogFetch();
-    const res = await toolMap(ctx).search_marketplace.execute("id", { leg: "og_image", query: "og image" });
-    const ids = (res.details as any).candidates as string[];
-    expect(ids.length).toBeGreaterThanOrEqual(1);
   });
 });

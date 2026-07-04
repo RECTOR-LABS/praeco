@@ -131,29 +131,24 @@ describe("runLaunchJob", () => {
   });
 });
 
-// A mock CAP client where the PINNED provider (svc "pin-bad") delivers a
-// redemption code (no inline content) and the inline alternative ("inline-good")
-// delivers usable prose. getDelivery/getOrder key off the negotiated serviceId.
-function escapeClient(): CapBuyer {
-  const orderService: Record<string, string> = {};
+// A mock CAP client whose only-ever-hired provider ("pin-bad") delivers a
+// redemption code (no inline content). vi.fn records negotiations so the test
+// can prove the inline alternative in the catalog is NEVER paid (fail-closed pin).
+function failClosedClient(): CapBuyer {
   let n = 0;
-  const deliverables: Record<string, string> = {
-    "pin-bad": "Your report is ready. Redeem code RSCH-9F2A at https://pygm.studio/r/RSCH-9F2A",
-    "inline-good": "Market research: privacy-first habit trackers resonate with indie developers who want " +
-      "local-first tools, no mandatory cloud, one-time purchase pricing, and open-source positioning.",
-  };
   return {
-    negotiateOrder: vi.fn(async (req: any) => { orderService[`ord-${++n}`] = req.serviceId; return { negotiationId: `neg-${n}` }; }),
+    negotiateOrder: vi.fn(async (_req: any) => ({ negotiationId: `neg-${++n}` })),
     getNegotiation: vi.fn(async () => ({ status: "pending" })),
     listOrders: vi.fn(async () => [{ orderId: `ord-${n}`, negotiationId: `neg-${n}`, price: "100000", status: "created" }]),
     getOrder: vi.fn(async (id: string) => ({ status: "created", price: "100000", deliverTxHash: `0xd-${id}` })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
-    getDelivery: vi.fn(async (id: string) => ({ deliverableType: "text", deliverableText: deliverables[orderService[id] ?? "inline-good"], contentHash: `0xh-${id}` })),
+    getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText: "Your report is ready. Redeem code RSCH-9F2A at https://pygm.studio/r/RSCH-9F2A", contentHash: "0xh" })),
   };
 }
 
-// Catalog with the pinned bad provider + an inline research alternative.
-const escapeFetch = (async (url: string, init?: RequestInit) => {
+// Catalog with the pinned bad provider + an inline research alternative that
+// must NEVER be hired (the pin is authoritative + fail-closed).
+const failClosedFetch = (async (url: string, init?: RequestInit) => {
   if (init?.method === "POST") return new Response(JSON.stringify({ result: "0x00000000000000000000000000000000000000000000000000000000001e8480" }), { status: 200 });
   const u = String(url);
   const agents: Record<string, unknown> = {
@@ -173,26 +168,21 @@ const escapeFetch = (async (url: string, init?: RequestInit) => {
   return new Response("not found", { status: 404 });
 }) as unknown as typeof fetch;
 
-describe("runLaunchJob — §7 pin-escape money safety", () => {
-  it("escapes a code-delivering pin, hires the inline alternative, and bounds spend", async () => {
+describe("runLaunchJob — §7 cap-only fail-closed on a bad pin", () => {
+  it("bounds spend to the cap and never pays an unvetted provider when a pinned provider keeps failing QA", async () => {
+    const client = failClosedClient();
     // Faithful agent-loop stand-in: gate every hire through beforeToolCall, like the real loop.
-    const escapeDriver: EngineDriver = async (ctx: RunContext) => {
+    const capDriver: EngineDriver = async (ctx: RunContext) => {
       const tools = Object.fromEntries(buildTools(ctx).map((t) => [t.name, t]));
       const guard = makeBeforeToolCall(ctx);
-      const tryHire = async (leg: string, serviceId: string) => {
-        const blocked = await guard({ toolCall: { name: "hire_specialist" }, args: { leg, serviceId } } as any);
-        if (blocked?.block) return null;
-        return tools.hire_specialist.execute("x", { leg, serviceId, requirements: { topic: "habits" } });
-      };
-      // Attempt 1: the pinned bad provider (discovery returns only the pin).
-      await tools.search_marketplace.execute("x", { leg: "research", query: "research" });
-      const h1 = await tryHire("research", "pin-bad");
-      await tools.qa_review.execute("x", { orderId: (h1!.details as any).orderId }); // formatGate -> swap -> escape
-      // Attempt 2: pin escaped, discovery opens; hire the inline alternative.
-      await tools.search_marketplace.execute("x", { leg: "research", query: "research" });
-      const h2 = await tryHire("research", "inline-good");
-      await tools.qa_review.execute("x", { orderId: (h2!.details as any).orderId }); // accept
-      await tools.submit_asset.execute("x", { orderId: (h2!.details as any).orderId });
+      for (let i = 0; i < 3; i++) {
+        // Pin is authoritative + fail-closed: discovery only ever returns "pin-bad".
+        await tools.search_marketplace.execute("x", { leg: "research", query: "research" });
+        const blocked = await guard({ toolCall: { name: "hire_specialist" }, args: { leg: "research", serviceId: "pin-bad" } } as any);
+        if (blocked?.block) break; // cap reached — stop hiring (graceful, no unvetted spend)
+        const h = await tools.hire_specialist.execute("x", { leg: "research", serviceId: "pin-bad", requirements: { topic: "habits" } });
+        await tools.qa_review.execute("x", { orderId: (h.details as any).orderId }); // formatGate -> swap (pin stays fail-closed)
+      }
       return {};
     };
 
@@ -200,21 +190,22 @@ describe("runLaunchJob — §7 pin-escape money safety", () => {
       { text: "Streaky habit tracker" },
       {
         ...baseDeps(),
-        client: escapeClient(),
-        fetchImpl: escapeFetch,
+        client,
+        fetchImpl: failClosedFetch,
         config: { ...config, preferredServiceIds: { research: "pin-bad" } },
-        drive: escapeDriver,
+        drive: capDriver,
       },
     );
 
-    // Only research was driven → partial, and its asset is from the INLINE provider (not the code pin).
-    expect(rec.status).toBe("partial");
-    expect(rec.assets).toHaveLength(1);
-    expect(rec.assets[0].leg).toBe("research");
-    expect(rec.assets[0].hire.serviceId).toBe("inline-good");
-    // Two paid hires on research (pin + inline) — under the cap, bounded spend.
+    // The cap bounds paid attempts to 2 — spend cannot exceed 2×price.
+    expect(client.payOrder).toHaveBeenCalledTimes(2);
     expect(rec.spentBaseUnits).toBe("200000");
-    // The pin-escape robustness event fired.
-    expect(rec.worklog.some((e) => e.message.includes("opening discovery"))).toBe(true);
+    // Fail-closed: every negotiation was for the pinned provider — the inline
+    // alternative that EXISTS in the catalog is never paid.
+    const negotiated = (client.negotiateOrder as any).mock.calls.map((c: any[]) => c[0].serviceId);
+    expect(negotiated.every((s: string) => s === "pin-bad")).toBe(true);
+    // No leg succeeded → graceful abort (no kit, no asset from an unvetted provider).
+    expect(rec.status).toBe("aborted");
+    expect(rec.assets).toHaveLength(0);
   });
 });

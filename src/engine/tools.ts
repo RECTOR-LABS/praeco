@@ -47,7 +47,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
         ctx.agentsById = new Map(agents.map((a) => [a.agentId, a]));
       }
       const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
-        preferredServiceId: ctx.escapedPins.has(leg) ? undefined : ctx.config.preferredServiceIds[leg],
+        preferredServiceId: ctx.config.preferredServiceIds[leg],
         limit: 5,
       });
       // Resolve the top listings into full candidates (reads requirementSchema from
@@ -145,12 +145,6 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       const verdict = await reviewDeliverable(ctx.llm, ctx.brief, h.leg, h.deliverable);
       ctx.verdicts.set(h.orderId, verdict);
       ctx.worklog.emit({ kind: "qa_verdict", at: Date.now(), leg: h.leg, message: `QA ${verdict.action}: ${verdict.reason}`, data: { score: verdict.score } });
-      if (verdict.action === "swap" && ctx.config.preferredServiceIds[h.leg] && !ctx.escapedPins.has(h.leg)) {
-        // A pinned provider that fails QA would otherwise redo-loop forever (discovery returns only the pin).
-        // Abandon the pin so the next search opens discovery to alternatives (§7 pin-escape).
-        ctx.escapedPins.add(h.leg);
-        ctx.worklog.emit({ kind: "hire_blocked", at: Date.now(), leg: h.leg, message: `pinned provider failed QA (swap) — opening discovery to alternative providers for ${h.leg}` });
-      }
       const guidance =
         verdict.action === "accept" ? "Call submit_asset with this orderId." :
         verdict.action === "redo" ? "Re-hire the same provider with improved requirements." :

@@ -39,6 +39,5 @@ export interface RunContext {
   verdicts: Map<string, QaVerdict>;           // orderId -> QA verdict
   paidOrderIds: Set<string>;                  // idempotency ledger
   paidAttemptsByLeg: Map<LegKind, number>;    // paid hires per leg (money-loss bound, §7)
-  escapedPins: Set<LegKind>;                  // legs whose pin was abandoned after failing QA → discovery opens (§7)
   assets: Map<LegKind, LaunchAsset>;          // submitted, QA-accepted, one per leg
 }
