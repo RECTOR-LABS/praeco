@@ -8,9 +8,16 @@ export interface FulfillDeps {
   runJob: (input: IntakeInput) => Promise<RunRecord>;
   assertFunded?: () => Promise<void>;
   poll?: { attempts: number; delayMs: number; sleep?: (ms: number) => Promise<void> };
+  deliver?: { attempts: number; delayMs: number };
   onLog?: (m: string) => void;
 }
-export interface FulfillResult { status: "delivered" | "rejected" | "skipped"; orderId?: string; contentHash?: string; reason?: string }
+export interface FulfillResult { status: "delivered" | "rejected" | "skipped"; orderId?: string; contentHash?: string; txHash?: string; reason?: string }
+
+// Order lifecycle vocabulary — verified against @croo-network/sdk@0.2.1 `OrderStatus`.
+// Kept as literals so this server module (and its tests) stay decoupled from the SDK
+// runtime; the SDK's OrderStatus const is the source of truth if the vocabulary changes.
+const PAID_STATUSES = new Set(["paid", "delivering", "completed"]); // buyer has paid → safe to spend
+const ABORT_STATUSES = new Set(["rejected", "rejecting", "expired", "create_failed", "pay_failed"]); // terminal before payment → abort early
 
 function parseBrief(requirements: string): IntakeInput | null {
   try {
@@ -45,8 +52,8 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   let paid = false;
   for (let i = 0; i < poll.attempts; i++) {
     const o = await deps.provider.getOrder(orderId);
-    if (o.status === "paid" || o.status === "delivering" || o.status === "completed") { paid = true; break; }
-    if (["rejected", "cancelled", "canceled", "expired", "refunded", "failed"].includes(o.status)) {
+    if (PAID_STATUSES.has(o.status)) { paid = true; break; }
+    if (ABORT_STATUSES.has(o.status)) {
       log(`order ${orderId} ended ${o.status} before payment`);
       return { status: "skipped", orderId, reason: `unpaid (${o.status})` };
     }
@@ -67,12 +74,23 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   const requested = (input.text ?? input.repoUrl ?? "").slice(0, 300);
   const text = `${kitToMarkdown(rec)}\n\n---\n\n_Original request: ${requested}_\n`;
   const schema = kitProvenanceJson(rec);
-  try {
-    const { contentHash } = await deps.provider.deliverOrder(orderId, { deliverableType: "text", deliverableText: text, deliverableSchema: schema });
-    log(`delivered order ${orderId} (${rec.status}) — contentHash ${contentHash}`);
-    return { status: "delivered", orderId, contentHash };
-  } catch (e) {
-    log(`delivery FAILED for order ${orderId} — run ${rec.runId} already spent ${rec.spentBaseUnits}; needs re-delivery: ${(e as Error).message}`);
-    throw e;
+  // The run's USDC is already spent, so retry a transient delivery failure before giving up.
+  const deliver = deps.deliver ?? { attempts: 3, delayMs: 2000 };
+  // Never skip delivery after the engine has spent: clamp to at least one attempt so a
+  // caller passing attempts<=0 still delivers (and lastErr is always set on real failure).
+  const attempts = Math.max(1, deliver.attempts);
+  let lastErr: unknown;
+  for (let i = 0; i < attempts; i++) {
+    try {
+      const { contentHash, txHash } = await deps.provider.deliverOrder(orderId, { deliverableType: "text", deliverableText: text, deliverableSchema: schema });
+      log(`delivered order ${orderId} (${rec.status}) — contentHash ${contentHash}${txHash ? ` txHash ${txHash}` : ""}`);
+      return { status: "delivered", orderId, contentHash, txHash };
+    } catch (e) {
+      lastErr = e;
+      log(`delivery attempt ${i + 1}/${attempts} FAILED for order ${orderId}: ${(e as Error).message}`);
+      if (i < attempts - 1) await sleep(deliver.delayMs);
+    }
   }
+  log(`delivery FAILED for order ${orderId} after ${attempts} attempts — run ${rec.runId} already spent ${rec.spentBaseUnits}; needs re-delivery: ${(lastErr as Error).message}`);
+  throw lastErr;
 }

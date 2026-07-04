@@ -7,7 +7,7 @@ const client = {
   acceptNegotiationWithFundAddress: vi.fn(async () => ({ order: { orderId: "o2" } })),
   rejectNegotiation: vi.fn(async () => {}),
   getOrder: vi.fn(async () => ({ status: "paid", price: "2000000" })),
-  deliverOrder: vi.fn(async () => ({ delivery: { contentHash: "0xhash" } })),
+  deliverOrder: vi.fn(async () => ({ delivery: { contentHash: "0xhash" }, txHash: "0xdelivertx" })),
   rejectOrder: vi.fn(async () => {}),
 };
 
@@ -28,10 +28,10 @@ describe("AgentClientProvider", () => {
     expect(await p.acceptNegotiation("n1", "0xfund")).toEqual({ orderId: "o2" });
     expect(client.acceptNegotiationWithFundAddress).toHaveBeenCalledWith("n1", "0xfund");
   });
-  it("delivers and returns the backend contentHash", async () => {
+  it("delivers and returns the backend contentHash + deliver txHash", async () => {
     const p = new AgentClientProvider(client as never);
     const r = await p.deliverOrder("o1", { deliverableType: "text", deliverableText: "kit" });
     expect(client.deliverOrder).toHaveBeenCalledWith("o1", { deliverableType: "text", deliverableText: "kit" });
-    expect(r).toEqual({ contentHash: "0xhash" });
+    expect(r).toEqual({ contentHash: "0xhash", txHash: "0xdelivertx" });
   });
 });
