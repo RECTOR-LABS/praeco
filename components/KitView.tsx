@@ -1,9 +1,10 @@
 "use client";
 
-import type { LaunchKit, ProvenanceCard } from "@/src/types";
-import { cn } from "@/lib/utils";
+import type { LaunchKit, ProvenanceCard, LegKind } from "@/src/types";
 import { Copy, Download, FileImage } from "lucide-react";
-import { BasescanLink } from "@/components/theater/BasescanLink";
+import { ConsolePanel } from "@/components/ui/ConsolePanel";
+import { StatusPill } from "@/components/ui/StatusPill";
+import { ReceiptChip } from "@/components/ui/ReceiptChip";
 
 function copyToClipboard(text: string) {
   navigator.clipboard
@@ -14,12 +15,12 @@ function copyToClipboard(text: string) {
 function SectionHeader({ label, onCopy }: { label: string; onCopy?: () => void }) {
   return (
     <div className="flex items-center justify-between">
-      <h3 className="text-xs font-semibold uppercase tracking-wider text-gray-500">{label}</h3>
+      <h3 className="font-mono text-[10px] font-semibold uppercase tracking-wider text-muted">{label}</h3>
       {onCopy && (
         <button
           type="button"
           onClick={onCopy}
-          className="inline-flex items-center gap-1 text-xs text-gray-500 transition-colors hover:text-gray-300"
+          className="inline-flex items-center gap-1 font-mono text-[11px] text-muted transition-colors hover:text-ink"
         >
           <Copy className="h-3 w-3" />
           Copy
@@ -29,27 +30,28 @@ function SectionHeader({ label, onCopy }: { label: string; onCopy?: () => void }
   );
 }
 
+const LEG_TONE: Record<LegKind, "research" | "copy" | "image"> = {
+  research: "research",
+  landing_copy: "copy",
+  og_image: "image",
+};
+
 function ProvenanceCardItem({ card }: { card: ProvenanceCard }) {
   return (
-    <div className="rounded-lg border border-white/10 bg-white/5 p-4 space-y-2">
+    <ConsolePanel tone="live" glow className="space-y-2 p-4">
       <div className="flex items-center justify-between gap-2">
-        <span className="text-sm font-semibold text-white">{card.agentName}</span>
-        <span className={cn(
-          "rounded-full px-2 py-0.5 text-xs font-medium",
-          "bg-white/10 text-gray-400",
-        )}>
-          {card.leg}
-        </span>
+        <span className="text-sm font-semibold text-ink">{card.agentName}</span>
+        <StatusPill tone={LEG_TONE[card.leg] ?? "muted"}>{card.leg}</StatusPill>
       </div>
-      <div className="flex flex-wrap items-center gap-2 text-xs text-gray-400">
-        <span className="font-mono">{card.amountUsd} USDC</span>
+      <div className="flex flex-wrap items-center gap-2 font-mono text-xs text-muted">
+        <span className="tabular-nums text-live">{card.amountUsd} USDC</span>
         <span>·</span>
-        <span className="font-mono truncate max-w-[200px]" title={card.contentHash}>
+        <span className="max-w-[200px] truncate" title={card.contentHash}>
           {card.contentHash}
         </span>
       </div>
-      <BasescanLink href={card.basescanUrl} label="Basescan receipt" />
-    </div>
+      <ReceiptChip href={card.basescanUrl} label="Basescan" />
+    </ConsolePanel>
   );
 }
 
@@ -67,13 +69,15 @@ export function KitView({ kit }: { kit: LaunchKit }) {
   }
 
   return (
-    <div className="space-y-6 p-4">
+    <div className="mx-auto max-w-5xl space-y-6 p-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-xl font-bold text-white">Launch Kit</h2>
+        <h2 className="text-xl font-bold text-ink">
+          Launch Kit <span className="font-mono text-xs uppercase tracking-wider text-live">· mission complete</span>
+        </h2>
         <button
           type="button"
           onClick={downloadJson}
-          className="inline-flex items-center gap-1.5 rounded-lg border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-gray-300 transition-colors hover:bg-white/10"
+          className="inline-flex items-center gap-1.5 rounded-lg border border-line bg-panel px-3 py-1.5 font-mono text-[11px] text-muted transition-colors hover:bg-panel-2 hover:text-ink"
         >
           <Download className="h-3.5 w-3.5" />
           Download JSON
@@ -87,67 +91,61 @@ export function KitView({ kit }: { kit: LaunchKit }) {
           <img
             src={kit.ogImageRef}
             alt="OG image"
-            className="rounded-lg border border-white/10 max-h-64 w-auto object-cover"
+            className="max-h-64 w-auto rounded-lg border border-line object-cover"
           />
         ) : (
-          <div className="rounded-lg border border-amber-500/20 bg-amber-500/10 p-4 space-y-2">
+          <ConsolePanel tone="copy" glow className="space-y-2 p-4">
             <div className="flex items-center gap-2">
-              <FileImage className="h-4 w-4 text-amber-400" aria-hidden="true" />
-              <span className="text-sm font-medium text-amber-300">
-                OG image — asset reference
-              </span>
+              <FileImage className="h-4 w-4 text-lane-copy" aria-hidden="true" />
+              <span className="text-sm font-medium text-lane-copy">OG image — asset reference</span>
             </div>
-            <p className="font-mono text-xs text-gray-400 break-all">{kit.ogImageRef}</p>
-          </div>
+            <p className="break-all font-mono text-xs text-muted">{kit.ogImageRef}</p>
+          </ConsolePanel>
         )}
       </section>
 
       <section className="space-y-2">
         <SectionHeader label="Short Pitch" onCopy={() => copyToClipboard(kit.shortPitch)} />
-        <p className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed">
-          {kit.shortPitch}
-        </p>
+        <ConsolePanel className="p-4 text-sm leading-relaxed text-ink/90">{kit.shortPitch}</ConsolePanel>
       </section>
 
       <section className="space-y-2">
         <SectionHeader label="Landing Copy" onCopy={() => copyToClipboard(kit.landingCopy)} />
-        <pre className="whitespace-pre-wrap rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed font-sans">
-          {kit.landingCopy}
-        </pre>
+        <ConsolePanel className="p-4">
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/90">{kit.landingCopy}</pre>
+        </ConsolePanel>
       </section>
 
       <section className="space-y-2">
         <SectionHeader label="PH / HN Blurb" onCopy={() => copyToClipboard(kit.phHnBlurb)} />
-        <p className="rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed">
-          {kit.phHnBlurb}
-        </p>
+        <ConsolePanel className="p-4 text-sm leading-relaxed text-ink/90">{kit.phHnBlurb}</ConsolePanel>
       </section>
 
       <section className="space-y-2">
         <SectionHeader label="Tweet Thread" />
         <div className="space-y-2">
           {kit.tweetThread.map((tweet, i) => (
-            <div key={i} className="flex items-start gap-3 rounded-lg border border-white/10 bg-white/5 p-4">
-              <span className="mt-0.5 shrink-0 font-mono text-xs text-gray-500">{i + 1}</span>
-              <p className="min-w-0 flex-1 text-sm leading-relaxed text-gray-200">{tweet}</p>
+            <ConsolePanel key={i} className="flex items-start gap-3 p-4">
+              <span className="mt-0.5 shrink-0 font-mono text-xs text-muted">{i + 1}</span>
+              <p className="min-w-0 flex-1 text-sm leading-relaxed text-ink/90">{tweet}</p>
               <button
                 type="button"
                 aria-label={`Copy tweet ${i + 1}`}
                 onClick={() => copyToClipboard(tweet)}
-                className="shrink-0 text-gray-500 transition-colors hover:text-gray-300"
+                className="shrink-0 text-muted transition-colors hover:text-ink"
               >
                 <Copy className="h-3.5 w-3.5" />
               </button>
-            </div>
+            </ConsolePanel>
           ))}
         </div>
       </section>
 
       <section className="space-y-2">
         <SectionHeader label="README Polish" onCopy={() => copyToClipboard(kit.readmePolish)} />
-        <pre className="whitespace-pre-wrap rounded-lg border border-white/10 bg-white/5 p-4 text-sm text-gray-200 leading-relaxed font-sans">
-          {kit.readmePolish}
-        </pre>
+        <ConsolePanel className="p-4">
+          <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/90">{kit.readmePolish}</pre>
+        </ConsolePanel>
       </section>
 
       {kit.provenance.length > 0 && (

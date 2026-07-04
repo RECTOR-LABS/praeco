@@ -1,6 +1,7 @@
 import { notFound } from "next/navigation";
 import { loadRecord } from "@/server/persistence";
 import { KitView } from "@/components/KitView";
+import { GridBackdrop } from "@/components/ui/GridBackdrop";
 
 export default async function KitPage({
   params,
@@ -12,7 +13,8 @@ export default async function KitPage({
   if (!rec?.kit) notFound();
 
   return (
-    <main className="min-h-screen bg-gray-950 text-white">
+    <main className="relative isolate min-h-screen bg-ground text-ink">
+      <GridBackdrop />
       <KitView kit={rec.kit} />
     </main>
   );
