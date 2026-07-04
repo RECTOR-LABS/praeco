@@ -6,6 +6,7 @@ import { ConsolePanel } from "@/components/ui/ConsolePanel";
 import { StatusPill } from "@/components/ui/StatusPill";
 import { StatTile } from "@/components/ui/StatTile";
 import { ReceiptChip } from "@/components/ui/ReceiptChip";
+import { Markdown } from "@/components/ui/Markdown";
 import { Button } from "@/components/ui/button";
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
@@ -158,7 +159,7 @@ export function KitView({ kit }: { kit: LaunchKit }) {
 
           <AssetSection icon={<BookOpen className="h-3 w-3" />} label="README Polish" onCopy={() => copyToClipboard(kit.readmePolish)} delay={350}>
             <ConsolePanel className="p-4">
-              <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed text-ink/90">{kit.readmePolish}</pre>
+              <Markdown>{kit.readmePolish}</Markdown>
             </ConsolePanel>
           </AssetSection>
         </div>
