@@ -55,10 +55,18 @@ describe("hireSpecialist (order finalization)", () => {
     expect(client.payOrder).not.toHaveBeenCalled();
   });
 
-  it("throws (no pay) when the order ends in a terminal-bad status", async () => {
+  it("throws FAST (no pay, no full-window poll) when the order ends in a real terminal status", async () => {
     const client = happyClient();
-    client.getOrder = vi.fn(async () => ({ status: "cancelled" }));
-    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/ended in status "cancelled"/);
+    client.getOrder = vi.fn(async () => ({ status: "create_failed" })); // real @croo-network/sdk OrderStatus
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/ended in status "create_failed"/);
+    expect(client.payOrder).not.toHaveBeenCalled();
+    expect(client.getOrder).toHaveBeenCalledTimes(1); // aborts on the first check, not after the whole poll window
+  });
+
+  it("also aborts on pay_failed — a real terminal status the old vocabulary missed", async () => {
+    const client = happyClient();
+    client.getOrder = vi.fn(async () => ({ status: "pay_failed" }));
+    await expect(hireSpecialist(client, base, () => {}, fast)).rejects.toThrow(/ended in status "pay_failed"/);
     expect(client.payOrder).not.toHaveBeenCalled();
   });
 });
