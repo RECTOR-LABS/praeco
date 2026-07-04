@@ -41,8 +41,8 @@ function substantiveWordCount(text: string): number {
  * Returns a swap verdict when the deliverable has no substantive inline content
  * for its leg, else null (the LLM art-director pass runs as normal).
  */
-export function formatGate(leg: LegKind, deliverable: Deliverable): QaVerdict | null {
-  const raw = deliverableToText(deliverable).trim();
+export function formatGate(leg: LegKind, deliverable: Deliverable, text = deliverableToText(deliverable)): QaVerdict | null {
+  const raw = text.trim();
   if (!raw) {
     return { action: "swap", reason: "deliverable is empty — no inline content for this leg; hire a provider that delivers inline content" };
   }
@@ -67,13 +67,13 @@ export async function reviewDeliverable(
   leg: LegKind,
   deliverable: Deliverable,
 ): Promise<QaVerdict> {
-  const gated = formatGate(leg, deliverable);
+  const full = deliverableToText(deliverable);
+  const gated = formatGate(leg, deliverable, full); // reuse the derived text — no second deliverableToText pass
   if (gated) return gated; // deterministic swap — do not spend an LLM call on a wrong-format deliverable
   // Review a generous slice — research reports run long, and an over-tight limit
   // makes QA see a mid-sentence cutoff and wrongly reject it as "truncated/
   // incomplete" (Phase-1 live finding). GLM-5.2 has ample context for this.
   const REVIEW_LIMIT = 32000;
-  const full = deliverableToText(deliverable);
   const content = full.length > REVIEW_LIMIT
     ? full.slice(0, REVIEW_LIMIT) + "\n\n[deliverable truncated HERE for review display only — not the provider's cutoff; do not judge completeness by this point]"
     : full;

@@ -79,6 +79,13 @@ describe("formatGate", () => {
     expect(formatGate("og_image", d)).toBeNull();
   });
 
+  it("passes an og_image whose url sits under a case-variant/alias schema field (imageURL/src)", () => {
+    // Regression: extractImageRef must resolve these (else a valid image is wrongly swapped
+    // AND the composed kit gets a hash-only ogImageRef).
+    expect(formatGate("og_image", { type: "schema", schema: { imageURL: "https://cdn.foundr.io/abc123" }, contentHash: "0x" })).toBeNull();
+    expect(formatGate("og_image", { type: "schema", schema: { src: "https://cdn.foundr.io/xyz789" }, contentHash: "0x" })).toBeNull();
+  });
+
   it("swaps an og_image redemption link even when an image extension hides in the query string", () => {
     const g = formatGate("og_image", textDeliverable("Redeem at https://platform.com/redeem?img=logo.png"));
     expect(g?.action).toBe("swap"); // .png in the query is not a real image URL

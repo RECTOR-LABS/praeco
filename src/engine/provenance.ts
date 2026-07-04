@@ -13,7 +13,7 @@ export function deliverableToText(d: Deliverable): string {
   return "";
 }
 
-const URL_FIELDS = ["imageUrl", "image_url", "url", "image", "ogImage", "og_image", "link"];
+const URL_FIELDS = ["imageUrl", "image_url", "url", "image", "ogImage", "og_image", "link", "src", "mediaUrl"];
 
 const isUrl = (s: string): boolean => /^https?:\/\/\S+$/i.test(s.trim());
 
@@ -21,8 +21,13 @@ export function extractImageRef(d: Deliverable): string {
   if (d.text && isUrl(d.text)) return d.text.trim();
   if (d.schema && typeof d.schema === "object") {
     const obj = d.schema as Record<string, unknown>;
+    // Case-insensitive key match, in URL_FIELDS priority order, so a provider that
+    // returns the url under `imageURL`/`IMAGE_URL`/`src` still resolves to a usable
+    // image ref (not a hash) — otherwise the composed kit gets a hash-only ogImageRef
+    // and the QA format-gate wrongly swaps a valid image.
+    const byLower = new Map(Object.entries(obj).map(([k, v]) => [k.toLowerCase(), v]));
     for (const f of URL_FIELDS) {
-      const v = obj[f];
+      const v = byLower.get(f.toLowerCase());
       if (typeof v === "string" && isUrl(v)) return v.trim();
     }
   }

@@ -273,8 +273,10 @@ const priceOf = (p: string): number => {
  * all inline providers for a leg — kept as last-resort candidates, not excluded.
  */
 export function isCodeFormat(name: string, description: string): boolean {
-  // Narrowed to a trailing "Code" in the NAME (the Pygm "… Text/Image Code" tell) or an
-  // explicit redemption term — so "no-code", "source code", "promo code" etc. don't misfire.
+  // Fires when the NAME's TRAILING word is "code" (the Pygm "… Text/Image Code" tell —
+  // this deliberately also catches "… Promo Code" / "… QR Code" / "… Source Code": a broad
+  // but SOFT de-rank, never an exclusion) OR a redemption term appears anywhere in
+  // name+description. A leading/mid "No-Code …" (code not the trailing word) does NOT match.
   return /\bcode\s*$/i.test(name.trim()) || /\bredemption\b|\bredeem\b|\bvoucher\b/i.test(`${name} ${description}`);
 }
 
