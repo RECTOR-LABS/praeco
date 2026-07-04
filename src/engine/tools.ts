@@ -47,7 +47,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
         ctx.agentsById = new Map(agents.map((a) => [a.agentId, a]));
       }
       const top = discoverForLeg(ctx.catalog, ctx.agentsById, leg, query, {
-        preferredServiceId: ctx.config.preferredServiceIds[leg],
+        preferredServiceId: ctx.escapedPins.has(leg) ? undefined : ctx.config.preferredServiceIds[leg],
         limit: 5,
       });
       // Resolve the top listings into full candidates (reads requirementSchema from
@@ -71,7 +71,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       }
       if (ranked.length === 0) return text(`No candidates found for "${params.query}". Try different keywords.`, { count: 0 });
       const summary = ranked
-        .map((c) => `- serviceId=${c.serviceId} agent="${c.agentName}" price=$${usd(c.priceBaseUnits)} completionRate=${(c.completionRate * 100).toFixed(1)}% orders=${c.completedOrders} requires=[${c.requirementSchema.map((f) => f.name + (f.required ? "*" : "")).join(", ")}]`)
+        .map((c) => `- serviceId=${c.serviceId} agent="${c.agentName}" price=$${usd(c.priceBaseUnits)} completionRate=${(c.completionRate * 100).toFixed(1)}% orders=${c.completedOrders} delivers=${c.deliverableType ?? "?"} requires=[${c.requirementSchema.map((f) => f.name + (f.required ? "*" : "")).join(", ")}]`)
         .join("\n");
       return text(`Candidates for ${leg} (best first):\n${summary}\n\nNext: get_service_schema, then hire_specialist with the best candidate.`, { candidates: ranked.map((c) => c.serviceId) });
     },
@@ -117,7 +117,11 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
           assertPayable,
           // Commit spend at pay-time so a delivery timeout cannot lose the accounting.
           // assertPayable already confirmed canAfford, so commit() cannot throw here.
-          onPaid: (price, orderId) => { ctx.budget.commit(price); ctx.paidOrderIds.add(orderId); },
+          onPaid: (price, orderId) => {
+            ctx.budget.commit(price);
+            ctx.paidOrderIds.add(orderId);
+            ctx.paidAttemptsByLeg.set(leg, (ctx.paidAttemptsByLeg.get(leg) ?? 0) + 1);
+          },
         },
         (e) => ctx.worklog.emit(e),
         ctx.hirePollOpts,
@@ -141,6 +145,12 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       const verdict = await reviewDeliverable(ctx.llm, ctx.brief, h.leg, h.deliverable);
       ctx.verdicts.set(h.orderId, verdict);
       ctx.worklog.emit({ kind: "qa_verdict", at: Date.now(), leg: h.leg, message: `QA ${verdict.action}: ${verdict.reason}`, data: { score: verdict.score } });
+      if (verdict.action === "swap" && ctx.config.preferredServiceIds[h.leg] && !ctx.escapedPins.has(h.leg)) {
+        // A pinned provider that fails QA would otherwise redo-loop forever (discovery returns only the pin).
+        // Abandon the pin so the next search opens discovery to alternatives (§7 pin-escape).
+        ctx.escapedPins.add(h.leg);
+        ctx.worklog.emit({ kind: "hire_blocked", at: Date.now(), leg: h.leg, message: `pinned provider failed QA (swap) — opening discovery to alternative providers for ${h.leg}` });
+      }
       const guidance =
         verdict.action === "accept" ? "Call submit_asset with this orderId." :
         verdict.action === "redo" ? "Re-hire the same provider with improved requirements." :

@@ -32,6 +32,8 @@ export function systemPrompt(ctx: RunContext): string {
     ``,
     `Do one leg at a time. When every required leg has a submitted asset, STOP — make no further tool calls and hire nothing extra.`,
     `Be decisive and frugal: one good, QA-passed hire per leg is the goal.`,
+    `On a "swap" verdict, call search_marketplace again for that leg and hire a DIFFERENT provider — do not re-hire the same one.`,
+    `If a leg stays blocked after repeated attempts (hire_blocked), stop trying it and finish with the legs you have — a partial kit is acceptable.`,
   ].join("\n");
 }
 
