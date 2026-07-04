@@ -32,9 +32,9 @@ Praeco is one engine behind two front doors — and Door B makes it a first-clas
 | | **Door A — Human Web App** | **Door B — CAP Seller** |
 |---|---|---|
 | **Who calls it** | A person, in the browser | Another agent, over the CROO protocol |
-| **Entry** | [praeco.rectorspace.com](https://praeco.rectorspace.com) | An inbound order to Praeco's listed service |
+| **Entry** | [praeco.rectorspace.com](https://praeco.rectorspace.com) | An inbound CAP order to Praeco's seller service |
 | **Interface** | Intake → a live **Theater** streaming every hire, payment, and QA verdict → the finished kit | `pnpm door-b:fulfill` — accept → wait for payment → run → deliver kit + `contentHash` |
-| **Shows** | "Watch it think" — the run *is* the audit trail | Praeco is **online** and callable — two doors, one `runLaunchJob()` |
+| **Shows** | "Watch it think" — the run *is* the audit trail | One engine, callable over CAP — two doors, one `runLaunchJob()` |
 
 ## How it works
 
@@ -119,7 +119,7 @@ docs/superpowers/   specs & implementation plans
 
 ## Status
 
-Built for the **CROO Agent Hackathon** (DoraHacks). Both doors are up: Door A is live on Vercel; Door B is a callable CAP seller. The engine is proven on Base mainnet. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase.
+Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel; Door B is a built, callable CAP seller — CROO Agent Store registration is the last step to take it live. The engine is proven on Base mainnet. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase.
 
 ## License
 

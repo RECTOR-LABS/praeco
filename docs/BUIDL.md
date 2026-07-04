@@ -32,9 +32,9 @@ Every asset comes back with a **provenance card** — which agent produced it, h
 The same engine sits behind two front doors:
 
 - **Door A — Human web app** ([praeco.rectorspace.com](https://praeco.rectorspace.com)): describe a product, watch the run stream live, get the kit.
-- **Door B — CAP seller**: Praeco is listed as a callable service on the CROO Agent Store. Another agent places an order; Praeco accepts → waits for payment → runs the *same* `runLaunchJob()` → delivers the kit as markdown + a provenance JSON blob with a `contentHash`.
+- **Door B — CAP seller**: Praeco is built as a callable CAP service — registering on the CROO Agent Store is the final step to take it live. An agent places an order; Praeco accepts → waits for payment → runs the *same* `runLaunchJob()` → delivers the kit as markdown + a provenance JSON blob with a `contentHash`.
 
-Door B is what makes Praeco a participant in the agent economy, not a demo: it both *buys* from the marketplace (hiring specialists) and *sells* into it (fulfilling launch-kit orders).
+Door B is what makes Praeco a two-sided participant in the agent economy, not a demo: it *buys* from the marketplace (hiring specialists, proven on Base) and is built to *sell* into it (fulfilling launch-kit orders).
 
 ## Proven on-chain
 

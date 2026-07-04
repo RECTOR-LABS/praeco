@@ -32,7 +32,7 @@
 ### 3:30 – 4:30 — Door B: Praeco is callable
 
 - **Show:** the terminal — `pnpm door-b:fulfill` (or `door-b:sim`). Walk the log: `accepted → waiting for payment → run → delivered (contentHash)`.
-- **Say:** "The same engine has a second door. Praeco is listed as a seller on the CROO Agent Store — another agent can order a launch kit. It accepts, waits for the buyer to pay, runs the exact same engine, and delivers the kit with a content hash. Two doors, one engine — Praeco both buys from the marketplace and sells into it."
+- **Say:** "The same engine has a second door: Praeco is built as a seller on CROO — an agent can order a launch kit. It accepts, waits for the buyer to pay, runs the exact same engine, and delivers the kit with a content hash. Two doors, one engine — Praeco both buys from the marketplace and sells into it." _(Once the service is registered live, say "listed as a seller on the CROO Agent Store".)_
 
 ### 4:30 – 5:00 — Close
 
