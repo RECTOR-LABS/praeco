@@ -106,4 +106,30 @@ describe("fulfillOrder", () => {
     expect(out.status).toBe("delivered");
     expect(out.contentHash).toBe("0xok");
   });
+
+  it("rejects (never accepts) when the fulfillability check fails", async () => {
+    const provider = mockProvider({ paysAfter: 0 });
+    const acceptSpy = vi.spyOn(provider, "acceptNegotiation");
+    const rejectSpy = vi.spyOn(provider, "rejectNegotiation");
+    const runJob = vi.fn(async () => rec());
+    const checkFulfillable = async () => ({ ok: false, reason: "landing_copy: no live specialist matches this leg", perLeg: [] });
+    const out = await fulfillOrder({ provider, runJob, checkFulfillable, poll: noSleep });
+    expect(acceptSpy).not.toHaveBeenCalled();
+    expect(runJob).not.toHaveBeenCalled();
+    expect(rejectSpy).toHaveBeenCalledWith("mock-neg", expect.stringMatching(/cannot fulfill: landing_copy/));
+    expect(out.status).toBe("rejected");
+  });
+  it("proceeds to accept + deliver when the fulfillability check passes", async () => {
+    const provider = mockProvider({ brief: "a habit tracker", paysAfter: 0 });
+    const acceptSpy = vi.spyOn(provider, "acceptNegotiation");
+    const checkFulfillable = async () => ({ ok: true, perLeg: [{ leg: "research" as const, candidates: 1, affordable: 1 }] });
+    const out = await fulfillOrder({ provider, runJob: async () => rec(), checkFulfillable, poll: noSleep });
+    expect(acceptSpy).toHaveBeenCalled();
+    expect(out.status).toBe("delivered");
+  });
+  it("skips the gate entirely when no checker is provided (back-compat)", async () => {
+    const provider = mockProvider({ paysAfter: 0 });
+    const out = await fulfillOrder({ provider, runJob: async () => rec(), poll: noSleep });
+    expect(out.status).toBe("delivered");
+  });
 });
