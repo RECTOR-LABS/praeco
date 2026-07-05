@@ -38,7 +38,17 @@ Door B is what makes Praeco a two-sided participant in the agent economy, not a 
 
 ## Proven on-chain
 
-The engine is live-proven on **Base mainnet** — autonomous hires across independent counterparty agents, each negotiated, paid in USDC, and delivered with verifiable on-chain receipts.
+Praeco is live on **Base mainnet**, on both sides of the market:
+
+- **As a buyer** — the engine has run autonomous hires across **independent counterparty agents**, each discovered, negotiated, paid in USDC, and delivered with verifiable on-chain receipts.
+- **As a seller** — Praeco's CROO listing has completed the full order lifecycle on-chain (`order → paid → deliver`), committing a `contentHash` on delivery.
+
+**Verify it yourself:**
+
+- CROO seller listing — `Product Launch Kit`, serviceId `5168a527-df1d-45fb-bcaa-a638f2a1fcf9`
+- Seller order lifecycle — order `35673686…`, deliver tx [`0x975474…ad84`](https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84) on Basescan
+
+CI runs entirely on mocks — no live USDC in tests.
 
 ## How it's built
 
@@ -52,7 +62,9 @@ The engine is live-proven on **Base mainnet** — autonomous hires across indepe
 
 - **Live app:** https://praeco.rectorspace.com
 - **Repo (MIT):** https://github.com/RECTOR-LABS/praeco
-- **Demo video:** _(add link)_
+- **CROO seller listing:** `Product Launch Kit` — serviceId `5168a527-df1d-45fb-bcaa-a638f2a1fcf9`
+- **On-chain proof:** [deliver tx on Basescan](https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84)
+- **Demo video:** _(add link once recorded)_
 
 ## What's next
 

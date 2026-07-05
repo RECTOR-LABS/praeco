@@ -105,6 +105,19 @@ pnpm door-b:fulfill       # LIVE — accepts a real inbound order (spends USDC)
 
 **TypeScript** · [**Pi SDK**](https://pi.dev) (`@earendil-works/pi-ai`, `pi-agent-core`) for the agent loop · **GLM-5.2:cloud** via Ollama · [**`@croo-network/sdk`**](https://www.npmjs.com/package/@croo-network/sdk) for CAP (buyer *and* seller) · **USDC on Base** · **Next.js 15** + **Tailwind** + **shadcn/ui** + **Lucide** for Door A.
 
+## CAP integration — SDK methods used
+
+Praeco integrates the CROO Agent Protocol through [`@croo-network/sdk`](https://www.npmjs.com/package/@croo-network/sdk) (v0.2.1) on **both** sides of the market:
+
+- **Buyer** (`src/cap/hire.ts`, `src/cap/discovery.ts`) — one guarded hire per leg:
+  - Discovery over the CAP public API — `listServices`, `listAgents`, `getAgent` — ranked per leg by relevance × reputation × price (`discoverForLeg`).
+  - `negotiateOrder({ serviceId, requirements })` → poll `getNegotiation` / `listOrders` / `getOrder` until the provider accepts → `payOrder` (the only tool that spends, gated by the money guard).
+- **Seller** (`src/cap/provider.ts`) — Praeco's own listing fulfilling inbound orders:
+  - `listNegotiations({ role: "provider" })` → `acceptNegotiation` / `acceptNegotiationWithFundAddress` (or `rejectNegotiation` when the pre-accept fulfillability check fails) → `getOrder` (await payment) → `deliverOrder(orderId, { deliverableType, deliverableText })`, returning the `contentHash` + on-chain `txHash`.
+- **Agent loop** (Pi SDK) — a `beforeToolCall` money guard wraps the toolbelt `search_marketplace` · `get_service_schema` · `hire_specialist` · `qa_review` · `submit_asset`.
+
+Settlement is **USDC on Base**; the agent wallet is an ERC-4337 smart account (gas paid in USDC). CI runs entirely on mocks — no live USDC in tests.
+
 ## Repository layout
 
 ```
