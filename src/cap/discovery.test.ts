@@ -266,3 +266,27 @@ describe("discoverForLeg — de-ranks code/redemption services", () => {
     expect(ranked[0].formatDeRank).toBe(0); // "no-code"/"source code" must not trip isCodeFormat
   });
 });
+
+describe("discoverForLeg — qualityScore ranking", () => {
+  it("ranks by our qualityScore over marketplace popularity", () => {
+    const services = [
+      { serviceId: "s-pop", agentId: "pop", name: "Market Research Report", priceBaseUnits: "100000" },
+      { serviceId: "s-good", agentId: "good", name: "Market Research Report", priceBaseUnits: "100000" },
+    ];
+    const agents = new Map<string, AgentRecord>([
+      ["pop", { agentId: "pop", name: "Popular", completedOrders: 5000, completionRate: 1, skillTagSlugs: [], services: [] }],
+      ["good", { agentId: "good", name: "ProvenHere", completedOrders: 3, completionRate: 1, skillTagSlugs: [], services: [] }],
+    ]);
+    // "good" has a strong Praeco QA record; "pop" is unseen (0.5). Same relevance + price.
+    const qualityScoreOf = (id: string) => (id === "good" ? 0.9 : 0.5);
+    const ranked = discoverForLeg(services as any, agents, "research", "market research report", { qualityScoreOf });
+    expect(ranked[0].agentId).toBe("good"); // work-record beats popularity
+  });
+
+  it("defaults every agent to a neutral score when no scorer is given", () => {
+    const services = [{ serviceId: "s1", agentId: "a1", name: "Landing Page Copy", priceBaseUnits: "100000" }];
+    const agents = new Map<string, AgentRecord>([["a1", { agentId: "a1", name: "A", completedOrders: 10, completionRate: 1, skillTagSlugs: [], services: [] }]]);
+    const ranked = discoverForLeg(services as any, agents, "landing_copy", "landing page copy", {});
+    expect(ranked[0].qualityScore).toBeCloseTo(0.5);
+  });
+});

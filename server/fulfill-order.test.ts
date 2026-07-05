@@ -3,10 +3,10 @@ import { fulfillOrder } from "./fulfill-order.js";
 import { mockProvider } from "@/src/cap/mock-provider";
 import type { DeliverReq } from "@/src/cap/provider";
 
-const rec = (status = "completed", kit = true) => ({
+const rec = (status = "completed", nAssets = 3) => ({
   runId: "run-x", status, brief: { product: "P", audience: "a", features: [], tone: "t", oneLiner: "o" },
-  assets: kit ? [{}] : [], spentBaseUnits: "700000", startedAt: 1, endedAt: 2, worklog: [],
-  kit: kit ? { landingCopy: "c", ogImageRef: "hash:0x", tweetThread: ["t"], shortPitch: "s", phHnBlurb: "p", readmePolish: "r", provenance: [] } : undefined,
+  assets: Array.from({ length: nAssets }, () => ({})), spentBaseUnits: "700000", startedAt: 1, endedAt: 2, worklog: [],
+  kit: nAssets > 0 ? { landingCopy: "c", ogImageRef: "hash:0x", tweetThread: ["t"], shortPitch: "s", phHnBlurb: "p", readmePolish: "r", provenance: [] } : undefined,
 }) as never;
 const noSleep = { attempts: 5, delayMs: 0, sleep: async () => {} };
 
@@ -42,11 +42,27 @@ describe("fulfillOrder", () => {
     const out = await fulfillOrder({ provider, runJob: vi.fn(async () => rec()), poll: noSleep });
     expect(out.status).toBe("skipped");
   });
-  it("still delivers a partial run with a note", async () => {
+  it("rejects (does NOT charge) a run that delivered 0 legs", async () => {
     const provider = mockProvider({ paysAfter: 0 });
-    const out = await fulfillOrder({ provider, runJob: async () => rec("partial", false), poll: noSleep });
+    const rejectSpy = vi.spyOn(provider, "rejectOrder");
+    const deliverSpy = vi.spyOn(provider, "deliverOrder");
+    const out = await fulfillOrder({ provider, runJob: async () => rec("failed", 0), poll: noSleep });
+    expect(out.status).toBe("rejected");
+    expect(rejectSpy).toHaveBeenCalledWith("mock-order", expect.stringMatching(/0 of 3 legs/));
+    expect(deliverSpy).not.toHaveBeenCalled();
+  });
+
+  it("rejects a 1-of-3-leg run (below the 2-leg minimum)", async () => {
+    const provider = mockProvider({ paysAfter: 0 });
+    const out = await fulfillOrder({ provider, runJob: async () => rec("partial", 1), poll: noSleep });
+    expect(out.status).toBe("rejected");
+  });
+
+  it("delivers a genuine 2-of-3-leg partial kit and discloses it as partial", async () => {
+    const provider = mockProvider({ paysAfter: 0 });
+    const out = await fulfillOrder({ provider, runJob: async () => rec("partial", 2), poll: noSleep });
     expect(out.status).toBe("delivered");
-    expect(provider.delivered[0].deliverableText).toMatch(/partial/i);
+    expect(provider.delivered[0].deliverableText).toMatch(/partial/i); // buyer is told it's a partial kit
   });
   it("calls assertFunded before accepting", async () => {
     const provider = mockProvider({ paysAfter: 0 });

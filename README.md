@@ -132,7 +132,7 @@ docs/superpowers/   specs & implementation plans
 
 ## Status
 
-Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered and live** on the CROO Agent Store (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase.
+Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered and live** on the CROO Agent Store (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase, and [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md) for an honest Q&A on validation, refunds, specialist selection, and resilience.
 
 ## License
 

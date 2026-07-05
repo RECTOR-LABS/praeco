@@ -3,6 +3,7 @@ import type { RunRecord } from "@/src/types";
 import type { IntakeInput } from "@/src/engine/intake";
 import type { FulfillabilityAssessment } from "@/src/cap/fulfillability";
 import { kitToMarkdown, kitProvenanceJson } from "./kit-markdown.js";
+import { MIN_DELIVERABLE_LEGS, REQUIRED_LEGS } from "@/src/constants";
 
 export interface FulfillDeps {
   provider: CapProvider;
@@ -28,6 +29,18 @@ function parseBrief(requirements: string): IntakeInput | null {
     if (brief.length < 3) return null;
     return /^https:\/\/github\.com\/[\w.-]+\/[\w.-]+\/?$/.test(brief) ? { repoUrl: brief } : { text: brief };
   } catch { return null; }
+}
+
+// Reject a paid order without letting a transient rejectOrder failure crash a
+// long-running --watch daemon: the order is left unresolved on CAP (an operator
+// can retry) but the fulfillment loop survives to serve other orders.
+async function safeReject(deps: FulfillDeps, log: (m: string) => void, orderId: string, reason: string): Promise<FulfillResult> {
+  try {
+    await deps.provider.rejectOrder(orderId, reason);
+  } catch (e) {
+    log(`order ${orderId}: rejectOrder failed (${(e as Error).message}) — order left unresolved`);
+  }
+  return { status: "rejected", orderId, reason };
 }
 
 export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
@@ -91,10 +104,20 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
   } catch (e) {
     const reason = `engine failed: ${(e as Error).message}`;
     log(`order ${orderId}: ${reason} — rejecting`);
-    await deps.provider.rejectOrder(orderId, reason);
-    return { status: "rejected", orderId, reason };
+    return safeReject(deps, log, orderId, reason);
   }
   log(`run ${rec.runId} completed (${rec.status}, spent ${rec.spentBaseUnits} base units) — delivering order ${orderId}`);
+
+  // Never charge for an under-delivered kit. Only a thrown engine error used to
+  // trigger a reject; a graceful 0/1-leg run would still deliver an empty/thin
+  // note and keep the payment. Reject below the minimum so the buyer's escrow is
+  // not released (CAP "no proof, no payment").
+  if (rec.assets.length < MIN_DELIVERABLE_LEGS) {
+    const reason = `delivered ${rec.assets.length} of ${REQUIRED_LEGS.length} legs (minimum ${MIN_DELIVERABLE_LEGS}) — order rejected, not charged`;
+    log(`order ${orderId}: ${reason}`);
+    return safeReject(deps, log, orderId, reason);
+  }
+
   const requested = (input.text ?? input.repoUrl ?? "").slice(0, 300);
   const text = `${kitToMarkdown(rec)}\n\n---\n\n_Original request: ${requested}_\n`;
   const schema = kitProvenanceJson(rec);

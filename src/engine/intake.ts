@@ -13,12 +13,18 @@ export interface IntakeInput {
   repoUrl?: string;
 }
 
+export class OutOfScopeError extends Error {
+  constructor(reason: string) { super(reason); this.name = "OutOfScopeError"; }
+}
+
 const briefSchema = z.object({
   product: z.string(),
   audience: z.string(),
   features: z.array(z.string()),
   tone: z.string(),
   oneLiner: z.string(),
+  inScope: z.boolean(),
+  scopeReason: z.string(),
 });
 
 export function parseGithubRepo(url: string): { owner: string; repo: string } | null {
@@ -65,10 +71,15 @@ export async function buildBrief(llm: Llm, input: IntakeInput, fetchImpl: FetchF
   const prompt =
     `You are Praeco's intake analyst. From the material below, infer a concise launch brief.\n\n` +
     `${context}\n\n` +
-    `Respond with JSON: {"product":string,"audience":string,"features":string[],"tone":string,"oneLiner":string}.\n` +
+    `Respond with JSON: {"product":string,"audience":string,"features":string[],"tone":string,"oneLiner":string,"inScope":boolean,"scopeReason":string}.\n` +
     `product = what it is in a few words; audience = who it's for; features = 3-6 key selling points; ` +
-    `tone = the voice for marketing copy; oneLiner = a punchy one-sentence pitch.`;
+    `tone = the voice for marketing copy; oneLiner = a punchy one-sentence pitch.\n` +
+    `inScope = false ONLY if this is clearly NOT a product/project/service that could have a marketing launch ` +
+    `(e.g. a coding task like "write me a smart contract", pure gibberish, or an unrelated request). ` +
+    `When in doubt, set inScope = true. scopeReason = a one-sentence explanation when inScope is false, else "".`;
 
-  const brief = await llm.completeJson(prompt, briefSchema);
+  const raw = await llm.completeJson(prompt, briefSchema);
+  if (!raw.inScope) throw new OutOfScopeError(raw.scopeReason || "request is not a launchable product");
+  const { inScope: _i, scopeReason: _s, ...brief } = raw; // strip scope fields — not part of LaunchBrief
   return sourceUrl ? { ...brief, sourceUrl } : brief;
 }

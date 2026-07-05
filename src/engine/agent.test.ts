@@ -10,8 +10,8 @@ function ctx(): RunContext {
     budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
     requiredLegs: ["research", "landing_copy", "og_image"],
     candidates: new Map(), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
-    paidAttemptsByLeg: new Map(), assets: new Map(),
-  } as RunContext;
+    paidAttemptsByLeg: new Map(), assets: new Map(), qaOutcomes: [],
+  } as unknown as RunContext;
 }
 
 const deps = {

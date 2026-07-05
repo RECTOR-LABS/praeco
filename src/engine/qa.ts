@@ -8,11 +8,12 @@ import { z } from "zod";
 import type { Llm } from "../llm/llm.js";
 import type { LaunchBrief, LegKind, Deliverable, QaVerdict } from "../types.js";
 import { deliverableToText, extractImageRef } from "./provenance.js";
+import { QA_ACCEPT_MIN_SCORE } from "../constants.js";
 
 export const qaVerdictSchema = z.object({
   action: z.enum(["accept", "redo", "swap"]),
   reason: z.string(),
-  score: z.number().min(0).max(100).optional(),
+  score: z.number().min(0).max(100),
 });
 
 /** Words with at least one alphanumeric char, after stripping URLs — the "substantive inline content" signal. */
@@ -90,5 +91,12 @@ export async function reviewDeliverable(
     `If the content ends with a "[deliverable truncated HERE for review display only ...]" marker, that is our review limit — judge the substance shown, do not flag it as incomplete.\n` +
     `Respond with JSON: {"action":"accept"|"redo"|"swap","reason":string,"score":0-100}.\n` +
     `Use "accept" if the deliverable is on-brief and high quality, "redo" if the same provider should retry for better quality, "swap" if a different provider is needed (e.g. wrong type of content for this leg).`;
-  return llm.completeJson(prompt, qaVerdictSchema);
+  const verdict = await llm.completeJson(prompt, qaVerdictSchema);
+  // The score is binding: an "accept" the model itself scores below the bar is
+  // downgraded to a redo (bounded by MAX_PAID_ATTEMPTS_PER_LEG). formatGate swaps
+  // return earlier and are unaffected.
+  if (verdict.action === "accept" && (verdict.score ?? 0) < QA_ACCEPT_MIN_SCORE) {
+    return { action: "redo", reason: `QA score ${verdict.score} below ${QA_ACCEPT_MIN_SCORE} — revise`, score: verdict.score };
+  }
+  return verdict;
 }

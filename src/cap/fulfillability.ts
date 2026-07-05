@@ -15,6 +15,7 @@ import type { LegKind } from "../types.js";
 import type { Config } from "../config.js";
 import type { FetchFn } from "./wallet.js";
 import { listServices, listAgents, discoverForLeg, type ServiceListing, type AgentRecord } from "./discovery.js";
+import { loadReputation, scorerFrom } from "./reputation.js";
 import { REQUIRED_LEGS, SEARCH_CANDIDATE_LIMIT, usdToBaseUnits, baseUnitsToUsd } from "../constants.js";
 
 export interface LegAssessment {
@@ -37,6 +38,7 @@ export interface AssessOpts {
   legCapBaseUnits: bigint;
   runBudgetBaseUnits: bigint;
   queries?: Partial<Record<LegKind, string>>;
+  qualityScoreOf?: (agentId: string) => number;
 }
 
 /** Canonical per-leg query — approximates a real LLM search so an unpinned
@@ -95,6 +97,7 @@ export function assessFulfillability(
       preferredServiceId: pinned,
       excludeAgentId: opts.selfAgentId,
       limit: SEARCH_CANDIDATE_LIMIT,
+      qualityScoreOf: opts.qualityScoreOf,
     });
     // Reject 0-priced listings: "0" is discovery's missing-price sentinel
     // (`price ?? "0"`), not a genuinely free specialist — an unknown price is
@@ -132,11 +135,13 @@ export async function checkFulfillability(cfg: Config, fetchImpl: FetchFn): Prom
     listServices(cfg.crooApiUrl, fetchImpl),
     listAgents(cfg.crooApiUrl, fetchImpl),
   ]);
+  const reputation = await loadReputation();
   return assessFulfillability(services, new Map(agents.map((a) => [a.agentId, a])), {
     legs: REQUIRED_LEGS,
     preferredServiceIds: cfg.preferredServiceIds,
     selfAgentId: cfg.praecoAgentId,
     legCapBaseUnits: usdToBaseUnits(cfg.legCapUsdc),
     runBudgetBaseUnits: usdToBaseUnits(cfg.runBudgetUsdc),
+    qualityScoreOf: scorerFrom(reputation),
   });
 }

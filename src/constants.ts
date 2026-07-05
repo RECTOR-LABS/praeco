@@ -14,10 +14,20 @@ export const MAX_TURNS = 24;
 /** Max PAID hires per leg before the guard stops spending on it (bounds loss on an unsatisfiable leg). */
 export const MAX_PAID_ATTEMPTS_PER_LEG = 2;
 
+/** Minimum QA score (0-100) required to accept a deliverable. An LLM "accept"
+ *  below this is downgraded to a redo — the score is binding, not decorative. */
+export const QA_ACCEPT_MIN_SCORE = 70;
+
 /** Top-N candidates a single marketplace search surfaces for a leg. Shared by the
  *  engine's search_marketplace and the Door B fulfillability gate so the gate sees
  *  exactly what the engine sees (no over-count of candidates the engine truncates). */
 export const SEARCH_CANDIDATE_LIMIT = 5;
+
+/** Minimum QA-accepted legs a Door B order must produce to deliver + charge.
+ *  Below this (0 or 1 of 3), reject the order — never charge for a kit that
+ *  under-delivers. Makes "never charges for a kit it can't deliver" true
+ *  post-acceptance, not just pre-accept (the fulfillability gate). */
+export const MIN_DELIVERABLE_LEGS = 2;
 
 const SCALE = 10n ** BigInt(USDC_DECIMALS);
 

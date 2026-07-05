@@ -23,7 +23,7 @@ export function systemPrompt(ctx: RunContext): string {
       `You CANNOT exceed these — over-budget hires are blocked automatically.`,
     ``,
     `For EACH required leg, in order:`,
-    `1. search_marketplace(leg, query): find candidates. Prefer high completionRate and many completedOrders. ` +
+    `1. search_marketplace(leg, query): find candidates. Prefer specialists with a strong track record in Praeco's own QA (qualityScore), then high completionRate. ` +
       `Avoid 0-order stubs — they accept but may never deliver.`,
     `2. get_service_schema(serviceId): learn the exact required input fields.`,
     `3. hire_specialist(leg, serviceId, requirements): fill the schema from the brief, then hire. Returns an orderId.`,

@@ -43,6 +43,24 @@ describe("reviewDeliverable", () => {
     ));
     expect(verdict.action).toBe("redo");
   });
+
+  it("downgrades an accept with a sub-threshold score to redo", async () => {
+    const llm = fakeLlm({ action: "accept", reason: "meh but ok", score: 65 });
+    const verdict = await reviewDeliverable(llm, brief, "landing_copy", textDeliverable(SUBSTANTIVE));
+    expect(verdict.action).toBe("redo");
+    expect(verdict.score).toBe(65);
+    expect(verdict.reason).toMatch(/70/);
+  });
+
+  it("keeps an accept at or above the threshold", async () => {
+    const llm = fakeLlm({ action: "accept", reason: "on-brief", score: 70 });
+    const verdict = await reviewDeliverable(llm, brief, "research", textDeliverable(SUBSTANTIVE));
+    expect(verdict.action).toBe("accept");
+  });
+
+  it("requires a score in the verdict schema", () => {
+    expect(() => qaVerdictSchema.parse({ action: "accept", reason: "x" })).toThrow();
+  });
 });
 
 describe("formatGate", () => {
