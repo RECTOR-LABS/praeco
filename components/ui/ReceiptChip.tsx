@@ -1,7 +1,7 @@
 import { CircleCheck, ExternalLink } from "lucide-react";
 import { cn } from "@/lib/utils";
 
-export function BasescanLink({
+export function ReceiptChip({
   href,
   label = "Basescan",
   className,
@@ -16,7 +16,7 @@ export function BasescanLink({
       target="_blank"
       rel="noopener noreferrer"
       className={cn(
-        "inline-flex items-center gap-1 rounded-md border border-emerald-500/20 bg-emerald-500/10 px-2 py-1 text-xs text-emerald-400 transition-colors hover:bg-emerald-500/20",
+        "inline-flex items-center gap-1 rounded-md border border-live/25 bg-live/10 px-2 py-1 font-mono text-[11px] text-live transition-colors hover:bg-live/20",
         className,
       )}
     >
