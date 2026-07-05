@@ -25,7 +25,8 @@
     "marketplace:probe": "tsx scripts/probe-marketplace.ts",
     "video:tts": "tsx scripts/video/tts.ts",
     "video:validate": "tsx scripts/video/validate-chunk.ts",
-    "video:compile": "tsx scripts/video/compile.ts"
+    "video:compile": "tsx scripts/video/compile.ts",
+    "video:upload": "tsx scripts/video/upload-blob.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
@@ -48,6 +49,7 @@
     "@croo-network/sdk": "^0.2.1",
     "@earendil-works/pi-agent-core": "0.80.2",
     "@earendil-works/pi-ai": "^0.80.2",
+    "@vercel/blob": "^2.5.0",
     "class-variance-authority": "^0.7.1",
     "clsx": "^2.1.1",
     "dotenv": "^17.4.2",
