@@ -210,6 +210,17 @@ describe("qa_review + submit_asset tools", () => {
     expect(ctx.qaOutcomes).toEqual([{ agentId: "a1", outcome: "accept" }]);
   });
 
+  it("records the reputation outcome ONCE per order (re-review does not double-count)", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({ action: "accept", reason: "ok", score: 90 }));
+    ctx.pendingHires.set("o1", {
+      orderId: "o1", agentId: "a1", leg: "research",
+      deliverable: { type: "text", text: "Comprehensive market research reveals that indie developers strongly prefer privacy-first local-first habit tracking tools with simple one-time pricing over subscription-based gamified competitors in this crowded productivity space.", contentHash: "0x" },
+    } as any);
+    await toolMap(ctx).qa_review.execute("x", { orderId: "o1" });
+    await toolMap(ctx).qa_review.execute("x", { orderId: "o1" }); // re-review the SAME order
+    expect(ctx.qaOutcomes).toEqual([{ agentId: "a1", outcome: "accept" }]); // one entry, not two
+  });
+
   it("qa_review records a reject outcome when the verdict is redo or swap", async () => {
     const ctx = ctxFor(happyClient(), fakeLlm({ action: "redo", reason: "weak" }));
     await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } });

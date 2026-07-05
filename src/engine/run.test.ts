@@ -35,10 +35,11 @@ const fetchImpl = (async (url: string, init?: RequestInit) => {
 }) as unknown as typeof fetch;
 
 function happyClient(): CapBuyer {
+  let n = 0; // unique orderId per hire — real orders are never reused across legs
   return {
-    negotiateOrder: vi.fn(async () => ({ negotiationId: "n1" })),
+    negotiateOrder: vi.fn(async () => ({ negotiationId: `n${++n}` })),
     getNegotiation: vi.fn(async () => ({ status: "pending" })),
-    listOrders: vi.fn(async () => [{ orderId: "o1", negotiationId: "n1", price: "100000", status: "created" }]),
+    listOrders: vi.fn(async () => [{ orderId: `o${n}`, negotiationId: `n${n}`, price: "100000", status: "created" }]),
     getOrder: vi.fn(async () => ({ status: "created", price: "100000", deliverTxHash: "0xd" })),
     payOrder: vi.fn(async () => ({ txHash: "0xpay" })),
     getDelivery: vi.fn(async () => ({ deliverableType: "text", deliverableText:

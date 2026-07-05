@@ -25,6 +25,7 @@ import "dotenv/config";
 import { loadConfig } from "../src/config.js";
 import { listServices, listAgents, discoverForLeg, getAgent } from "../src/cap/discovery.js";
 import { assessFulfillability, findStalePins, parseBaseUnits, DEFAULT_LEG_QUERIES } from "../src/cap/fulfillability.js";
+import { loadReputation, scorerFrom } from "../src/cap/reputation.js";
 import { REQUIRED_LEGS, SEARCH_CANDIDATE_LIMIT, usdToBaseUnits, baseUnitsToUsd } from "../src/constants.js";
 
 const deep = process.argv.includes("--deliverables");
@@ -54,6 +55,9 @@ async function main() {
     listAgents(cfg.crooApiUrl, fetch as never),
   ]);
   const agentsById = new Map(agents.map((a) => [a.agentId, a]));
+  // Match the Door B gate exactly: rank candidates with the SAME QA-outcome
+  // reputation scorer checkFulfillability now loads, else the probe verdict drifts.
+  const qualityScoreOf = scorerFrom(await loadReputation());
   console.log(`\n  live catalog   : ${services.length} services / ${agents.length} agents`);
 
   const stale = findStalePins(services, cfg.preferredServiceIds);
@@ -76,6 +80,7 @@ async function main() {
     const alts = discoverForLeg(services, agentsById, leg, DEFAULT_LEG_QUERIES[leg], {
       excludeAgentId: cfg.praecoAgentId,
       limit: SEARCH_CANDIDATE_LIMIT,
+      qualityScoreOf,
     });
     console.log(`  top ${alts.length} unpinned candidate(s) [self-excluded, limit ${SEARCH_CANDIDATE_LIMIT}]:`);
     if (!alts.length) console.log(`      (none — no live specialist matches this leg)`);
@@ -101,6 +106,7 @@ async function main() {
     selfAgentId: cfg.praecoAgentId,
     legCapBaseUnits: cap,
     runBudgetBaseUnits: usdToBaseUnits(cfg.runBudgetUsdc),
+    qualityScoreOf,
   });
   console.log(`\n=== GATE VERDICT (what fulfillOrder runs before accept) ===`);
   console.log(`  ok = ${verdict.ok}${verdict.reason ? `\n  reason: ${verdict.reason}` : ""}`);

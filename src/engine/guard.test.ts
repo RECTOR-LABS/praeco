@@ -16,7 +16,7 @@ function ctx(over: Partial<RunContext> = {}): RunContext {
       budget: new BudgetGuard(2_000_000n, 600_000n), worklog: new Worklog(),
       candidates: new Map([["s1", cand("100000")]]), assets: new Map(),
       requiredLegs: ["research"], pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
-      paidAttemptsByLeg: new Map(),
+      paidAttemptsByLeg: new Map(), qaOutcomes: [],
       config: { apiUrl: "", rpcUrl: "", agentWallet: "", usdcTokenAddress: "", preferredServiceIds: {} },
     },
     over,

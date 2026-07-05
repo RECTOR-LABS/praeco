@@ -28,6 +28,17 @@ describe("applyOutcomes", () => {
     applyOutcomes(store, [{ agentId: "", outcome: "accept" }], "t");
     expect(Object.keys(store)).toHaveLength(0);
   });
+
+  it("ignores prototype-polluting agentIds (no Object.prototype pollution)", () => {
+    const store: ReputationStore = {};
+    applyOutcomes(store, [
+      { agentId: "__proto__", outcome: "accept" },
+      { agentId: "constructor", outcome: "reject" },
+      { agentId: "prototype", outcome: "accept" },
+    ], "t");
+    expect(Object.keys(store)).toHaveLength(0);
+    expect(({} as Record<string, unknown>).accepts).toBeUndefined(); // global prototype untouched
+  });
 });
 
 describe("load/save", () => {

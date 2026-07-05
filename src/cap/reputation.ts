@@ -17,16 +17,23 @@ export function reputationFile(): string {
 
 /** Bayesian success rate with a neutral 0.5 prior. Unseen agent → 0.5. */
 export function qualityScore(entry?: RepEntry): number {
-  const a = entry?.accepts ?? 0;
-  const r = entry?.rejects ?? 0;
+  // Coerce non-finite counts (a corrupt/hand-edited store) to 0 — a bad entry
+  // must never yield a NaN score that scrambles discovery's numeric sort.
+  const a = Number.isFinite(entry?.accepts) ? (entry as RepEntry).accepts : 0;
+  const r = Number.isFinite(entry?.rejects) ? (entry as RepEntry).rejects : 0;
   return (a + 1) / (a + r + 2);
 }
+
+/** Prototype keys that must never be used as a store index — a marketplace
+ *  agentId of "__proto__"/"constructor"/"prototype" would pollute Object.prototype
+ *  via plain bracket assignment instead of recording a reputation entry. */
+const UNSAFE_AGENT_KEYS = new Set(["__proto__", "constructor", "prototype"]);
 
 /** Apply QA outcomes to the store (mutates + returns it). `now` is an ISO string. */
 export function applyOutcomes(store: ReputationStore, outcomes: { agentId: string; outcome: QaOutcome }[], now: string): ReputationStore {
   for (const { agentId, outcome } of outcomes) {
-    if (!agentId) continue;
-    const e = store[agentId] ?? { accepts: 0, rejects: 0, lastSeen: now };
+    if (!agentId || UNSAFE_AGENT_KEYS.has(agentId)) continue;
+    const e = Object.hasOwn(store, agentId) ? store[agentId] : { accepts: 0, rejects: 0, lastSeen: now };
     if (outcome === "accept") e.accepts += 1; else e.rejects += 1;
     e.lastSeen = now;
     store[agentId] = e;
@@ -52,5 +59,6 @@ export async function saveReputation(store: ReputationStore, file = reputationFi
 
 /** A scorer closure over a loaded store — for discoverForLeg's qualityScoreOf. */
 export function scorerFrom(store: ReputationStore): (agentId: string) => number {
-  return (agentId: string) => qualityScore(store[agentId]);
+  // Object.hasOwn read: never resolve "__proto__" et al. to Object.prototype.
+  return (agentId: string) => qualityScore(Object.hasOwn(store, agentId) ? store[agentId] : undefined);
 }

@@ -58,10 +58,11 @@ describe("fulfillOrder", () => {
     expect(out.status).toBe("rejected");
   });
 
-  it("delivers a genuine 2-of-3-leg partial kit", async () => {
+  it("delivers a genuine 2-of-3-leg partial kit and discloses it as partial", async () => {
     const provider = mockProvider({ paysAfter: 0 });
     const out = await fulfillOrder({ provider, runJob: async () => rec("partial", 2), poll: noSleep });
     expect(out.status).toBe("delivered");
+    expect(provider.delivered[0].deliverableText).toMatch(/partial/i); // buyer is told it's a partial kit
   });
   it("calls assertFunded before accepting", async () => {
     const provider = mockProvider({ paysAfter: 0 });

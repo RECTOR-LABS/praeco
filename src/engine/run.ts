@@ -129,8 +129,14 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
   worklog.emitKind(status === "completed" ? "run_completed" : "run_aborted",
     `run ${runId}: ${status} — ${assets.length}/${ctx.requiredLegs.length} legs, spent $${baseUnitsToUsd(budget.spent)}`);
 
-  applyOutcomes(reputation, ctx.qaOutcomes, new Date(endedAt).toISOString());
-  await saveReputation(reputation);
+  // Persist QA outcomes best-effort. Reload the store fresh so a concurrent run's
+  // updates (landed while this run was in flight) are merged rather than clobbered
+  // by our run-start snapshot; and never fail a completed run over a stats write.
+  try {
+    const fresh = await loadReputation();
+    applyOutcomes(fresh, ctx.qaOutcomes, new Date(endedAt).toISOString());
+    await saveReputation(fresh);
+  } catch { /* reputation is a best-effort side-channel — a run must never fail on it */ }
 
   return {
     runId,
