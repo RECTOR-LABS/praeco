@@ -19,8 +19,15 @@ export async function saveRecord(rec: RunRecord): Promise<void> {
 async function loadFromFs(runId: string): Promise<RunRecord | null> {
   // Guard against path traversal: only a bare runId is addressable.
   if (!/^[\w.-]+$/.test(runId)) return null;
-  try { return JSON.parse(await readFile(join(runsDir(), `${runId}.json`), "utf8")) as RunRecord; }
-  catch { return null; }
+  try {
+    const parsed = JSON.parse(await readFile(join(runsDir(), `${runId}.json`), "utf8"));
+    // Not every *.json in RUNS_DIR is a RunRecord — src/cap/reputation.ts's store
+    // defaults into RUNS_DIR (reputation.json) when REPUTATION_FILE is unset. Skip
+    // anything that doesn't at least carry a string runId, so it never masquerades
+    // as a record for listRecords()/loadRecord().
+    if (!parsed || typeof parsed.runId !== "string") return null;
+    return parsed as RunRecord;
+  } catch { return null; }
 }
 
 export async function loadRecord(runId: string): Promise<RunRecord | null> {
