@@ -22,7 +22,8 @@
     "engine:run": "ENGINE_LIVE=1 tsx scripts/run-job.ts",
     "door-b:sim": "tsx scripts/door-b-fulfill.ts --sim",
     "door-b:fulfill": "tsx scripts/door-b-fulfill.ts",
-    "marketplace:probe": "tsx scripts/probe-marketplace.ts"
+    "marketplace:probe": "tsx scripts/probe-marketplace.ts",
+    "video:tts": "tsx scripts/video/tts.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
