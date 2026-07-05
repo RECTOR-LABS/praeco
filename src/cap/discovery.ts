@@ -61,7 +61,7 @@ export interface RankedListing extends ServiceListing {
   onlineStatus?: string;
   skillTagSlugs: string[];
   relevance: number;
-  repScore: number;
+  qualityScore: number;   // Praeco's own QA-outcome score (0..1); 0.5 = neutral/unseen
   formatDeRank: number;   // 0 = inline provider; 1 = code/redemption-titled (last resort for a leg)
 }
 
@@ -292,7 +292,7 @@ export function discoverForLeg(
   agentsById: Map<string, AgentRecord>,
   leg: LegKind,
   query: string,
-  opts: { preferredServiceId?: string; limit?: number; excludeAgentId?: string } = {},
+  opts: { preferredServiceId?: string; limit?: number; excludeAgentId?: string; qualityScoreOf?: (agentId: string) => number } = {},
 ): RankedListing[] {
   const fuse = (s: ServiceListing, relevance: number): RankedListing => {
     const a = agentsById.get(s.agentId);
@@ -301,7 +301,7 @@ export function discoverForLeg(
     return {
       ...s, agentName: a?.name ?? "", completedOrders, completionRate,
       onlineStatus: a?.onlineStatus, skillTagSlugs: a?.skillTagSlugs ?? [],
-      relevance, repScore: completionRate * Math.log10(completedOrders + 1),
+      relevance, qualityScore: opts.qualityScoreOf ? opts.qualityScoreOf(s.agentId) : 0.5,
       formatDeRank: isCodeFormat(s.name, s.description ?? "") ? 1 : 0,
     };
   };
@@ -326,7 +326,8 @@ export function discoverForLeg(
   matches.sort((a, b) => {
     if (a.formatDeRank !== b.formatDeRank) return a.formatDeRank - b.formatDeRank; // inline (0) before code (1)
     if (b.relevance !== a.relevance) return b.relevance - a.relevance;
-    if (b.repScore !== a.repScore) return b.repScore - a.repScore;
+    if (b.qualityScore !== a.qualityScore) return b.qualityScore - a.qualityScore; // our QA record
+    if (b.completionRate !== a.completionRate) return b.completionRate - a.completionRate; // marketplace fulfillment, secondary
     return priceOf(a.priceBaseUnits) - priceOf(b.priceBaseUnits);
   });
   return opts.limit ? matches.slice(0, opts.limit) : matches;
