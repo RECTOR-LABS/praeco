@@ -160,7 +160,7 @@ export function KitView({ kit, spentUsd }: { kit: LaunchKit; spentUsd?: string }
             </div>
           </AssetSection>
 
-          <AssetSection icon={<BookOpen className="h-3 w-3" />} label="README Polish" onCopy={() => copyToClipboard(kit.readmePolish)} delay={350}>
+          <AssetSection icon={<BookOpen className="h-3 w-3" />} label="README" onCopy={() => copyToClipboard(kit.readmePolish)} delay={350}>
             <ConsolePanel className="p-4">
               <Markdown>{kit.readmePolish}</Markdown>
             </ConsolePanel>
