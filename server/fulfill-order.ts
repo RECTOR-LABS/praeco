@@ -3,6 +3,7 @@ import type { RunRecord } from "@/src/types";
 import type { IntakeInput } from "@/src/engine/intake";
 import type { FulfillabilityAssessment } from "@/src/cap/fulfillability";
 import { kitToMarkdown, kitProvenanceJson } from "./kit-markdown.js";
+import { MIN_DELIVERABLE_LEGS, REQUIRED_LEGS } from "@/src/constants";
 
 export interface FulfillDeps {
   provider: CapProvider;
@@ -95,6 +96,18 @@ export async function fulfillOrder(deps: FulfillDeps): Promise<FulfillResult> {
     return { status: "rejected", orderId, reason };
   }
   log(`run ${rec.runId} completed (${rec.status}, spent ${rec.spentBaseUnits} base units) — delivering order ${orderId}`);
+
+  // Never charge for an under-delivered kit. Only a thrown engine error used to
+  // trigger a reject; a graceful 0/1-leg run would still deliver an empty/thin
+  // note and keep the payment. Reject below the minimum so the buyer's escrow is
+  // not released (CAP "no proof, no payment").
+  if (rec.assets.length < MIN_DELIVERABLE_LEGS) {
+    const reason = `delivered ${rec.assets.length} of ${REQUIRED_LEGS.length} legs (minimum ${MIN_DELIVERABLE_LEGS}) — order rejected, not charged`;
+    log(`order ${orderId}: ${reason}`);
+    await deps.provider.rejectOrder(orderId, reason);
+    return { status: "rejected", orderId, reason };
+  }
+
   const requested = (input.text ?? input.repoUrl ?? "").slice(0, 300);
   const text = `${kitToMarkdown(rec)}\n\n---\n\n_Original request: ${requested}_\n`;
   const schema = kitProvenanceJson(rec);

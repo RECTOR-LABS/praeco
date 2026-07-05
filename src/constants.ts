@@ -23,6 +23,12 @@ export const QA_ACCEPT_MIN_SCORE = 70;
  *  exactly what the engine sees (no over-count of candidates the engine truncates). */
 export const SEARCH_CANDIDATE_LIMIT = 5;
 
+/** Minimum QA-accepted legs a Door B order must produce to deliver + charge.
+ *  Below this (0 or 1 of 3), reject the order — never charge for a kit that
+ *  under-delivers. Makes "never charges for a kit it can't deliver" true
+ *  post-acceptance, not just pre-accept (the fulfillability gate). */
+export const MIN_DELIVERABLE_LEGS = 2;
+
 const SCALE = 10n ** BigInt(USDC_DECIMALS);
 
 /** Parse a decimal-dollar string to USDC base units. Rejects junk and >6dp precision. */
