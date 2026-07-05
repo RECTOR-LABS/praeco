@@ -45,8 +45,14 @@ There are two independent layers, and they run in a specific order:
 1. **Shape validation** (`server/gating.ts`) — a zod schema at the HTTP boundary. `mode`
    must be `replay | sandbox | live`; `text` (if given) is 3–2000 characters, trimmed;
    `repoUrl` (if given) must match `^https://github.com/<owner>/<repo>/?$`; at least one
-   of the two is required. A malformed request never reaches the engine — Door A returns
-   HTTP 400 immediately.
+   of the two is required. A malformed request never reaches the engine. The gated
+   `POST /api/runs` route returns HTTP 400 immediately (`GateError` → status). The public
+   deployed path the Theater UI actually calls — `GET /api/runs/live`
+   (`useLiveRunStream.ts`) — runs the **same** zod check but can't attach a 400 to an
+   already-open SSE response: on a bad request it responds HTTP 200 with an in-band
+   `event: error` SSE frame carrying the reason instead (`server/live-run.ts`,
+   `app/api/runs/live/route.ts`) — still pre-engine, still $0, just a different transport
+   for the rejection.
 2. **Scope validation** (`src/engine/intake.ts`, new this pass) — folded into the intake
    LLM call that already turns the input into a structured brief (no extra call, no extra
    spend). The same JSON response now also carries `inScope: boolean` and `scopeReason:
@@ -147,9 +153,18 @@ Five mechanisms, stacked:
    degradation, not a hidden failure).
 
 Beyond the verdict itself: every accepted asset carries a **provenance card** (agent
-name, price, content hash, Basescan link for the real on-chain payment), and the full run
+name, price, content hash, a Basescan link for that hire's payment tx), and the full run
 is a replayable `RunRecord` — the live Theater and `/replay/:id` render the *same*
-artifact. Trust here is backed by a checkable record, not just an internal score.
+artifact. Trust here is backed by a checkable record, not just an internal score —
+**with one caveat stated plainly:** on the deployed sandbox and in the bundled replays,
+that payment tx comes from the **mock** CAP client (`0xmockpay*` in `src/cap/mock.ts`) —
+`hire.ts` builds the same Basescan URL regardless of source, so those provenance links are
+illustrative only and will 404 on Basescan if clicked, not real settlements. The mechanism
+itself is real, and does produce a checkable record where the hire is real: the actual
+Door B settlement — deliver tx
+[`0x975474…ad84`](https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84)
+(`docs/BUIDL.md`) — and the Phase-1 buyer-side hires are genuinely on-chain and
+independently checkable today.
 
 **Honest boundary.** QA is LLM-judged, not objectively verified — there is no ground-truth
 oracle checking "is this landing copy actually good." The judge can be fooled by
@@ -272,12 +287,14 @@ live CAP `/search?q=` endpoint is single-keyword, returns agents (not services),
 misses whole categories (an `image` query returns 0 results). Instead Praeco pages the
 full `/services` and `/agents` catalogs once per run and ranks client-side:
 
-1. **Leg relevance** — keyword match against a per-leg list (`LEG_KEYWORDS`), weighted:
-   the service's own name ×3, its description ×1, the provider's skill tags ×1, plus a
-   bonus per distinctive query word found. Only candidates with `relevance > 0` are kept.
-2. **Format de-rank** — a service whose name/description reads as a redemption-code
+1. **Format de-rank** — a service whose name/description reads as a redemption-code
    format (Pygm's "… Code" pattern, or "redemption"/"redeem"/"voucher") is ranked *below*
-   every inline-content provider for that leg — a last resort, not excluded outright.
+   every inline-content provider for that leg — a last resort, not excluded outright. This
+   is the top tie-break the ranking checks, ahead of relevance.
+2. **Leg relevance** — keyword match against a per-leg list (`LEG_KEYWORDS`), weighted:
+   the service's own name ×3, its description ×1, the provider's skill tags ×1, plus a
+   bonus per distinctive query word found. Only candidates with `relevance > 0` are kept;
+   among those, higher relevance ranks first.
 3. **Quality score** — Praeco's own QA-outcome record for that agent (below).
 4. **Completion rate** — the marketplace's self-reported fulfillment rate, as a tiebreak.
 5. **Price** — cheapest, as the final tiebreak.
@@ -380,10 +397,11 @@ CLI-hosted path, money-handling is deliberately resilient to slow or failed step
   `BudgetGuard`'s in-memory state, but no record of the run is ever written. The audit
   trail for a real payment can be lost even though the payment itself happened.
 - **No SSE stream-resume across a restart.** The hub-based path (`server/run-hub.ts`,
-  used by the gated "live" Door A mode) buffers events in-memory per process and supports
-  client reconnect via `lastEventId` **within the same live process** — that buffer is a
-  `globalThis` singleton, not durable storage, and does not survive a process restart or
-  redeploy.
+  used by Door A's `mode: "live"` path — the real-money mode; only `mode: "live"` is
+  token-gated, per `server/gating.ts`, not Door A or sandbox mode generally) buffers
+  events in-memory per process and supports client reconnect via `lastEventId` **within
+  the same live process** — that buffer is a `globalThis` singleton, not durable storage,
+  and does not survive a process restart or redeploy.
 - **`reputation.json` has no file locking** — safe for Praeco's actual usage (one run at a
   time), not safe if two runs ever wrote to it concurrently.
 
