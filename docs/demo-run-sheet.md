@@ -48,7 +48,7 @@ The replay page renders the finished **Launch Kit · MISSION COMPLETE** *below* 
 | 1:00–2:45 | **Hero: the Theater** at `/replay/run-1782628352055`, played at **4×** | "This is a recorded run of the engine. Three lanes — each a real hire: negotiate, pay, deliver. Watch the spend meter climb and a receipt drop on each payment. Then the art-director QA grades every deliverable — accept, redo, or swap." | Load replay → **4×** → watch lanes advance, spend climb, receipts appear → let it reach **COMPLETED** | ✅ shows redo |
 | — | The **redo** moment (receipts list: two Foundr) | "Here — QA rejected the first landing copy for missing the brief, so it re-briefed and re-hired the same specialist. The second pass passed. That curation loop is what turns raw output into a coherent kit." | Point at the two **Foundr $0.10** receipts | ✅ verified |
 | 2:45–3:30 | Scroll to **Launch Kit · MISSION COMPLETE** | "Here's the kit — short pitch, landing copy, PH/HN blurb, tweet thread — and a provenance card per asset: which agent, what it cost, the content hash." | Scroll the kit; hover a provenance card. **Do NOT click its Basescan link** (mock). | ✅ kit rich |
-| 3:30–4:30 | **Door B + real on-chain proof** | "Same engine, second door: Praeco is a registered seller on the CROO Store — and it won't take a job it can't staff. Before accepting it verifies every leg, rejecting-with-reason otherwise. And it's real on Base —" | Terminal: `pnpm door-b:sim` (clean happy-path) → then the **real** Basescan tab (`0x9754…`) + optional `marketplace:probe` for the $0 reject | ✅ verified |
+| 3:30–4:30 | **Door B + real on-chain proof** | "Same engine, second door: Praeco is a registered seller on the CROO Store — and it won't take a job it can't staff. Before accepting it verifies every leg, rejecting-with-reason otherwise. And it's real on Base —" | Terminal: `pnpm door-b:sim` (clean happy-path) → then the **real** Basescan tab (`0x9754…`) + optional integrity probe (command below) for the $0 reject | ✅ verified |
 | 4:30–5:00 | Repo (MIT) + architecture | "Open source, MIT, proven on Base mainnet. Give it a product, get a launch — coordinated, paid for, and verifiable, by agents." | Show the GitHub repo + `assets/architecture.svg` | ✅ |
 
 ---
@@ -63,10 +63,10 @@ pnpm door-b:sim
 
 **Integrity gate — reject-with-reason at `$0` (live marketplace):**
 ```
-tsx scripts/probe-marketplace.ts     # NOT `pnpm marketplace:probe`
+pnpm exec tsx scripts/probe-marketplace.ts   # NOT `pnpm marketplace:probe` (ELIFECYCLE) · NOT bare `tsx` (no global tsx)
 ```
 → per-leg candidate table → `GATE VERDICT ok=false … NOT STAFFABLE — a live clean run would fail-close at $0`.
-- **Why `tsx` directly:** the probe intentionally exits `1` when not-staffable; `pnpm` then prints `ELIFECYCLE Command failed with exit code 1`, which looks like a crash on camera. Running `tsx` directly shows the clean verdict without the pnpm error line.
+- **Why `pnpm exec tsx`:** two camera traps to dodge. (1) The probe intentionally exits `1` when not-staffable, so `pnpm marketplace:probe` (a `pnpm run` script) appends `ELIFECYCLE Command failed with exit code 1` — looks like a crash. (2) Bare `tsx …` needs a *global* `tsx`; this machine has none, so it errors `command not found: tsx` (exit 127). `pnpm exec tsx` resolves the local `node_modules/.bin/tsx` **and** passes the clean exit through — you see just the verdict.
 - Current live state is **NOT STAFFABLE** (stale pins offline) — that's a *good* integrity beat, but say it accurately: "its vetted providers are offline right now, so it fails closed rather than charge you."
 
 ---
