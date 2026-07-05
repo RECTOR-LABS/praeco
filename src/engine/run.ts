@@ -18,6 +18,7 @@ import { BudgetGuard } from "./budget.js";
 import { Worklog, attachAgentWorklog } from "./worklog.js";
 import { createPraecoAgent } from "./agent.js";
 import { composeKit } from "./compose.js";
+import { loadReputation, applyOutcomes, saveReputation, scorerFrom } from "../cap/reputation.js";
 import { REQUIRED_LEGS, usdToBaseUnits, baseUnitsToUsd } from "../constants.js";
 
 export interface DriveResult {
@@ -62,6 +63,7 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
   const brief = await buildBrief(deps.llm, input, deps.fetchImpl);
   worklog.emitKind("intake_done", `brief ready: ${brief.product}`, { data: { oneLiner: brief.oneLiner } });
 
+  const reputation = await loadReputation();
   const budget = new BudgetGuard(usdToBaseUnits(deps.config.runBudgetUsdc), usdToBaseUnits(deps.config.legCapUsdc));
   const ctx: RunContext = {
     brief,
@@ -86,6 +88,8 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
     paidOrderIds: new Set(),
     paidAttemptsByLeg: new Map(),
     assets: new Map(),
+    qaOutcomes: [],
+    qualityScoreOf: scorerFrom(reputation),
   };
 
   const drive = deps.drive ?? defaultDriver;
@@ -124,6 +128,9 @@ export async function runLaunchJob(input: IntakeInput, deps: RunDeps): Promise<R
   const endedAt = now();
   worklog.emitKind(status === "completed" ? "run_completed" : "run_aborted",
     `run ${runId}: ${status} — ${assets.length}/${ctx.requiredLegs.length} legs, spent $${baseUnitsToUsd(budget.spent)}`);
+
+  applyOutcomes(reputation, ctx.qaOutcomes, new Date(endedAt).toISOString());
+  await saveReputation(reputation);
 
   return {
     runId,

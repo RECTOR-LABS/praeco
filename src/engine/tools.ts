@@ -50,6 +50,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
         preferredServiceId: ctx.config.preferredServiceIds[leg],
         excludeAgentId: ctx.config.selfAgentId,
         limit: SEARCH_CANDIDATE_LIMIT,
+        qualityScoreOf: ctx.qualityScoreOf,
       });
       // Resolve the top listings into full candidates (reads requirementSchema from
       // the agent record). Dedup the /agents/{id} fetch per agentId (two services
@@ -145,6 +146,7 @@ export function buildTools(ctx: RunContext): AgentTool<any>[] {
       if (!h) throw new Error(`unknown orderId ${params.orderId}`);
       const verdict = await reviewDeliverable(ctx.llm, ctx.brief, h.leg, h.deliverable);
       ctx.verdicts.set(h.orderId, verdict);
+      ctx.qaOutcomes.push({ agentId: h.agentId, outcome: verdict.action === "accept" ? "accept" : "reject" });
       ctx.worklog.emit({ kind: "qa_verdict", at: Date.now(), leg: h.leg, message: `QA ${verdict.action}: ${verdict.reason}`, data: { score: verdict.score } });
       const guidance =
         verdict.action === "accept" ? "Call submit_asset with this orderId." :

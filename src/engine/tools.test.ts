@@ -38,7 +38,7 @@ function ctxFor(client: CapBuyer, llm: Llm, over: Partial<RunContext> = {}): Run
     config: { apiUrl: "https://api", rpcUrl: "https://rpc", agentWallet: "0xee47", usdcTokenAddress: "0x8335", preferredServiceIds: {} },
     fetchImpl: fundedFetch, requiredLegs: ["research"], hirePollOpts: { negotiationPolls: 2, deliveryPolls: 2, sleep: async () => {} },
     candidates: new Map([["s1", candidate]]), pendingHires: new Map(), verdicts: new Map(), paidOrderIds: new Set(),
-    paidAttemptsByLeg: new Map(), assets: new Map(),
+    paidAttemptsByLeg: new Map(), assets: new Map(), qaOutcomes: [],
     ...over,
   };
 }
@@ -195,6 +195,26 @@ describe("qa_review + submit_asset tools", () => {
     await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } });
     await toolMap(ctx).qa_review.execute("id", { orderId: "o1" });
     await expect(toolMap(ctx).submit_asset.execute("id", { orderId: "o1" })).rejects.toThrow(/has not passed QA/);
+  });
+
+  it("qa_review records a reputation outcome for the hired agent", async () => {
+    // >=MIN_TEXT_WORDS distinct words so the deterministic formatGate doesn't
+    // intercept this as a swap before the (mocked) LLM verdict is ever consulted.
+    const ctx = ctxFor(happyClient(), fakeLlm({ action: "accept", reason: "ok", score: 90 }));
+    ctx.pendingHires.set("o1", {
+      orderId: "o1", agentId: "a1", leg: "research",
+      deliverable: { type: "text", text: "Comprehensive market research reveals that indie developers strongly prefer privacy-first local-first habit tracking tools with simple one-time pricing over subscription-based gamified competitors in this crowded productivity space.", contentHash: "0x" },
+    } as any);
+    const res = await toolMap(ctx).qa_review.execute("x", { orderId: "o1" });
+    expect((res.details as any).verdict.action).toBe("accept");
+    expect(ctx.qaOutcomes).toEqual([{ agentId: "a1", outcome: "accept" }]);
+  });
+
+  it("qa_review records a reject outcome when the verdict is redo or swap", async () => {
+    const ctx = ctxFor(happyClient(), fakeLlm({ action: "redo", reason: "weak" }));
+    await toolMap(ctx).hire_specialist.execute("id", { leg: "research", serviceId: "s1", requirements: { topic: "habits" } });
+    await toolMap(ctx).qa_review.execute("id", { orderId: "o1" });
+    expect(ctx.qaOutcomes).toEqual([{ agentId: "a1", outcome: "reject" }]);
   });
 });
 

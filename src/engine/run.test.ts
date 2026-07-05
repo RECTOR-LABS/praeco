@@ -1,4 +1,7 @@
-import { describe, it, expect, vi } from "vitest";
+import { describe, it, expect, vi, beforeEach, afterEach } from "vitest";
+import { mkdtemp, rm, readFile } from "node:fs/promises";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
 import { runLaunchJob, type EngineDriver } from "./run.js";
 import { buildTools } from "./tools.js";
 import { makeBeforeToolCall } from "./guard.js";
@@ -6,6 +9,13 @@ import type { RunContext } from "./context.js";
 import type { Config } from "../config.js";
 import type { Llm } from "../llm/llm.js";
 import type { CapBuyer } from "../cap/hire.js";
+
+// Every runLaunchJob call now loads/saves a reputation store at run end (Task 6).
+// Isolate ALL tests in this file (both describe blocks below) to a per-test temp
+// file so no run — scripted, capped, or otherwise — ever writes the repo's ./runs.
+let repDir: string;
+beforeEach(async () => { repDir = await mkdtemp(join(tmpdir(), "praeco-run-rep-")); process.env.REPUTATION_FILE = join(repDir, "reputation.json"); });
+afterEach(async () => { delete process.env.REPUTATION_FILE; await rm(repDir, { recursive: true, force: true }); });
 
 const config: Config = {
   crooApiUrl: "https://api", crooWsUrl: "wss://api", crooSdkKey: "k", baseRpcUrl: "https://rpc",
@@ -128,6 +138,15 @@ describe("runLaunchJob", () => {
     expect(rec.kit).toBeUndefined();
     // The error event must be present with the compose failure message.
     expect(rec.worklog.some((e) => e.kind === "error" && e.message.includes("compose failed"))).toBe(true);
+  });
+
+  it("persists a QA-accept reputation outcome for the hired agent after a run", async () => {
+    // Reuses baseDeps() (not a hand-rolled deps object) so the hire's negotiation/delivery
+    // polls resolve instantly via its scripted hirePollOpts — the same convention every
+    // other test in this file relies on to avoid real setTimeout-based poll delays.
+    await runLaunchJob({ text: "a habit tracker" }, { ...baseDeps(), drive: scriptedDriver, now: () => 1 });
+    const store = JSON.parse(await readFile(process.env.REPUTATION_FILE!, "utf8"));
+    expect(store.a1.accepts).toBe(3); // three legs, all QA-accepted, all hired from agent a1
   });
 });
 

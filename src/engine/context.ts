@@ -41,4 +41,6 @@ export interface RunContext {
   paidOrderIds: Set<string>;                  // idempotency ledger
   paidAttemptsByLeg: Map<LegKind, number>;    // paid hires per leg (money-loss bound, §7)
   assets: Map<LegKind, LaunchAsset>;          // submitted, QA-accepted, one per leg
+  qaOutcomes: { agentId: string; outcome: "accept" | "reject" }[]; // per-run QA record, persisted at run end
+  qualityScoreOf?: (agentId: string) => number;                    // reputation scorer for discovery ranking
 }
