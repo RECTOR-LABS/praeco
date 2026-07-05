@@ -41,7 +41,7 @@ function happyClient(): CapBuyer {
 const fakeLlm: Llm = {
   completeText: async () => "",
   completeJson: (async (prompt: string) => {
-    if (prompt.includes("intake analyst")) return { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits." };
+    if (prompt.includes("intake analyst")) return { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits.", inScope: true, scopeReason: "" };
     if (prompt.includes("art director")) return { action: "accept", reason: "on-brief", score: 88 };
     if (prompt.includes("composer")) return { tweetThread: ["1/ Meet Streaky"], shortPitch: "p", phHnBlurb: "Show HN: Streaky", readmePolish: "# Streaky" };
     throw new Error("unexpected prompt: " + prompt.slice(0, 50));
@@ -111,7 +111,7 @@ describe("runLaunchJob", () => {
     const boomOnCompose: Llm = {
       completeText: async () => "",
       completeJson: (async (prompt: string) => {
-        if (prompt.includes("intake analyst")) return { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits." };
+        if (prompt.includes("intake analyst")) return { product: "Streaky", audience: "builders", features: ["streaks"], tone: "playful", oneLiner: "Track habits.", inScope: true, scopeReason: "" };
         if (prompt.includes("art director")) return { action: "accept", reason: "on-brief", score: 88 };
         if (prompt.includes("composer")) throw new Error("schema validation failed");
         throw new Error("unexpected prompt: " + prompt.slice(0, 50));

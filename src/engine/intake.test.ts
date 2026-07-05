@@ -1,8 +1,8 @@
 import { describe, it, expect, vi } from "vitest";
-import { buildBrief, parseGithubRepo } from "./intake.js";
+import { buildBrief, parseGithubRepo, OutOfScopeError } from "./intake.js";
 import type { Llm } from "../llm/llm.js";
 
-const brief = { product: "Streaky", audience: "indie devs", features: ["streaks", "reminders"], tone: "playful", oneLiner: "Track habits without the guilt." };
+const brief = { product: "Streaky", audience: "indie devs", features: ["streaks", "reminders"], tone: "playful", oneLiner: "Track habits without the guilt.", inScope: true, scopeReason: "" };
 
 function fakeLlm(): Llm {
   return {
@@ -55,5 +55,22 @@ describe("buildBrief", () => {
     await expect(
       buildBrief(fakeLlm(), { repoUrl: "not a url" })
     ).rejects.toThrow(/not a recognizable github repo/i);
+  });
+
+  it("throws OutOfScopeError when the model flags the request out of scope", async () => {
+    const llm = { completeText: async () => "", completeJson: (async () => ({
+      product: "", audience: "", features: [], tone: "", oneLiner: "", inScope: false, scopeReason: "not a launchable product",
+    })) as any } as any;
+    await expect(buildBrief(llm, { text: "write me a smart contract" })).rejects.toBeInstanceOf(OutOfScopeError);
+  });
+
+  it("returns a clean LaunchBrief (no scope fields) when in scope", async () => {
+    const llm = { completeText: async () => "", completeJson: (async () => ({
+      product: "Streaky", audience: "devs", features: ["streaks"], tone: "playful", oneLiner: "Track habits.", inScope: true, scopeReason: "",
+    })) as any } as any;
+    const brief = await buildBrief(llm, { text: "a privacy-first habit tracker" });
+    expect(brief.product).toBe("Streaky");
+    expect((brief as any).inScope).toBeUndefined();
+    expect((brief as any).scopeReason).toBeUndefined();
   });
 });
