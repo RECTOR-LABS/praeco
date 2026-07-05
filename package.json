@@ -24,7 +24,8 @@
     "door-b:fulfill": "tsx scripts/door-b-fulfill.ts",
     "marketplace:probe": "tsx scripts/probe-marketplace.ts",
     "video:tts": "tsx scripts/video/tts.ts",
-    "video:validate": "tsx scripts/video/validate-chunk.ts"
+    "video:validate": "tsx scripts/video/validate-chunk.ts",
+    "video:compile": "tsx scripts/video/compile.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
