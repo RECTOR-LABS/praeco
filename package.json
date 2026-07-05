@@ -23,7 +23,8 @@
     "door-b:sim": "tsx scripts/door-b-fulfill.ts --sim",
     "door-b:fulfill": "tsx scripts/door-b-fulfill.ts",
     "marketplace:probe": "tsx scripts/probe-marketplace.ts",
-    "video:tts": "tsx scripts/video/tts.ts"
+    "video:tts": "tsx scripts/video/tts.ts",
+    "video:validate": "tsx scripts/video/validate-chunk.ts"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4.3.2",
