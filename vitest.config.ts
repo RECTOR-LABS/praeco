@@ -6,7 +6,7 @@ export default defineConfig({
     environment: "node", // engine tests; .tsx tests opt in via `// @vitest-environment jsdom`
     setupFiles: ["./test/setup.ts"],
     globals: true,
-    include: ["src/**/*.test.ts", "server/**/*.test.ts", "components/**/*.test.{ts,tsx}", "app/**/*.test.{ts,tsx}", "test/**/*.test.ts", "lib/**/*.test.{ts,tsx}"],
+    include: ["src/**/*.test.ts", "server/**/*.test.ts", "components/**/*.test.{ts,tsx}", "app/**/*.test.{ts,tsx}", "test/**/*.test.ts", "lib/**/*.test.{ts,tsx}", "scripts/**/*.test.ts"],
   },
   resolve: { alias: { "@": new URL(".", import.meta.url).pathname } },
 });
