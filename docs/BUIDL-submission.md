@@ -15,7 +15,7 @@
 | — | **Deadline** | **2026/07/12 16:00** | Confirmed live on the DoraHacks page (06-26). The "2026-07-09" in recent handoffs was a **self-imposed buffer**, not the real cutoff. **Re-confirm the countdown on the live page before relying on it** — organizers can extend/shorten. |
 | — | Repo **PUBLIC** | ✅ verified | `RECTOR-LABS/praeco` visibility = PUBLIC (checked this session). Private repo = **hard DQ**. |
 | — | **MIT** license | ✅ verified | `LICENSE` present, `licenseInfo.key = mit`. |
-| — | README (setup + SDK methods + integration) | ⚠️ mostly | Covers setup, integration notes, and the two-door architecture, and **names** the SDKs (`@croo-network/sdk`, Pi SDK) + Praeco's toolbelt. It does **not enumerate the concrete `@croo-network/sdk` calls** — functionally satisfies req #4, but a short explicit "CAP SDK methods used" list would bulletproof it. See **README hardening** below. |
+| — | README (setup + SDK methods + integration) | ✅ verified | Setup, integration notes, the two-door architecture, **and** an explicit "CAP integration — SDK methods used" section enumerating the concrete `@croo-network/sdk` calls (buyer + seller). Req #4 fully covered. |
 | — | **Demo video (≤5 min)** | ⧗ **the one blocker** | Record per `docs/demo-storyboard.md`, upload (YouTube/Loom **unlisted** is fine), then drop the URL into the **Video** field below + `BUIDL.md` line ~55. |
 
 ### The 5 hard requirements (all mandatory)
@@ -23,16 +23,12 @@
 1. **Listed on CROO Agent Store** — ✅ `Product Launch Kit`, serviceId `5168a527-df1d-45fb-bcaa-a638f2a1fcf9`.
 2. **Integrated with CAP — callable, settles on-chain** — ✅ buyer + seller both proven on Base mainnet.
 3. **Open source, permissive license** — ✅ MIT, public repo.
-4. **Demo (≤5-min video) + README** — README ✅ setup + integration · *SDK-methods list recommended (below)* · video ⧗ (record + link).
+4. **Demo (≤5-min video) + README** — README ✅ (setup + integration + explicit SDK-methods section) · video ⧗ (record + link).
 5. **BUIDL filed on DoraHacks** — ⧗ this sheet.
 
-### README hardening (optional, ~10 min — recommended)
+### README hardening — ✅ DONE
 
-Req #4 asks for "**SDK methods used**." The README names the SDKs and describes the integration, but a reviewer doing a strict read may want the concrete calls listed. Bulletproof it with a short subsection, e.g.:
-
-> **CAP SDK methods used (`@croo-network/sdk`)** — buyer: catalog discovery, order create, order pay; seller: WebSocket order events, deliver-with-proof (`contentHash`). Agent loop (Pi SDK): `beforeToolCall` money guard over the `search_marketplace / get_service_schema / hire_specialist / qa_review / submit_asset` toolbelt.
-
-Pull the exact method names from `src/cap/` before writing it so the list is accurate, not approximate.
+Req #4's "**SDK methods used**" is now covered: the README has an explicit **"CAP integration — SDK methods used"** section enumerating the concrete `@croo-network/sdk` calls — buyer (`listServices`/`listAgents`/`getAgent`, `negotiateOrder → getNegotiation`/`listOrders`/`getOrder → payOrder`) and seller (`listNegotiations → acceptNegotiation`(`/WithFundAddress`)/`rejectNegotiation → getOrder → deliverOrder`) — plus the Pi-SDK money-guarded toolbelt. Method names pulled from `src/cap/`.
 
 ---
 
