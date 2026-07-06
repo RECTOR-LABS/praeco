@@ -1,5 +1,6 @@
 import { execFileSync } from "node:child_process";
-import { mkdirSync, writeFileSync, readFileSync } from "node:fs";
+import { mkdirSync, writeFileSync, readFileSync, existsSync } from "node:fs";
+import { resolve } from "node:path";
 import { computeFit, type FitPlan } from "./lib/fit";
 
 export interface Chunk { beat: string; video: string; audio: string }
@@ -64,13 +65,24 @@ function main() {
     console.log(`✓ beat ${c.beat} → ${proc} (${plan.action})`);
   }
 
+  // Book-end with the intro/outro bumpers when present (video/bumpers/*.mp4), then concat.
+  // Re-encode rather than -c copy: the bumpers come from a different source than the muxed
+  // chunks, so copy would be fragile on timebase/params. Absolute paths so the concat
+  // demuxer resolves them regardless of the list file's location.
+  const segments = [
+    ...(existsSync("video/bumpers/intro.mp4") ? ["video/bumpers/intro.mp4"] : []),
+    ...procList,
+    ...(existsSync("video/bumpers/outro.mp4") ? ["video/bumpers/outro.mp4"] : []),
+  ];
   const listPath = "video/proc/concat.txt";
-  writeFileSync(listPath, procList.map((p) => `file '${p.replace("video/proc/", "")}'`).join("\n"));
+  writeFileSync(listPath, segments.map((p) => `file '${resolve(p)}'`).join("\n"));
   execFileSync("ffmpeg", [
     "-y", "-f", "concat", "-safe", "0", "-i", listPath,
-    "-c", "copy", "-movflags", "+faststart", "video/out/praeco-demo.mp4",
+    "-c:v", "libx264", "-preset", "medium", "-crf", "21",
+    "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+    "-movflags", "+faststart", "video/out/praeco-demo.mp4",
   ], { stdio: "inherit" });
-  console.log("✓ video/out/praeco-demo.mp4");
+  console.log(`✓ video/out/praeco-demo.mp4 (${segments.length} segments: intro + ${procList.length} chunks + outro)`);
 }
 
 if (import.meta.url === `file://${process.argv[1]}`) {

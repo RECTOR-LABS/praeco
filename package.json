@@ -26,6 +26,7 @@
     "marketplace:probe": "tsx scripts/probe-marketplace.ts",
     "video:tts": "tsx scripts/video/tts.ts",
     "video:validate": "tsx scripts/video/validate-chunk.ts",
+    "video:bumpers": "tsx scripts/video/make-bumpers.ts",
     "video:compile": "tsx scripts/video/compile.ts",
     "video:upload": "tsx scripts/video/upload-blob.ts"
   },

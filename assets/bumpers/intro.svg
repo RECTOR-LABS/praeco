@@ -1,0 +1,27 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080">
+  <defs>
+    <radialGradient id="glow" cx="50%" cy="42%" r="55%">
+      <stop offset="0%" stop-color="#0f1a16"/>
+      <stop offset="55%" stop-color="#0a0e12"/>
+      <stop offset="100%" stop-color="#070a0e"/>
+    </radialGradient>
+    <pattern id="grid" width="48" height="48" patternUnits="userSpaceOnUse">
+      <path d="M48 0H0V48" fill="none" stroke="#2a3540" stroke-width="1" opacity="0.16"/>
+    </pattern>
+  </defs>
+
+  <rect width="1920" height="1080" fill="url(#glow)"/>
+  <rect width="1920" height="1080" fill="url(#grid)"/>
+
+  <!-- top badge -->
+  <text x="960" y="372" text-anchor="middle" font-family="Menlo, monospace"
+        fill="#43e08a" font-size="24" letter-spacing="7">AUTONOMOUS · ON-CHAIN</text>
+
+  <!-- wordmark -->
+  <text x="960" y="560" text-anchor="middle" font-family="Menlo, monospace" font-weight="bold"
+        font-size="150" letter-spacing="14" fill="#e6edf3">PRAECO</text>
+
+  <!-- tagline -->
+  <text x="960" y="660" text-anchor="middle" font-family="'Helvetica Neue', Helvetica, Arial, sans-serif"
+        font-size="46" fill="#9fb0bd">Ship your launch. <tspan fill="#43e08a" font-weight="600">Autonomously.</tspan></text>
+</svg>
