@@ -1,7 +1,7 @@
 # Praeco — DoraHacks Filing Sheet (paste-ready)
 
 > Operational sheet for filing the BUIDL on DoraHacks. Every field below is copy-paste ready.
-> Once the demo video URL exists, filing is a ~5-minute mechanical step.
+> The demo video is done and live at /pitch — filing is now a ~5-minute mechanical step.
 > Long-form narrative lives in [`BUIDL.md`](./BUIDL.md); this sheet maps it onto the form fields.
 
 **Where:** https://dorahacks.io/hackathon/croo-hackathon → **Submit BUIDL** (or create the BUIDL first, then submit it to the hackathon).
@@ -16,14 +16,14 @@
 | — | Repo **PUBLIC** | ✅ verified | `RECTOR-LABS/praeco` visibility = PUBLIC (checked this session). Private repo = **hard DQ**. |
 | — | **MIT** license | ✅ verified | `LICENSE` present, `licenseInfo.key = mit`. |
 | — | README (setup + SDK methods + integration) | ✅ verified | Setup, integration notes, the two-door architecture, **and** an explicit "CAP integration — SDK methods used" section enumerating the concrete `@croo-network/sdk` calls (buyer + seller). Req #4 fully covered. |
-| — | **Demo video (≤5 min)** | ⧗ **the one blocker** | Record per `docs/demo-storyboard.md`, upload (YouTube/Loom **unlisted** is fine), then drop the URL into the **Video** field below + `BUIDL.md` line ~55. |
+| — | **Demo video (≤5 min)** | ✅ **DONE** | Shot, captioned, compiled (3:22), uploaded to Vercel Blob, live at [/pitch](https://praeco.rectorspace.com/pitch). URL is in the **Video** field below + `BUIDL.md`. |
 
 ### The 5 hard requirements (all mandatory)
 
 1. **Listed on CROO Agent Store** — ✅ `Product Launch Kit`, serviceId `5168a527-df1d-45fb-bcaa-a638f2a1fcf9`.
 2. **Integrated with CAP — callable, settles on-chain** — ✅ buyer + seller both proven on Base mainnet.
 3. **Open source, permissive license** — ✅ MIT, public repo.
-4. **Demo (≤5-min video) + README** — README ✅ (setup + integration + explicit SDK-methods section) · video ⧗ (record + link).
+4. **Demo (≤5-min video) + README** — README ✅ (setup + integration + explicit SDK-methods section) · video ✅ (3:22 captioned, live at /pitch).
 5. **BUIDL filed on DoraHacks** — ⧗ this sheet.
 
 ### README hardening — ✅ DONE
@@ -78,7 +78,7 @@ Paste the body of [`BUIDL.md`](./BUIDL.md) — **everything from `## The problem
 ### Links (one URL per blank)
 | Field | Value |
 |---|---|
-| **Video** | ⧗ *(add once recorded)* |
+| **Video** | `https://praeco.rectorspace.com/pitch` — 3:22 captioned + on-chain proof inline · direct mp4: `https://vbceuvnwd1gzyrvk.public.blob.vercel-storage.com/demo/praeco-demo.mp4` — **verify DoraHacks accepts a self-hosted URL; Vimeo-unlisted fallback, not YouTube** |
 | **Website / live demo** | `https://praeco.rectorspace.com` |
 | **Source code / GitHub** | `https://github.com/RECTOR-LABS/praeco` |
 
@@ -113,8 +113,8 @@ Filing is valid regardless; these flags affect **reward** eligibility:
 
 ## Filing checklist (do in order)
 
-1. [ ] Record the demo video (≤5 min) → upload → copy URL.
-2. [ ] Add the video URL to `BUIDL.md` (line ~55) and to the **Video** field above; commit.
+1. [x] Record the demo video → upload → copy URL. ✅ (3:22 captioned; Vercel Blob; live at /pitch)
+2. [x] Add the video URL to `BUIDL.md` + the **Video** field above; commit. ✅
 3. [ ] Re-confirm the deadline countdown on the live DoraHacks page.
 4. [ ] DoraHacks → CROO Agent Hackathon → **Submit BUIDL**.
 5. [ ] Fill: Name · Logo · Cover · Tagline (longest that fits) · Tags · Description (BUIDL.md body + on-chain block) · Video · Website · GitHub.

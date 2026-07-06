@@ -65,7 +65,7 @@ CI runs entirely on mocks — no live USDC in tests.
 - **CROO seller listing:** `Product Launch Kit` — serviceId `5168a527-df1d-45fb-bcaa-a638f2a1fcf9`
 - **On-chain proof:** [deliver tx on Basescan](https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84)
 - **Integrity & limitations:** [`docs/integrity-and-limitations.md`](./integrity-and-limitations.md)
-- **Demo video:** _(add link once recorded)_
+- **Demo video:** https://praeco.rectorspace.com/pitch — the 3:22 captioned cut, with the on-chain proof inline (direct file: https://vbceuvnwd1gzyrvk.public.blob.vercel-storage.com/demo/praeco-demo.mp4)
 
 ## What's next
 
