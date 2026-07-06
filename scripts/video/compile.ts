@@ -42,16 +42,19 @@ function main() {
       throw new Error(`beat ${c.beat}: narration is >8% too long — shorten the copy and regenerate`);
     }
     const proc = `video/proc/${c.beat}.mp4`;
-    // Both chains in ONE -filter_complex (mixing -vf with -filter_complex errors).
-    // Force every chunk to an identical 1920x1080/30fps frame (letterbox-pad any aspect
-    // ratio, SAR 1:1) so the final concat can `-c copy` no matter what the takes were
-    // recorded at — and so the /pitch <video> (16:9) never crops.
-    const vchain =
-      "scale=1920:1080:force_original_aspect_ratio=decrease," +
-      "pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=yuv420p,fps=30";
+    // Everything in ONE -filter_complex (mixing -vf with -filter_complex errors).
+    // Fit any aspect into a uniform 1920x1080/30fps frame with a blurred-zoom background
+    // fill (a centered sharp copy over a scaled+blurred copy of itself) instead of black
+    // bars — looks intentional for non-16:9 window captures, and the identical output size
+    // lets the final concat `-c copy`. SAR 1:1 so /pitch's 16:9 <video> never distorts.
+    const vGraph =
+      "[0:v]split[bg][fg];" +
+      "[bg]scale=1920:1080:force_original_aspect_ratio=increase,crop=1920:1080,gblur=sigma=24[bg];" +
+      "[fg]scale=1920:1080:force_original_aspect_ratio=decrease[fg];" +
+      "[bg][fg]overlay=(W-w)/2:(H-h)/2,setsar=1,format=yuv420p,fps=30[v]";
     execFileSync("ffmpeg", [
       "-y", "-i", c.video, "-i", c.audio,
-      "-filter_complex", `[0:v]${vchain}[v];[1:a]${audioFilter(plan)}[a]`,
+      "-filter_complex", `${vGraph};[1:a]${audioFilter(plan)}[a]`,
       "-map", "[v]", "-map", "[a]",
       "-c:v", "libx264", "-preset", "medium", "-crf", "21",
       "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
