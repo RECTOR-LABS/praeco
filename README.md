@@ -9,6 +9,7 @@
     <a href="#the-two-doors">The two doors</a>
   </p>
   <p>
+    <a href="https://github.com/RECTOR-LABS/praeco/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/RECTOR-LABS/praeco/actions/workflows/ci.yml/badge.svg"></a>
     <img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-6366F1">
     <img alt="tests" src="https://img.shields.io/badge/tests-vitest-10B981">
     <img alt="chain" src="https://img.shields.io/badge/payments-USDC%20on%20Base-informational">
