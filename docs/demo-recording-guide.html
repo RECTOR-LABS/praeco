@@ -96,8 +96,13 @@
   .chunk .file { font: 600 12px ui-monospace, Menlo, monospace; color: var(--ink); background: var(--panel-2); padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); }
   .chunk .time { margin-left: auto; font-size: 12px; color: var(--ink-dim); }
   .chunk .show { margin: 7px 0 0; }
-  .chunk .watch { margin: 8px 0 0; font-size: 13px; color: var(--image); }
+  .chunk .watch { margin: 9px 0 0; font-size: 13px; color: var(--image); }
   .chunk .watch b { color: var(--ink); font-weight: 600; }
+  .chunk .steps { margin: 9px 0 0; padding-left: 20px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .chunk .steps li { padding: 2px 0; }
+  .chunk .steps li::marker { color: var(--live); font-weight: 700; }
+  .chunk .steps code { font-size: 12px; }
+  .chunk .steps .k { color: var(--ink-dim); }
   .chunk[data-lane=research] { border-left: 3px solid var(--research); }
   .chunk[data-lane=copy] { border-left: 3px solid var(--copy); }
   .chunk[data-lane=image] { border-left: 3px solid var(--image); }
@@ -178,44 +183,82 @@
   <div class="chunks" id="chunks">
     <div class="chunk" data-lane="live"><input type="checkbox" id="c1"><div class="body">
       <div class="top"><span class="id">1 · Hook</span><span class="file">1-hook.mov</span><span class="time">25s · 0:00–0:25</span></div>
-      <div class="show">Landing page — slow scroll: hero → mission-control preview → the two-doors / proven-on-chain cards.</div>
-      <div class="watch"><b>Watch:</b> just scroll calmly, top to bottom.</div>
+      <ol class="steps">
+        <li>Open <code>praeco.rectorspace.com</code>, scrolled to the very <b>top</b>.</li>
+        <li>Start recording; hold ~1s on the hero (<span class="k">"Ship your launch. Autonomously."</span> + the Mission-Control card).</li>
+        <li><b>Scroll down slowly</b> through: <span class="k">What it does</span> → <span class="k">Two doors, one engine</span> → <span class="k">Proven on-chain</span>.</li>
+        <li>Stop at the bottom of <span class="k">Proven on-chain</span>, hold ~1s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Watch:</b> one smooth, calm scroll top→bottom — no clicking. <b>(You've already recorded this ✓)</b></div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c2"><div class="body">
       <div class="top"><span class="id">2 · Intake</span><span class="file">2-intake.mov</span><span class="time">25s · 0:25–0:50</span></div>
-      <div class="show">The intake page — type a one-liner (or paste a repo) into the single field, submit.</div>
-      <div class="watch"><b>Watch:</b> show it's <b>one field in → kit out</b>.</div>
+      <ol class="steps">
+        <li>Go to <code>praeco.rectorspace.com/intake?mode=sandbox</code> <span class="k">(or click "Try free" top-right on the landing).</span></li>
+        <li>Start recording; hold ~1s on the <b>"Mission briefing"</b> card (one input field + green button + <span class="k">SANDBOX</span> pill).</li>
+        <li>Click the field <span class="k">"Paste a one-liner or GitHub URL"</span> and <b>type slowly:</b><br><code>A privacy-first habit tracker called Streaky</code></li>
+        <li>Click the green <b>"Try it free →"</b> button.</li>
+        <li>It jumps to the live run — header goes <b>RUNNING</b>, three lanes appear (RESEARCH / LANDING COPY / OG IMAGE), spend <code>$0.00 / $2.00</code>. Hold ~2–3s.</li>
+        <li>Stop recording. <b>Don't wait for the run to finish</b> — the replay (chunk 3) is the full run.</li>
+      </ol>
+      <div class="watch"><b>Point:</b> "one field in → kit out." You're only showing the <b>input + it starting</b>, then cutting away.</div>
     </div></div>
 
     <div class="chunk" data-lane="copy"><input type="checkbox" id="c3a"><div class="body">
       <div class="top"><span class="id">3a · Theater</span><span class="file">3a-theater.mov</span><span class="time">65s · 0:50–1:55</span></div>
-      <div class="show">Hero replay → hit <b>4×</b> → let all 3 lanes advance, spend meter climb, receipts drop → land on <b>COMPLETED</b> (all lanes ACCEPTED, <code>$0.80</code>).</div>
-      <div class="watch"><b>Reach COMPLETED before stopping.</b> Don't scroll to the kit yet.</div>
+      <ol class="steps">
+        <li>Go to <code>/replay/run-1782628352055</code>, scrolled to the <b>top</b> — the <span class="k">SPEED (1× · 4× · Skip)</span> controls + the Theater (3 lanes) in frame. <b>Kit NOT in frame yet.</b></li>
+        <li>Start recording. Theater shows <span class="k">RUNNING</span>, lanes <span class="k">IDLE</span>, spend <code>$0.00</code>.</li>
+        <li>Click <b>4×</b>. <span class="k">(Finishes in ~10s. Want a slower, more watchable beat? Use 1× and record ~40s, then click Skip.)</span></li>
+        <li>Watch the 3 lanes go <b>ACCEPTED</b>, spend climb to <code>$0.80</code>, header hit <b>✓ COMPLETED</b>.</li>
+        <li>Hold ~2s on COMPLETED, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Reach COMPLETED before stopping</b>, and keep the Theater in frame — <b>don't scroll to the kit yet</b> (that's chunk 4).</div>
     </div></div>
 
     <div class="chunk" data-lane="copy"><input type="checkbox" id="c3b"><div class="body">
       <div class="top"><span class="id">3b · Redo</span><span class="file">3b-redo.mov</span><span class="time">20s · 1:55–2:15</span></div>
-      <div class="show">Still on the replay — point at the <b>ON-CHAIN RECEIPTS</b> list, specifically the <b>two Foundr $0.10</b> entries (the QA redo).</div>
-      <div class="watch"><b>Watch:</b> "hired twice" = the whole story.</div>
+      <ol class="steps">
+        <li>Still on the replay at <b>COMPLETED</b> — scroll a touch so the <b>ON-CHAIN RECEIPTS</b> list is centered (just under the 3 lanes).</li>
+        <li>Start recording. Move the mouse to the receipts list and rest it on the <b>two <code>Foundr · $0.10</code> rows</b> — that's the landing-copy specialist <b>hired twice</b> (QA rejected draft 1 → re-hired → draft 2 passed).</li>
+        <li>Hold ~15s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>"Hired twice" = the whole story.</b> <b>Don't click</b> any <span class="k">Receipt / Basescan</span> link — they're mock.</div>
     </div></div>
 
     <div class="chunk" data-lane="image"><input type="checkbox" id="c4"><div class="body">
       <div class="top"><span class="id">4 · Kit</span><span class="file">4-kit.mov</span><span class="time">40s · 2:15–2:55</span></div>
-      <div class="show">Scroll to <b>Launch Kit · MISSION COMPLETE</b> — copy, OG image, tweet thread, PH/HN blurb; hover a <b>provenance card</b>.</div>
-      <div class="watch"><b>Watch:</b> hover the card, <b>don't click</b> its Basescan link (mock).</div>
+      <ol class="steps">
+        <li>Still on the replay — scroll <b>down</b> to <b>"Launch Kit · MISSION COMPLETE"</b>.</li>
+        <li>Start recording. Show the stat row: <code>SPENT $0.80</code> · <code>SPECIALISTS 3</code> · <code>RECEIPTS 3</code>.</li>
+        <li><b>Scroll slowly</b> through the kit: OG-image ref → Short Pitch → Landing Copy → PH/HN Blurb → Tweet Thread.</li>
+        <li>On the right, <b>hover a PROVENANCE card</b> (e.g. <span class="k">ProofResearch · 0.10 USDC · hash</span>).</li>
+        <li>Hold ~2s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Don't click</b> a card's <span class="k">Basescan</span> link (mock hash) — just hover to show agent · cost · hash.</div>
     </div></div>
 
     <div class="chunk" data-lane="live"><input type="checkbox" id="c5"><div class="body">
       <div class="top"><span class="id">5 · Door B — real, on-chain</span><span class="file">5-doorb.mov</span><span class="time">75s · 2:55–4:10</span></div>
-      <div class="show"><b>1.</b> Terminal: <code>pnpm door-b:verify</code> — prints the <b>live listing</b> (pulled from the public CROO API — Praeco / Product Launch Kit / <code>5168a527…</code> / $2) + the <b>real settled order</b> (order → paid → deliver, block-confirmed on Base). <b>2.</b> <code>pnpm exec tsx scripts/probe-marketplace.ts</code> — the live <b>$0 integrity reject</b> (it won't take a job it can't staff). <b>3.</b> Switch to the real <b>Basescan</b> tab (<code>0x9754…</code>) — the decoded USDC settlement. <i>Optional: <code>pnpm door-b:sim</code> for the fulfillment-flow shape.</i></div>
-      <div class="watch"><b>This is the real on-chain hero.</b> The listing is live &amp; verifiable, the tx is confirmed on Base. All three commands print only public data (safe on camera).</div>
+      <ol class="steps">
+        <li>Switch to your <b>Terminal</b> in <code>~/local-dev/praeco</code> (nothing sensitive on screen). Start recording.</li>
+        <li>Run <code>pnpm door-b:verify</code> → wait for the panel: <b>live listing</b> (Praeco · Product Launch Kit · <code>5168a527…</code> · $2) + <b>real settled order</b> (order → paid → deliver, block-confirmed). Hold ~3s.</li>
+        <li>Run <code>pnpm exec tsx scripts/probe-marketplace.ts</code> → wait for <b>❌ NOT STAFFABLE</b> (the $0 integrity reject). Hold ~3s.</li>
+        <li>Switch to the <b>Basescan tab</b> (<code>0x9754…</code>) — the real USDC settlement. Hold ~3s.</li>
+        <li><span class="k">Optional:</span> <code>pnpm door-b:sim</code> for the accept→pay→run→deliver flow shape. Then stop recording.</li>
+      </ol>
+      <div class="watch"><b>The real on-chain hero.</b> All three commands print only public data (safe on camera). Type commands cleanly — no <code>.env</code>/keys in view.</div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c6"><div class="body">
       <div class="top"><span class="id">6 · Close</span><span class="file">6-close.mov</span><span class="time">20s · 4:10–4:30</span></div>
-      <div class="show">The GitHub repo page (MIT) + <code>assets/architecture.svg</code> (open it in the browser).</div>
-      <div class="watch"><b>Watch:</b> calm close.</div>
+      <ol class="steps">
+        <li>Browser: go to <code>github.com/RECTOR-LABS/praeco</code>. Start recording; hold ~5s on the repo (README title + the <span class="k">MIT</span> license).</li>
+        <li>Open <code>assets/architecture.svg</code> in the repo (click into <span class="k">assets/</span> → the file) — show the architecture diagram ~8s.</li>
+        <li>Hold ~2s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Calm close</b> — open-source, MIT, proven on Base.</div>
     </div></div>
   </div>
 
