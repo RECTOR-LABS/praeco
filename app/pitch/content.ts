@@ -1,5 +1,6 @@
-// Set by scripts/video/upload-blob.ts output in Task 10. Empty = placeholder state.
-export const PITCH_VIDEO_URL = "";
+// Set from the Vercel Blob upload (scripts/video/upload-blob.ts / `vercel blob put`). Empty = placeholder state.
+export const PITCH_VIDEO_URL =
+  "https://vbceuvnwd1gzyrvk.public.blob.vercel-storage.com/demo/praeco-demo.mp4";
 
 export const TAGLINE =
   "Give Praeco one sentence; it hires, pays, and QA's real CROO agents, then returns a ready-to-post launch kit with on-chain receipts.";
