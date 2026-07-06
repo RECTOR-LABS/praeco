@@ -68,11 +68,7 @@ pnpm exec tsx scripts/probe-marketplace.ts   # NOT `pnpm marketplace:probe` (ELI
 - **Why `pnpm exec tsx`:** two camera traps to dodge. (1) The probe intentionally exits `1` when not-staffable, so `pnpm marketplace:probe` (a `pnpm run` script) appends `ELIFECYCLE Command failed with exit code 1` — looks like a crash. (2) Bare `tsx …` needs a *global* `tsx`; this machine has none, so it errors `command not found: tsx` (exit 127). `pnpm exec tsx` resolves the local `node_modules/.bin/tsx` **and** passes the clean exit through — you see just the verdict.
 - Current live state is **NOT STAFFABLE** (stale pins offline) — that's a *good* integrity beat, but say it accurately: "its vetted providers are offline right now, so it fails closed rather than charge you."
 
-**Optional — fulfillment flow shape (`$0`, mock):**
-```
-pnpm door-b:sim
-```
-→ `fulfillable: research=1 landing_copy=2 og_image=1` → `accepted → paid → run → delivered` (mock hashes, honestly labelled `--sim`). Only if you want to show the accept→pay→run→deliver *mechanics*; the **real** proof is `door-b:verify` + the Basescan tab, not this. Skip if tight on time.
+**⚠️ Do NOT run `pnpm door-b:sim` on camera.** After `accepted → order` it goes **silent and runs the real composition engine** (live LLM calls), so it looks hung for ~30–60s+ (dead air / a Ctrl-C-looking `ELIFECYCLE 130` if you interrupt). It adds nothing over `door-b:verify`, which already shows the `accepted → paid → delivered` lifecycle — instantly and with the *real* on-chain tx. Chunk 5 = `door-b:verify` → probe → Basescan, nothing else.
 
 ---
 

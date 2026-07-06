@@ -248,10 +248,9 @@
         <li>Switch to your <b>Terminal</b> in <code>~/local-dev/praeco</code> (nothing sensitive on screen). Start recording.</li>
         <li>Run <code>pnpm door-b:verify</code> → wait for the panel: <b>live listing</b> (Praeco · Product Launch Kit · <code>5168a527…</code> · $2) + <b>real settled order</b> (order → paid → deliver, block-confirmed). Hold ~3s.</li>
         <li>Run <code>pnpm exec tsx scripts/probe-marketplace.ts</code> → wait for <b>❌ NOT STAFFABLE</b> (the $0 integrity reject). Hold ~3s.</li>
-        <li>Switch to the <b>Basescan tab</b> (<code>0x9754…</code>) — the real USDC settlement. Hold ~3s.</li>
-        <li><span class="k">Optional:</span> <code>pnpm door-b:sim</code> for the accept→pay→run→deliver flow shape. Then stop recording.</li>
+        <li>Switch to the <b>Basescan tab</b> (<code>0x9754…</code>) — the real USDC settlement. Hold ~3s, then stop recording.</li>
       </ol>
-      <div class="watch"><b>The real on-chain hero.</b> All three commands print only public data (safe on camera). Type commands cleanly — no <code>.env</code>/keys in view.</div>
+      <div class="watch"><b>The real on-chain hero.</b> Both commands print only public data (safe on camera). <b>Do NOT run <code>door-b:sim</code></b> — it silently runs the real engine (~30–60s of dead air); <code>door-b:verify</code> already shows the full lifecycle.</div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c6"><div class="body">
