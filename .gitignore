@@ -12,3 +12,7 @@ tsconfig.tsbuildinfo
 skills-lock.json
 .vercel
 .env*
+
+# demo-video working dir (raw takes, mp3s, intermediate + final renders)
+# root-anchored so it does NOT match scripts/video/ (the pipeline source)
+/video/

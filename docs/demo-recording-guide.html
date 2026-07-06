@@ -1,0 +1,328 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Praeco Demo — Recording Kit</title>
+<style>
+  :root {
+    --ground: #0a0e12;
+    --panel: #121a22;
+    --panel-2: #172230;
+    --ink: #e6edf3;
+    --ink-dim: #9fb0bd;
+    --live: #43e08a;
+    --research: #5aa9ff;
+    --copy: #c07bff;
+    --image: #ffb454;
+    --danger: #ff6b6b;
+    --line: rgba(255,255,255,.09);
+  }
+  * { box-sizing: border-box; }
+  html { -webkit-text-size-adjust: 100%; }
+  body {
+    margin: 0;
+    background:
+      radial-gradient(1200px 600px at 80% -10%, rgba(67,224,138,.08), transparent 60%),
+      linear-gradient(180deg, var(--ground), #070a0e);
+    color: var(--ink);
+    font: 15px/1.55 system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+    padding: 0 0 80px;
+  }
+  .wrap { max-width: 880px; margin: 0 auto; padding: 0 20px; }
+  header {
+    padding: 40px 0 20px;
+    border-bottom: 1px solid var(--line);
+    margin-bottom: 28px;
+  }
+  .brand { font: 600 13px/1 ui-monospace, "SF Mono", Menlo, monospace; letter-spacing: .04em; color: var(--live); }
+  h1 { margin: 12px 0 6px; font-size: 30px; letter-spacing: -.02em; }
+  .sub { color: var(--ink-dim); font-size: 14px; }
+  .sub b { color: var(--ink); font-weight: 600; }
+
+  h2 {
+    font-size: 13px; text-transform: uppercase; letter-spacing: .09em;
+    color: var(--ink-dim); margin: 34px 0 12px; font-weight: 700;
+  }
+
+  .card { background: var(--panel); border: 1px solid var(--line); border-radius: 14px; padding: 18px 20px; }
+  .card + .card { margin-top: 12px; }
+
+  ul.check { list-style: none; margin: 0; padding: 0; }
+  ul.check li { display: flex; gap: 11px; align-items: flex-start; padding: 7px 0; }
+  ul.check li + li { border-top: 1px dashed var(--line); }
+  input[type=checkbox] {
+    appearance: none; -webkit-appearance: none; flex: none;
+    width: 20px; height: 20px; margin: 1px 0 0; border: 1.6px solid rgba(255,255,255,.25);
+    border-radius: 6px; background: var(--panel-2); cursor: pointer; position: relative; transition: .12s;
+  }
+  input[type=checkbox]:checked { background: var(--live); border-color: var(--live); }
+  input[type=checkbox]:checked::after {
+    content: ""; position: absolute; left: 6px; top: 2px; width: 5px; height: 10px;
+    border: solid #06120b; border-width: 0 2.5px 2.5px 0; transform: rotate(42deg);
+  }
+  .check label { cursor: pointer; }
+  input[type=checkbox]:checked + label { color: var(--ink-dim); text-decoration: line-through; text-decoration-color: rgba(159,176,189,.5); }
+  kbd {
+    font: 600 12px ui-monospace, Menlo, monospace; background: var(--panel-2);
+    border: 1px solid var(--line); border-bottom-width: 2px; border-radius: 5px; padding: 1px 6px; color: var(--ink);
+  }
+  code { font: 500 13px ui-monospace, Menlo, monospace; color: var(--live); background: rgba(67,224,138,.08); padding: 1px 5px; border-radius: 5px; }
+
+  .danger { border-color: rgba(255,107,107,.4); background: linear-gradient(180deg, rgba(255,107,107,.08), rgba(255,107,107,.02)); }
+  .danger h2 { color: var(--danger); margin-top: 0; }
+  .danger li { color: var(--ink); }
+  .danger input[type=checkbox]:checked { background: var(--danger); border-color: var(--danger); }
+
+  .copyrow { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; margin: 8px 0; }
+  .copyrow .lbl { font-size: 12px; color: var(--ink-dim); min-width: 62px; }
+  .copyrow code { overflow-wrap: anywhere; flex: 1; min-width: 0; }
+  button.copy {
+    flex: none; font: 600 11px system-ui; color: var(--ink); background: var(--panel-2);
+    border: 1px solid var(--line); border-radius: 7px; padding: 5px 10px; cursor: pointer; transition: .12s;
+  }
+  button.copy:hover { border-color: var(--live); color: var(--live); }
+  button.copy.done { color: var(--live); border-color: var(--live); }
+
+  .chunks { display: grid; gap: 10px; }
+  .chunk {
+    display: grid; grid-template-columns: 24px 1fr; gap: 12px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 14px 16px;
+  }
+  .chunk.done { opacity: .55; }
+  .chunk .body { min-width: 0; }
+  .chunk .top { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+  .chunk .id { font: 700 13px ui-monospace, Menlo, monospace; color: var(--live); }
+  .chunk .file { font: 600 12px ui-monospace, Menlo, monospace; color: var(--ink); background: var(--panel-2); padding: 2px 7px; border-radius: 6px; border: 1px solid var(--line); }
+  .chunk .time { margin-left: auto; font-size: 12px; color: var(--ink-dim); }
+  .chunk .show { margin: 7px 0 0; }
+  .chunk .watch { margin: 9px 0 0; font-size: 13px; color: var(--image); }
+  .chunk .watch b { color: var(--ink); font-weight: 600; }
+  .chunk .steps { margin: 9px 0 0; padding-left: 20px; font-size: 13px; color: var(--ink); line-height: 1.5; }
+  .chunk .steps li { padding: 2px 0; }
+  .chunk .steps li::marker { color: var(--live); font-weight: 700; }
+  .chunk .steps code { font-size: 12px; }
+  .chunk .steps .k { color: var(--ink-dim); }
+  .chunk[data-lane=research] { border-left: 3px solid var(--research); }
+  .chunk[data-lane=copy] { border-left: 3px solid var(--copy); }
+  .chunk[data-lane=image] { border-left: 3px solid var(--image); }
+  .chunk[data-lane=live] { border-left: 3px solid var(--live); }
+
+  .tl { display: flex; gap: 3px; height: 54px; border-radius: 10px; overflow: hidden; }
+  .tl .seg { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; color: #06120b; font-weight: 700; }
+  .tl .seg span { font: 700 13px ui-monospace, Menlo, monospace; }
+  .tl .seg small { font-size: 10px; opacity: .8; }
+  .tl .seg[data-lane=research] { background: var(--research); }
+  .tl .seg[data-lane=copy] { background: var(--copy); }
+  .tl .seg[data-lane=image] { background: var(--image); }
+  .tl .seg[data-lane=live] { background: var(--live); }
+  .tl-scale { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--ink-dim); }
+
+  .foot { margin-top: 34px; }
+  .foot ol { margin: 8px 0 0; padding-left: 20px; }
+  .foot li { padding: 3px 0; }
+  .pill { display: inline-block; background: rgba(67,224,138,.12); color: var(--live); border: 1px solid rgba(67,224,138,.3); border-radius: 999px; padding: 2px 11px; font-size: 12px; font-weight: 600; }
+  .reset { margin-top: 24px; font-size: 12px; color: var(--ink-dim); }
+  .reset button { background: none; border: 1px solid var(--line); color: var(--ink-dim); border-radius: 7px; padding: 5px 11px; cursor: pointer; font: inherit; }
+  .reset button:hover { color: var(--danger); border-color: rgba(255,107,107,.4); }
+  a { color: var(--live); }
+  @media print {
+    body { background: #fff; color: #000; }
+    .card, .chunk { border-color: #ccc; background: #fff; }
+    button.copy, .reset { display: none; }
+  }
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="brand">PRAECO</div>
+    <h1>Demo — Recording Kit</h1>
+    <p class="sub"><b>7 chunks</b> · target <b>≈4:30</b> (hard cap 5:00) · screen-first, record in any order · <span class="pill">tick as you go</span></p>
+  </header>
+
+  <h2>Timeline — how it lands in ≈4:30</h2>
+  <div class="card">
+    <div class="tl">
+      <div class="seg" data-lane="live" style="flex:25"><span>1</span><small>25s</small></div>
+      <div class="seg" data-lane="research" style="flex:25"><span>2</span><small>25s</small></div>
+      <div class="seg" data-lane="copy" style="flex:65"><span>3a</span><small>65s</small></div>
+      <div class="seg" data-lane="copy" style="flex:20"><span>3b</span><small>20s</small></div>
+      <div class="seg" data-lane="image" style="flex:40"><span>4</span><small>40s</small></div>
+      <div class="seg" data-lane="live" style="flex:75"><span>5</span><small>75s</small></div>
+      <div class="seg" data-lane="research" style="flex:20"><span>6</span><small>20s</small></div>
+    </div>
+    <div class="tl-scale"><span>0:00</span><span>total ≈ 4:30 &nbsp;·&nbsp; ~30s margin under the 5:00 cap</span></div>
+  </div>
+
+  <h2>One-time setup</h2>
+  <div class="card">
+    <ul class="check" id="setup">
+      <li><input type="checkbox" id="s1"><label for="s1">Two windows open: <b>Chrome</b> at <code>praeco.rectorspace.com</code> · <b>Terminal</b> in <code>~/local-dev/praeco</code></label></li>
+      <li><input type="checkbox" id="s2"><label for="s2">Pre-loaded the <b>hero replay</b> tab and the <b>real Basescan</b> tab (URLs below)</label></li>
+      <li><input type="checkbox" id="s3"><label for="s3"><b>Do Not Disturb</b> on · Dock auto-hidden · noisy tabs/notifications closed</label></li>
+      <li><input type="checkbox" id="s4"><label for="s4"><kbd>⌘</kbd>+<kbd>⇧</kbd>+<kbd>5</kbd> → <i>Record Entire Screen</i> → <b>Options → Save to:</b> <code>video/raw</code></label></li>
+      <li><input type="checkbox" id="s5"><label for="s5">Don't sweat resolution/aspect — <b>every clip is normalized to clean 1080p at compile</b></label></li>
+    </ul>
+    <div style="margin-top:14px; border-top:1px dashed var(--line); padding-top:12px">
+      <div class="copyrow"><span class="lbl">Replay</span><code>https://praeco.rectorspace.com/replay/run-1782628352055</code><button class="copy" data-copy="https://praeco.rectorspace.com/replay/run-1782628352055">Copy</button></div>
+      <div class="copyrow"><span class="lbl">Real tx</span><code>https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84</code><button class="copy" data-copy="https://basescan.org/tx/0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84">Copy</button></div>
+    </div>
+  </div>
+
+  <h2>🚫 Never on camera</h2>
+  <div class="card danger">
+    <ul class="check" id="dont">
+      <li><input type="checkbox" id="d1"><label for="d1">No <code>.env</code>, CROO SDK key, or wallet private key in frame</label></li>
+      <li><input type="checkbox" id="d2">Don't <b>click</b> any <b>replay</b> "Basescan/Receipt" link — those are mock <code>0xmockpay…</code> and 404</li>
+      <li><input type="checkbox" id="d3">Don't click the toolbar extension icons / "Ask Gemini" mid-take (keep the frame calm)</li>
+    </ul>
+  </div>
+
+  <h2>The 7 chunks</h2>
+  <div class="chunks" id="chunks">
+    <div class="chunk" data-lane="live"><input type="checkbox" id="c1"><div class="body">
+      <div class="top"><span class="id">1 · Hook</span><span class="file">1-hook.mov</span><span class="time">25s · 0:00–0:25</span></div>
+      <ol class="steps">
+        <li>Open <code>praeco.rectorspace.com</code>, scrolled to the very <b>top</b>.</li>
+        <li>Start recording; hold ~1s on the hero (<span class="k">"Ship your launch. Autonomously."</span> + the Mission-Control card).</li>
+        <li><b>Scroll down slowly</b> through: <span class="k">What it does</span> → <span class="k">Two doors, one engine</span> → <span class="k">Proven on-chain</span>.</li>
+        <li>Stop at the bottom of <span class="k">Proven on-chain</span>, hold ~1s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Watch:</b> one smooth, calm scroll top→bottom — no clicking. <b>(You've already recorded this ✓)</b></div>
+    </div></div>
+
+    <div class="chunk" data-lane="research"><input type="checkbox" id="c2"><div class="body">
+      <div class="top"><span class="id">2 · Intake</span><span class="file">2-intake.mov</span><span class="time">25s · 0:25–0:50</span></div>
+      <ol class="steps">
+        <li>Go to <code>praeco.rectorspace.com/intake?mode=sandbox</code> <span class="k">(or click "Try free" top-right on the landing).</span></li>
+        <li>Start recording; hold ~1s on the <b>"Mission briefing"</b> card (one input field + green button + <span class="k">SANDBOX</span> pill).</li>
+        <li>Click the field <span class="k">"Paste a one-liner or GitHub URL"</span> and <b>type slowly:</b><br><code>A privacy-first habit tracker called Streaky</code></li>
+        <li>Click the green <b>"Try it free →"</b> button.</li>
+        <li>It jumps to the live run — header goes <b>RUNNING</b>, three lanes appear (RESEARCH / LANDING COPY / OG IMAGE), spend <code>$0.00 / $2.00</code>. Hold ~2–3s.</li>
+        <li>Stop recording. <b>Don't wait for the run to finish</b> — the replay (chunk 3) is the full run.</li>
+      </ol>
+      <div class="watch"><b>Point:</b> "one field in → kit out." You're only showing the <b>input + it starting</b>, then cutting away.</div>
+    </div></div>
+
+    <div class="card" style="border-color:rgba(90,169,255,.4);background:linear-gradient(180deg,rgba(90,169,255,.07),transparent);margin-bottom:10px;padding:12px 16px;font-size:13px">
+      <b style="color:var(--research)">ONE-SHOT TIP —</b> 3a + 3b + 4 are all the same replay page → record as <b>one continuous take</b>. The page now <b>auto-hides the kit until the Theater hits COMPLETED</b> and shows a <b>live climbing clock</b> (the old mismatch + 0s-clock are fixed), so <b>1× is great</b> — you get the streaming THINKING FEED and a real clock. Flow: <b>play</b> → let it reach <b>COMPLETED</b> (kit appears) → rest on the <b>two Foundr receipts</b> → <b>scroll</b> through the kit → hover a provenance card. Save as <code>3-run.mov</code>.
+    </div>
+    <div class="chunk" data-lane="copy"><input type="checkbox" id="c3a"><div class="body">
+      <div class="top"><span class="id">3a · Theater</span><span class="file">3a-theater.mov</span><span class="time">65s · 0:50–1:55</span></div>
+      <ol class="steps">
+        <li>Go to <code>/replay/run-1782628352055</code>, scrolled to the <b>top</b> — the <span class="k">SPEED (1× · 4× · Skip)</span> controls + the Theater (3 lanes) in frame. <b>Kit NOT in frame yet.</b></li>
+        <li>Start recording. Theater shows <span class="k">RUNNING</span>, lanes <span class="k">IDLE</span>, spend <code>$0.00</code>.</li>
+        <li><b>Let it play at 1×</b> — you'll see the THINKING FEED stream and the clock climb. <span class="k">(4× is ~10s if you prefer; Skip jumps to the end.)</span></li>
+        <li>Watch the 3 lanes go <b>ACCEPTED</b>, spend climb to <code>$0.80</code>, header hit <b>✓ COMPLETED · 2m 23s</b>.</li>
+        <li>When it completes, the <b>kit appears below</b> — flow straight into 3b/4.</li>
+      </ol>
+      <div class="watch">The kit stays hidden until COMPLETED now, so there's <b>no mismatch to avoid</b> — just play it through and keep going.</div>
+    </div></div>
+
+    <div class="chunk" data-lane="copy"><input type="checkbox" id="c3b"><div class="body">
+      <div class="top"><span class="id">3b · Redo</span><span class="file">3b-redo.mov</span><span class="time">20s · 1:55–2:15</span></div>
+      <ol class="steps">
+        <li>Still on the replay at <b>COMPLETED</b> — scroll a touch so the <b>ON-CHAIN RECEIPTS</b> list is centered (just under the 3 lanes).</li>
+        <li>Start recording. Move the mouse to the receipts list and rest it on the <b>two <code>Foundr · $0.10</code> rows</b> — that's the landing-copy specialist <b>hired twice</b> (QA rejected draft 1 → re-hired → draft 2 passed).</li>
+        <li>Hold ~15s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>"Hired twice" = the whole story.</b> <b>Don't click</b> any <span class="k">Receipt / Basescan</span> link — they're mock.</div>
+    </div></div>
+
+    <div class="chunk" data-lane="image"><input type="checkbox" id="c4"><div class="body">
+      <div class="top"><span class="id">4 · Kit</span><span class="file">4-kit.mov</span><span class="time">40s · 2:15–2:55</span></div>
+      <ol class="steps">
+        <li>Still on the replay — scroll <b>down</b> to <b>"Launch Kit · MISSION COMPLETE"</b>.</li>
+        <li>Start recording. Show the stat row: <code>SPENT $0.80</code> · <code>SPECIALISTS 3</code> · <code>RECEIPTS 3</code>.</li>
+        <li><b>Scroll slowly</b> through the kit: OG-image ref → Short Pitch → Landing Copy → PH/HN Blurb → Tweet Thread.</li>
+        <li>On the right, <b>hover a PROVENANCE card</b> (e.g. <span class="k">ProofResearch · 0.10 USDC · hash</span>).</li>
+        <li>Hold ~2s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Don't click</b> a card's <span class="k">Basescan</span> link (mock hash) — just hover to show agent · cost · hash.</div>
+    </div></div>
+
+    <div class="chunk" data-lane="live"><input type="checkbox" id="c5"><div class="body">
+      <div class="top"><span class="id">5 · Door B — real, on-chain</span><span class="file">5-doorb.mov</span><span class="time">75s · 2:55–4:10</span></div>
+      <ol class="steps">
+        <li>Switch to your <b>Terminal</b> in <code>~/local-dev/praeco</code> (nothing sensitive on screen). Start recording.</li>
+        <li>Run <code>pnpm door-b:verify</code> → wait for the panel: <b>live listing</b> (Praeco · Product Launch Kit · <code>5168a527…</code> · $2) + <b>real settled order</b> (order → paid → deliver, block-confirmed). Hold ~3s.</li>
+        <li>Run <code>pnpm exec tsx scripts/probe-marketplace.ts</code> → wait for <b>❌ NOT STAFFABLE</b> (the $0 integrity reject). Hold ~3s.</li>
+        <li>Switch to the <b>Basescan tab</b> (<code>0x9754…</code>) — the real USDC settlement. Hold ~3s, then stop recording.</li>
+      </ol>
+      <div class="watch"><b>The real on-chain hero.</b> Both commands print only public data (safe on camera). <b>Do NOT run <code>door-b:sim</code></b> — it silently runs the real engine (~30–60s of dead air); <code>door-b:verify</code> already shows the full lifecycle.</div>
+    </div></div>
+
+    <div class="chunk" data-lane="research"><input type="checkbox" id="c6"><div class="body">
+      <div class="top"><span class="id">6 · Close</span><span class="file">6-close.mov</span><span class="time">20s · 4:10–4:30</span></div>
+      <ol class="steps">
+        <li>Browser: go to <code>github.com/RECTOR-LABS/praeco</code>. Start recording; hold ~5s on the repo (README title + the <span class="k">MIT</span> license).</li>
+        <li>Open <code>assets/architecture.svg</code> in the repo (click into <span class="k">assets/</span> → the file) — show the architecture diagram ~8s.</li>
+        <li>Hold ~2s, stop recording.</li>
+      </ol>
+      <div class="watch"><b>Calm close</b> — open-source, MIT, proven on Base.</div>
+    </div></div>
+  </div>
+
+  <h2>Tips</h2>
+  <div class="card">
+    <ul class="check" style="pointer-events:none">
+      <li style="border:none"><span style="color:var(--live)">▹</span>&nbsp; <b>No need to talk</b> — the AI voice covers everything. Mumble along for pacing if it helps; your audio is discarded.</li>
+      <li><span style="color:var(--live)">▹</span>&nbsp; Leave <b>~1s of stillness</b> at the start &amp; end of each clip — cleaner narration fitting.</li>
+      <li><span style="color:var(--live)">▹</span>&nbsp; <b>Natural, unhurried pace.</b> Drift is fine — I fit the voice to whatever length you record.</li>
+      <li><span style="color:var(--live)">▹</span>&nbsp; One bad take = re-record just that chunk (same filename, overwrite).</li>
+    </ul>
+  </div>
+
+  <div class="card foot">
+    <h2 style="margin-top:0">When you're done (a batch or all 7)</h2>
+    Drop the clips in <code>video/raw/</code> with the exact filenames above and ping me. Then I:
+    <ol>
+      <li><b>Frame-check</b> each for leaked secrets / wrong tab / <code>0s</code> clock (I look at sampled frames).</li>
+      <li><b>Generate the fitted narration</b> in your chosen voice — so pick <b>Roger / Will / Chris / Eric</b> when you can.</li>
+      <li>Compile → upload to Blob → wire <code>/pitch</code> → file the BUIDL.</li>
+    </ol>
+  </div>
+
+  <p class="reset">Progress is saved in this browser. <button id="resetBtn">Reset all ticks</button></p>
+</div>
+
+<script>
+  // Persist checkbox state in localStorage so ticks survive refreshes / a recording session.
+  var KEY = "praeco-rec-guide-v1";
+  var boxes = Array.prototype.slice.call(document.querySelectorAll('input[type=checkbox]'));
+  function load() {
+    var saved;
+    try { saved = JSON.parse(localStorage.getItem(KEY) || "{}"); } catch (e) { saved = {}; }
+    boxes.forEach(function (b) { if (saved[b.id]) b.checked = true; syncChunk(b); });
+  }
+  function save() {
+    var state = {};
+    boxes.forEach(function (b) { if (b.checked) state[b.id] = 1; });
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+  }
+  function syncChunk(b) {
+    var chunk = b.closest('.chunk');
+    if (chunk) chunk.classList.toggle('done', b.checked);
+  }
+  boxes.forEach(function (b) {
+    b.addEventListener('change', function () { syncChunk(b); save(); });
+  });
+  document.getElementById('resetBtn').addEventListener('click', function () {
+    boxes.forEach(function (b) { b.checked = false; syncChunk(b); });
+    save();
+  });
+  // Copy buttons.
+  Array.prototype.slice.call(document.querySelectorAll('button.copy')).forEach(function (btn) {
+    btn.addEventListener('click', function () {
+      var text = btn.getAttribute('data-copy');
+      navigator.clipboard.writeText(text).then(function () {
+        var old = btn.textContent; btn.textContent = "Copied ✓"; btn.classList.add('done');
+        setTimeout(function () { btn.textContent = old; btn.classList.remove('done'); }, 1400);
+      });
+    });
+  });
+  load();
+</script>
+</body>
+</html>
