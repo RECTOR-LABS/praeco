@@ -9,6 +9,7 @@
     <a href="#the-two-doors">The two doors</a>
   </p>
   <p>
+    <a href="https://github.com/RECTOR-LABS/praeco/actions/workflows/ci.yml"><img alt="CI" src="https://github.com/RECTOR-LABS/praeco/actions/workflows/ci.yml/badge.svg"></a>
     <img alt="license: MIT" src="https://img.shields.io/badge/license-MIT-6366F1">
     <img alt="tests" src="https://img.shields.io/badge/tests-vitest-10B981">
     <img alt="chain" src="https://img.shields.io/badge/payments-USDC%20on%20Base-informational">
@@ -58,6 +59,8 @@ The three required legs are **research**, **landing copy**, and **OG image**. Mi
 
 The engine is live-proven on **Base mainnet** — autonomous hires across **independent counterparty agents**, each negotiated, paid in USDC, and delivered with verifiable on-chain receipts. CI runs entirely on mocks (no live USDC in tests).
 
+> **On the sample replays:** the runs bundled into the live app use **mock provenance** so the public demo costs nothing — their Basescan links are placeholders, not settlements. The real, block-confirmed proof is reproducible anytime with `pnpm door-b:verify` (Praeco's Door B listing + a settled order + tx on Base). Full disclosure in [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md).
+
 ## Quickstart
 
 Requires **Node ≥ 22.19** and [pnpm](https://pnpm.io).
@@ -103,7 +106,7 @@ pnpm door-b:fulfill       # LIVE — accepts a real inbound order (spends USDC)
 
 ## Stack
 
-**TypeScript** · [**Pi SDK**](https://pi.dev) (`@earendil-works/pi-ai`, `pi-agent-core`) for the agent loop · **GLM-5.2:cloud** via Ollama · [**`@croo-network/sdk`**](https://www.npmjs.com/package/@croo-network/sdk) for CAP (buyer *and* seller) · **USDC on Base** · **Next.js 15** + **Tailwind** + **shadcn/ui** + **Lucide** for Door A.
+**TypeScript** · [**Pi SDK**](https://pi.dev) (`@earendil-works/pi-ai`, `@earendil-works/pi-agent-core`) for the agent loop · **GLM-5.2:cloud** via Ollama · [**`@croo-network/sdk`**](https://www.npmjs.com/package/@croo-network/sdk) for CAP (buyer *and* seller) · **USDC on Base** · **Next.js 15** + **Tailwind** + **shadcn/ui** + **Lucide** for Door A.
 
 ## CAP integration — SDK methods used
 
@@ -126,13 +129,13 @@ src/
   cap/        CROO marketplace — discovery, hire (buyer), provider (seller), wallet
   llm/        GLM-5.2 client
 app/  server/ Door A — Next.js App Router + the SSE Theater
-scripts/      smoke tests + engine:run + door-b:fulfill + marketplace:probe CLIs
+scripts/      smoke tests + engine:run + door-b:fulfill + door-b:verify + marketplace:probe CLIs
 docs/superpowers/   specs & implementation plans
 ```
 
 ## Status
 
-Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered and live** on the CROO Agent Store (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase, and [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md) for an honest Q&A on validation, refunds, specialist selection, and resilience.
+Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered on the CROO Agent Store** (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase, and [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md) for an honest Q&A on validation, refunds, specialist selection, and resilience.
 
 ## License
 
