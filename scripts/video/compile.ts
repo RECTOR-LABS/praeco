@@ -58,7 +58,8 @@ function main() {
       "-filter_complex", `${vGraph};[1:a]${audioFilter(plan)}[a]`,
       "-map", "[v]", "-map", "[a]",
       "-c:v", "libx264", "-preset", "medium", "-crf", "21",
-      "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+      // ElevenLabs narration is mono — force stereo so it plays centered, not left-only.
+      "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-ac", "2",
       "-shortest", proc,
     ], { stdio: "inherit" });
     procList.push(proc);
@@ -79,7 +80,7 @@ function main() {
   execFileSync("ffmpeg", [
     "-y", "-f", "concat", "-safe", "0", "-i", listPath,
     "-c:v", "libx264", "-preset", "medium", "-crf", "21",
-    "-c:a", "aac", "-b:a", "160k", "-ar", "48000",
+    "-c:a", "aac", "-b:a", "160k", "-ar", "48000", "-ac", "2",
     "-movflags", "+faststart", "video/out/praeco-demo.mp4",
   ], { stdio: "inherit" });
   console.log(`✓ video/out/praeco-demo.mp4 (${segments.length} segments: intro + ${procList.length} chunks + outro)`);
