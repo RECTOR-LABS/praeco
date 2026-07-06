@@ -27,6 +27,7 @@
     "video:tts": "tsx scripts/video/tts.ts",
     "video:validate": "tsx scripts/video/validate-chunk.ts",
     "video:bumpers": "tsx scripts/video/make-bumpers.ts",
+    "video:captions": "tsx scripts/video/captions.ts",
     "video:compile": "tsx scripts/video/compile.ts",
     "video:upload": "tsx scripts/video/upload-blob.ts"
   },

@@ -1,4 +1,4 @@
-import { audioFilter, parseManifest } from "./compile";
+import { audioFilter, parseManifest, videoFilter } from "./compile";
 
 test("pad plan → apad with the trailing silence duration + loudnorm", () => {
   expect(audioFilter({ action: "pad", atempo: 1, padSeconds: 6 }))
@@ -21,4 +21,27 @@ test("parseManifest returns the chunk list", () => {
 
 test("parseManifest rejects a missing field", () => {
   expect(() => parseManifest('[{"beat":"1","video":"x"}]')).toThrow();
+});
+
+test("videoFilter without cues builds the blur-fill graph, no overlays", () => {
+  const g = videoFilter();
+  expect(g).toContain("[0:v]split[bg][fg]");
+  expect(g).toContain("overlay=(W-w)/2:(H-h)/2");
+  expect(g.endsWith("fps=30[v]")).toBe(true);
+  expect(g).not.toContain("enable=");
+});
+
+test("videoFilter overlays one caption input per cue on its own time window", () => {
+  const g = videoFilter(
+    [
+      { start: 0.1, end: 2.0, text: "one" },
+      { start: 2.1, end: 4.0, text: "two" },
+    ],
+    2
+  );
+  // blur-fill composited to [base], then a chained overlay per cue
+  expect(g).toContain("fps=30[base]");
+  expect(g).toContain("[base][2:v]overlay=0:0:enable='between(t,0.1,2)'");
+  expect(g).toContain("[3:v]overlay=0:0:enable='between(t,2.1,4)'");
+  expect(g.endsWith("[v]")).toBe(true);
 });
