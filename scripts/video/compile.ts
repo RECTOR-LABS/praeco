@@ -43,8 +43,12 @@ function main() {
     }
     const proc = `video/proc/${c.beat}.mp4`;
     // Both chains in ONE -filter_complex (mixing -vf with -filter_complex errors).
-    // Video is normalized to a common 1080p/30fps profile so the final concat can `-c copy`.
-    const vchain = "scale=-2:1080,format=yuv420p,fps=30";
+    // Force every chunk to an identical 1920x1080/30fps frame (letterbox-pad any aspect
+    // ratio, SAR 1:1) so the final concat can `-c copy` no matter what the takes were
+    // recorded at — and so the /pitch <video> (16:9) never crops.
+    const vchain =
+      "scale=1920:1080:force_original_aspect_ratio=decrease," +
+      "pad=1920:1080:(ow-iw)/2:(oh-ih)/2:color=black,setsar=1,format=yuv420p,fps=30";
     execFileSync("ffmpeg", [
       "-y", "-i", c.video, "-i", c.audio,
       "-filter_complex", `[0:v]${vchain}[v];[1:a]${audioFilter(plan)}[a]`,
