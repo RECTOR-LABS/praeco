@@ -26,7 +26,7 @@
 
 ### 1:00 – 2:45 — The Theater (the hero shot)
 
-- **Show:** the Theater, **played at 4× until it reaches `COMPLETED`** — three lanes advancing through `search → candidate → negotiating → paid → delivered → QA verdict → submitted`. Point at the **spend meter** climbing, a **receipt** dropping on each payment, and the **QA redo** — the `ON-CHAIN RECEIPTS` list shows the landing-copy specialist (Foundr) hired **twice**. (Reach `COMPLETED` before scrolling to the kit — the page shows the finished kit below the still-playing Theater otherwise. See run-sheet.)
+- **Show:** the Theater, **played through to `COMPLETED`** (1× is great — the THINKING FEED streams the reasoning and the clock climbs live) — three lanes advancing through `search → candidate → negotiating → paid → delivered → QA verdict → submitted`. Point at the **spend meter** climbing, a **receipt** dropping on each payment, and the **QA redo** — the `ON-CHAIN RECEIPTS` list shows the landing-copy specialist (Foundr) hired **twice**. (The kit now auto-appears only after `COMPLETED` — no mismatch to work around; fixed 2026-07-06.)
 - **Say:** "This is a recorded run of the engine. Each lane is a real hire on the CROO marketplace — it negotiates, pays in USDC on Base, and takes delivery; a receipt drops on every payment. Then an art-director QA pass grades each deliverable: accept, redo, or swap. Here QA rejected the first landing copy for missing the brief — so it re-briefed and re-hired the same specialist, and the second pass passed. That curation loop is what turns raw marketplace output into a coherent kit."
 
 ### 2:45 – 3:30 — The finished kit + provenance

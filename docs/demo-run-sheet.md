@@ -24,9 +24,8 @@ This matters: the hackathon hard-DQs a "fake demo," and there's a random 10% hum
 ### 2. It's a REDO, not a swap
 In this replay, `landing_copy` was hired from **Foundr** → QA returned **redo** ("copy omitted the brief") → **Foundr was re-hired** with a revised brief → QA **accept** (95). It re-hired the *same* specialist, it did **not** swap to a different one. Narrate "redo": *"QA rejected the first draft, so it re-briefed and re-hired the same specialist — the second pass passed."* (The receipts list makes this visible: **two Foundr entries**.)
 
-### 3. Temporal mismatch — reach COMPLETED first, then scroll to the kit
-The replay page renders the finished **Launch Kit · MISSION COMPLETE** *below* the still-playing Theater (known issue). If both are in frame, the Theater says RUNNING while the kit says COMPLETE. Also, the Theater's elapsed clock reads **`0s` while playing** (cosmetic bug), only showing the true `2m 23s` once done.
-- **Workaround:** hit **4×** (or **Skip**) to land on the clean **COMPLETED** Theater (all lanes ACCEPTED, spend `$0.80`, the receipts list), *then* scroll down to the kit. Don't linger on the `0s` clock mid-play.
+### 3. Temporal mismatch + 0s clock — ✅ FIXED (2026-07-06, PR #22)
+The replay page *used to* render the finished kit below the still-playing Theater (RUNNING-vs-COMPLETE mismatch) and show a `0s` clock mid-play. **Both are now fixed at the source:** the kit stays hidden until the Theater reaches **COMPLETED**, and the elapsed clock climbs live through the run. So just **play the replay through — 1× is great** (you see the streaming THINKING FEED + a real clock); the kit appears on completion. No camera workaround needed.
 
 ---
 
@@ -80,7 +79,6 @@ pnpm door-b:sim
 ## Do NOT show on camera
 - `.env`, the CROO SDK key, the agent wallet private key.
 - Any **replay** "Basescan"/"Receipt" link click (mock `0xmockpay*`).
-- The Theater's `0s` elapsed clock lingering mid-play (use 4× / Skip).
 
 ## The only real on-chain artifacts (safe to show)
 - Door B deliver tx: `0x97547499e592dc1b4390e3a11213502f9fabc0dec5fe5fba4e4362cdf886ad84` → resolves on Basescan.
