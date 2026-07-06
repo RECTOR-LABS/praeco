@@ -7,7 +7,7 @@ export interface LedgerEntry { agentName: string; amountUsd: string; basescanUrl
 export interface TheaterState {
   status: "running" | "completed" | "partial" | "aborted" | "failed";
   lanes: Record<LegKind, LaneState>; ledger: LedgerEntry[]; thinking: string[];
-  spentUsd: string; product?: string; startedAt?: number; endedAt?: number;
+  spentUsd: string; product?: string; startedAt?: number; endedAt?: number; lastEventAt?: number;
 }
 export function initialTheaterState(): TheaterState {
   const lanes = Object.fromEntries(REQUIRED_LEGS.map((leg) => [leg, { leg, phase: "idle" as Phase }])) as Record<LegKind, LaneState>;
@@ -23,7 +23,10 @@ const sumUsd = (l: LedgerEntry[]) => (l.reduce((a, e) => a + Math.round(Number(e
 // ("negotiating <Agent> (<serviceId>)"). Parse once and carry it on the lane.
 const agentFromNegotiating = (msg: string): string | undefined => msg.match(/negotiating (.+?) \(/)?.[1];
 
-export function theaterReducer(s: TheaterState, e: WorklogEvent): TheaterState {
+export function theaterReducer(state: TheaterState, e: WorklogEvent): TheaterState {
+  // Carry the latest event timestamp on every transition so the elapsed clock can
+  // progress during playback (before run_completed sets endedAt) — not sit at 0s.
+  const s = e.at != null ? { ...state, lastEventAt: Math.max(state.lastEventAt ?? 0, e.at) } : state;
   const d = (e.data ?? {}) as Record<string, unknown>;
   if (e.kind === "run_started") return { ...s, startedAt: e.at };
   if (e.kind === "intake_done") return { ...s, product: (d.oneLiner as string) ?? s.product };

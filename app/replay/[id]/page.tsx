@@ -2,7 +2,6 @@ import { notFound } from "next/navigation";
 import { loadRecord } from "@/server/persistence";
 import { baseUnitsToUsd } from "@/src/constants";
 import { ReplayStage } from "@/components/ReplayStage";
-import { KitView } from "@/components/KitView";
 import { GridBackdrop } from "@/components/ui/GridBackdrop";
 
 export default async function ReplayPage({
@@ -17,8 +16,11 @@ export default async function ReplayPage({
   return (
     <main className="relative isolate min-h-screen bg-ground text-ink">
       <GridBackdrop />
-      <ReplayStage runId={id} />
-      {rec.kit && <KitView kit={rec.kit} spentUsd={baseUnitsToUsd(BigInt(rec.spentBaseUnits))} />}
+      <ReplayStage
+        runId={id}
+        kit={rec.kit}
+        spentUsd={baseUnitsToUsd(BigInt(rec.spentBaseUnits))}
+      />
     </main>
   );
 }
