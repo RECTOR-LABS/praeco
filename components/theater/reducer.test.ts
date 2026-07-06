@@ -55,3 +55,15 @@ it("marks a leg blocked on a QA swap/redo (verdict word lives in the message; pa
   expect(s.ledger).toHaveLength(1);       // the swapped-away provider was still paid
   expect(s.spentUsd).toBe("0.10");
 });
+
+it("tracks lastEventAt so the elapsed clock can progress before the run completes", () => {
+  const events = rec.worklog;
+  const full = fold();
+  expect(full.lastEventAt).toBe(events[events.length - 1].at);
+  expect(full.lastEventAt! - full.startedAt!).toBeGreaterThan(0); // a real run has real duration
+
+  // mid-run: no endedAt yet, but lastEventAt already advanced past startedAt (so the clock isn't stuck at 0)
+  const partial = events.slice(0, 6).reduce(theaterReducer, initialTheaterState());
+  expect(partial.endedAt).toBeUndefined();
+  expect(partial.lastEventAt).toBe(events[5].at);
+});

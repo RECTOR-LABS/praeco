@@ -14,9 +14,11 @@ const STATUS_CONFIG = {
   failed:    { label: "Failed",    color: "text-danger",    Icon: XCircle },
 } as const satisfies Record<TheaterState["status"], { label: string; color: string; Icon: FC<{ className?: string }> }>;
 
-function elapsedLabel(startedAt?: number, endedAt?: number): string {
+export function elapsedLabel(startedAt?: number, endedAt?: number, lastEventAt?: number): string {
   if (!startedAt) return "—";
-  const ms = (endedAt ?? startedAt) - startedAt;
+  // While playing (no endedAt yet), track the latest streamed event so the clock climbs
+  // through the run's timeline instead of showing a stuck 0s.
+  const ms = (endedAt ?? lastEventAt ?? startedAt) - startedAt;
   const s = Math.round(ms / 1000);
   if (s < 60) return `${s}s`;
   return `${Math.floor(s / 60)}m ${s % 60}s`;
@@ -39,7 +41,7 @@ export function BrainBar({ state }: { state: TheaterState }) {
         </div>
         <span className="flex items-center gap-1 font-mono text-xs text-muted-foreground">
           <Clock className="h-3.5 w-3.5" />
-          {elapsedLabel(state.startedAt, state.endedAt)}
+          {elapsedLabel(state.startedAt, state.endedAt, state.lastEventAt)}
         </span>
       </div>
       <div className="mt-3">

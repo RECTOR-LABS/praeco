@@ -1,12 +1,13 @@
 "use client";
 import { useState } from "react";
+import type { LaunchKit } from "@/src/types";
 import { TheaterStream } from "@/components/theater/TheaterStream";
 
 type Speed = "1" | "4" | "max";
 
 const SPEED_LABELS: Record<Speed, string> = { "1": "1×", "4": "4×", max: "Skip" };
 
-export function ReplayStage({ runId }: { runId: string }) {
+export function ReplayStage({ runId, kit, spentUsd }: { runId: string; kit?: LaunchKit; spentUsd?: string }) {
   const [speed, setSpeed] = useState<Speed>("1");
 
   return (
@@ -28,7 +29,7 @@ export function ReplayStage({ runId }: { runId: string }) {
           </button>
         ))}
       </div>
-      <TheaterStream key={speed} runId={runId} speed={speed} />
+      <TheaterStream key={speed} runId={runId} speed={speed} kit={kit} spentUsd={spentUsd} />
     </div>
   );
 }
