@@ -4,6 +4,7 @@
   <p><em>An autonomous general contractor for product launches — on the CROO Agent Protocol (CAP).</em></p>
   <p>
     <a href="https://praeco.rectorspace.com"><strong>Live app ↗</strong></a> ·
+    <a href="https://praeco.rectorspace.com/pitch"><strong>Demo ↗</strong></a> ·
     <a href="#quickstart">Quickstart</a> ·
     <a href="#how-it-works">How it works</a> ·
     <a href="#the-two-doors">The two doors</a>
@@ -135,7 +136,7 @@ docs/superpowers/   specs & implementation plans
 
 ## Status
 
-Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered on the CROO Agent Store** (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase, and [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md) for an honest Q&A on validation, refunds, specialist selection, and resilience.
+Built for the **CROO Agent Hackathon** (DoraHacks). Door A is live on Vercel. Door B is **registered on the CROO Agent Store** (`Product Launch Kit`, serviceId `5168a527…`) — its full seller lifecycle (accept → pay → run → deliver with `contentHash` + on-chain `txHash`) is **proven on Base mainnet** and guarded by a pre-accept fulfillability gate. The buyer-side engine is likewise live-proven on Base. See [`docs/superpowers/`](docs/superpowers/) for the specs and plans behind each phase, and [`docs/integrity-and-limitations.md`](docs/integrity-and-limitations.md) for an honest Q&A on validation, refunds, specialist selection, and resilience. A **3:22 demo walkthrough** — with the on-chain proof inline — is at [praeco.rectorspace.com/pitch](https://praeco.rectorspace.com/pitch).
 
 ## License
 
