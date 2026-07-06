@@ -73,17 +73,18 @@ target; I trim/extend to fit so the voice matches the video (never the reverse).
 >
 > *(Camera: do NOT click the provenance card's Basescan link — mock hash.)*
 
-### Beat 5 — Door B + real on-chain proof (3:30–4:30) · SHOW: `pnpm door-b:sim`, then real Basescan tab, optional probe
-> "Okay, second door — same engine, other direction. Praeco's also listed as a seller on the CROO
-> store, so another agent can just order a launch kit from it. And here's the part I care about most:
-> it won't take a job it can't actually do. Before it accepts, it checks it can staff every leg — and
-> if it can't, it rejects with a reason instead of taking your money. Let me show both. This first run
-> is the happy path — accepts, waits for payment, runs the engine, delivers with a content hash. And
-> this one — its providers are offline right now, so watch, it just fails closed at zero cost rather
-> than charge you for something it can't deliver. And it's real on Base mainnet — here's the actual
-> settlement transaction. Two doors, one engine: Praeco buys from the marketplace and sells into it."
+### Beat 5 — Door B, the real on-chain hero (3:30–4:40) · SHOW: `pnpm door-b:verify` → `probe-marketplace` → real Basescan tab
+> "Okay, second door — same engine, other direction — and this part's real, so let me just show you.
+> Praeco isn't only a thing *you* hire; it's registered as a *seller* on the CROO store. Watch —
+> [`door-b:verify`] that listing right there is live, pulled straight from CROO's public API, you can
+> check it yourself. And this is an actual order it fulfilled — paid and delivered on Base mainnet,
+> and it even confirms the block for you. Then the part I care about most: it's honest about what it
+> can take on. [probe] Before it accepts a job it checks it can staff every leg — and right now its
+> providers are offline, so watch, it just rejects at zero cost instead of charging you for something
+> it can't deliver. And here's that settlement on Basescan — real USDC, on Base. Two doors, one
+> engine: Praeco buys from the marketplace *and* sells into it, for real."
 >
-> *(Densest beat; copy is elastic — trim live to fit. Real tx: `0x9754…`. Probe cmd: `pnpm exec tsx scripts/probe-marketplace.ts`.)*
+> *(The real hero beat. `door-b:verify` = live public-API listing + on-chain settlement (block-confirmed); output is all public — safe on camera. Then the `$0` integrity reject. Real tx: `0x9754…`. Copy is elastic — trim live to fit. `door-b:sim` optional if showing the flow mechanics.)*
 
 ### Beat 6 — Close (4:30–5:00) · SHOW: GitHub repo (MIT) + `assets/architecture.svg`
 > "That's Praeco. It's open source, MIT, and it's proven on Base mainnet — not a mockup. The idea's

@@ -123,7 +123,7 @@
   <header>
     <div class="brand">PRAECO</div>
     <h1>Demo — Recording Kit</h1>
-    <p class="sub"><b>7 chunks</b> · target <b>≈4:20</b> (hard cap 5:00) · screen-first, record in any order · <span class="pill">tick as you go</span></p>
+    <p class="sub"><b>7 chunks</b> · target <b>≈4:30</b> (hard cap 5:00) · screen-first, record in any order · <span class="pill">tick as you go</span></p>
   </header>
 
   <h2>One-time setup</h2>
@@ -183,9 +183,9 @@
     </div></div>
 
     <div class="chunk" data-lane="live"><input type="checkbox" id="c5"><div class="body">
-      <div class="top"><span class="id">5 · Door B</span><span class="file">5-doorb.mov</span><span class="time">~60s</span></div>
-      <div class="show">Terminal: <code>pnpm door-b:sim</code> (let the log finish → delivered). Then switch to the <b>real</b> Basescan tab (<code>0x9754…</code>). Then optionally <code>pnpm exec tsx scripts/probe-marketplace.ts</code> (the $0 reject).</div>
-      <div class="watch"><b>Watch:</b> the real Basescan tab is the on-chain proof; sim hashes are mock (fine — labelled).</div>
+      <div class="top"><span class="id">5 · Door B — real, on-chain</span><span class="file">5-doorb.mov</span><span class="time">~70s</span></div>
+      <div class="show"><b>1.</b> Terminal: <code>pnpm door-b:verify</code> — prints the <b>live listing</b> (pulled from the public CROO API — Praeco / Product Launch Kit / <code>5168a527…</code> / $2) + the <b>real settled order</b> (order → paid → deliver, block-confirmed on Base). <b>2.</b> <code>pnpm exec tsx scripts/probe-marketplace.ts</code> — the live <b>$0 integrity reject</b> (it won't take a job it can't staff). <b>3.</b> Switch to the real <b>Basescan</b> tab (<code>0x9754…</code>) — the decoded USDC settlement. <i>Optional: <code>pnpm door-b:sim</code> for the fulfillment-flow shape.</i></div>
+      <div class="watch"><b>This is the real on-chain hero.</b> The listing is live &amp; verifiable, the tx is confirmed on Base. All three commands print only public data (safe on camera).</div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c6"><div class="body">
