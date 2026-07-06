@@ -103,6 +103,16 @@
   .chunk[data-lane=image] { border-left: 3px solid var(--image); }
   .chunk[data-lane=live] { border-left: 3px solid var(--live); }
 
+  .tl { display: flex; gap: 3px; height: 54px; border-radius: 10px; overflow: hidden; }
+  .tl .seg { display: flex; flex-direction: column; align-items: center; justify-content: center; min-width: 0; color: #06120b; font-weight: 700; }
+  .tl .seg span { font: 700 13px ui-monospace, Menlo, monospace; }
+  .tl .seg small { font-size: 10px; opacity: .8; }
+  .tl .seg[data-lane=research] { background: var(--research); }
+  .tl .seg[data-lane=copy] { background: var(--copy); }
+  .tl .seg[data-lane=image] { background: var(--image); }
+  .tl .seg[data-lane=live] { background: var(--live); }
+  .tl-scale { display: flex; justify-content: space-between; margin-top: 8px; font-size: 12px; color: var(--ink-dim); }
+
   .foot { margin-top: 34px; }
   .foot ol { margin: 8px 0 0; padding-left: 20px; }
   .foot li { padding: 3px 0; }
@@ -125,6 +135,20 @@
     <h1>Demo — Recording Kit</h1>
     <p class="sub"><b>7 chunks</b> · target <b>≈4:30</b> (hard cap 5:00) · screen-first, record in any order · <span class="pill">tick as you go</span></p>
   </header>
+
+  <h2>Timeline — how it lands in ≈4:30</h2>
+  <div class="card">
+    <div class="tl">
+      <div class="seg" data-lane="live" style="flex:25"><span>1</span><small>25s</small></div>
+      <div class="seg" data-lane="research" style="flex:25"><span>2</span><small>25s</small></div>
+      <div class="seg" data-lane="copy" style="flex:65"><span>3a</span><small>65s</small></div>
+      <div class="seg" data-lane="copy" style="flex:20"><span>3b</span><small>20s</small></div>
+      <div class="seg" data-lane="image" style="flex:40"><span>4</span><small>40s</small></div>
+      <div class="seg" data-lane="live" style="flex:75"><span>5</span><small>75s</small></div>
+      <div class="seg" data-lane="research" style="flex:20"><span>6</span><small>20s</small></div>
+    </div>
+    <div class="tl-scale"><span>0:00</span><span>total ≈ 4:30 &nbsp;·&nbsp; ~30s margin under the 5:00 cap</span></div>
+  </div>
 
   <h2>One-time setup</h2>
   <div class="card">
@@ -153,43 +177,43 @@
   <h2>The 7 chunks</h2>
   <div class="chunks" id="chunks">
     <div class="chunk" data-lane="live"><input type="checkbox" id="c1"><div class="body">
-      <div class="top"><span class="id">1 · Hook</span><span class="file">1-hook.mov</span><span class="time">~25s</span></div>
+      <div class="top"><span class="id">1 · Hook</span><span class="file">1-hook.mov</span><span class="time">25s · 0:00–0:25</span></div>
       <div class="show">Landing page — slow scroll: hero → mission-control preview → the two-doors / proven-on-chain cards.</div>
       <div class="watch"><b>Watch:</b> just scroll calmly, top to bottom.</div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c2"><div class="body">
-      <div class="top"><span class="id">2 · Intake</span><span class="file">2-intake.mov</span><span class="time">~25s</span></div>
+      <div class="top"><span class="id">2 · Intake</span><span class="file">2-intake.mov</span><span class="time">25s · 0:25–0:50</span></div>
       <div class="show">The intake page — type a one-liner (or paste a repo) into the single field, submit.</div>
       <div class="watch"><b>Watch:</b> show it's <b>one field in → kit out</b>.</div>
     </div></div>
 
     <div class="chunk" data-lane="copy"><input type="checkbox" id="c3a"><div class="body">
-      <div class="top"><span class="id">3a · Theater</span><span class="file">3a-theater.mov</span><span class="time">~60–70s</span></div>
+      <div class="top"><span class="id">3a · Theater</span><span class="file">3a-theater.mov</span><span class="time">65s · 0:50–1:55</span></div>
       <div class="show">Hero replay → hit <b>4×</b> → let all 3 lanes advance, spend meter climb, receipts drop → land on <b>COMPLETED</b> (all lanes ACCEPTED, <code>$0.80</code>).</div>
       <div class="watch"><b>Reach COMPLETED before stopping.</b> Don't scroll to the kit yet.</div>
     </div></div>
 
     <div class="chunk" data-lane="copy"><input type="checkbox" id="c3b"><div class="body">
-      <div class="top"><span class="id">3b · Redo</span><span class="file">3b-redo.mov</span><span class="time">~20s</span></div>
+      <div class="top"><span class="id">3b · Redo</span><span class="file">3b-redo.mov</span><span class="time">20s · 1:55–2:15</span></div>
       <div class="show">Still on the replay — point at the <b>ON-CHAIN RECEIPTS</b> list, specifically the <b>two Foundr $0.10</b> entries (the QA redo).</div>
       <div class="watch"><b>Watch:</b> "hired twice" = the whole story.</div>
     </div></div>
 
     <div class="chunk" data-lane="image"><input type="checkbox" id="c4"><div class="body">
-      <div class="top"><span class="id">4 · Kit</span><span class="file">4-kit.mov</span><span class="time">~40s</span></div>
+      <div class="top"><span class="id">4 · Kit</span><span class="file">4-kit.mov</span><span class="time">40s · 2:15–2:55</span></div>
       <div class="show">Scroll to <b>Launch Kit · MISSION COMPLETE</b> — copy, OG image, tweet thread, PH/HN blurb; hover a <b>provenance card</b>.</div>
       <div class="watch"><b>Watch:</b> hover the card, <b>don't click</b> its Basescan link (mock).</div>
     </div></div>
 
     <div class="chunk" data-lane="live"><input type="checkbox" id="c5"><div class="body">
-      <div class="top"><span class="id">5 · Door B — real, on-chain</span><span class="file">5-doorb.mov</span><span class="time">~70s</span></div>
+      <div class="top"><span class="id">5 · Door B — real, on-chain</span><span class="file">5-doorb.mov</span><span class="time">75s · 2:55–4:10</span></div>
       <div class="show"><b>1.</b> Terminal: <code>pnpm door-b:verify</code> — prints the <b>live listing</b> (pulled from the public CROO API — Praeco / Product Launch Kit / <code>5168a527…</code> / $2) + the <b>real settled order</b> (order → paid → deliver, block-confirmed on Base). <b>2.</b> <code>pnpm exec tsx scripts/probe-marketplace.ts</code> — the live <b>$0 integrity reject</b> (it won't take a job it can't staff). <b>3.</b> Switch to the real <b>Basescan</b> tab (<code>0x9754…</code>) — the decoded USDC settlement. <i>Optional: <code>pnpm door-b:sim</code> for the fulfillment-flow shape.</i></div>
       <div class="watch"><b>This is the real on-chain hero.</b> The listing is live &amp; verifiable, the tx is confirmed on Base. All three commands print only public data (safe on camera).</div>
     </div></div>
 
     <div class="chunk" data-lane="research"><input type="checkbox" id="c6"><div class="body">
-      <div class="top"><span class="id">6 · Close</span><span class="file">6-close.mov</span><span class="time">~20s</span></div>
+      <div class="top"><span class="id">6 · Close</span><span class="file">6-close.mov</span><span class="time">20s · 4:10–4:30</span></div>
       <div class="show">The GitHub repo page (MIT) + <code>assets/architecture.svg</code> (open it in the browser).</div>
       <div class="watch"><b>Watch:</b> calm close.</div>
     </div></div>
